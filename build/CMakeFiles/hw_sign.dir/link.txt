@@ -1,0 +1,1 @@
+/usr/bin/c++ -Wl,--dependency-file=CMakeFiles/hw_sign.dir/link.d CMakeFiles/hw_sign.dir/hw_sign.cpp.o -o hw_sign  libutil.a /usr/lib/x86_64-linux-gnu/libcrypto.so /usr/lib/x86_64-linux-gnu/libz.so -lstdc++fs

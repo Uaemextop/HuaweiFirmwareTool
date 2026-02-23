@@ -25,11 +25,13 @@ Download command templates (from libhw_swm_dll.so):
 
 import argparse
 import hashlib
+import gzip
 import os
 import shutil
 import struct
 import subprocess
 import sys
+import tarfile
 import urllib.request
 import urllib.error
 
@@ -43,11 +45,17 @@ HWNP_ITEM_SIZE = 360      # sizeof(huawei_item)
 # Encrypted rootfs magic (found in V2/SPC210/SPC458 firmwares)
 ENCRYPTED_ROOTFS_MAGIC = 0x20190416
 
+# Huawei aescrypt2 encrypted config type
+AESCRYPT2_ENCRYPTED_TYPE = 4
+
 # SquashFS magic
 SQUASHFS_MAGIC = b'hsqs'
 
 # uImage magic
 UIMAGE_MAGIC = b'\x27\x05\x19\x56'
+
+# Timeout for unsquashfs extraction (seconds)
+UNSQUASHFS_TIMEOUT = 300
 
 
 def read_hwnp_header(data):
@@ -181,9 +189,6 @@ def _analyze_efs(item_data):
 
 def _try_extract_archive(archive_path, output_dir, safe_name):
     """Try to extract a .tar.gz archive, or identify encrypted files."""
-    import tarfile
-    import gzip
-
     base_name = safe_name.replace('.tar.gz', '')
     extract_dir = os.path.join(output_dir, base_name + '_contents')
 
@@ -220,7 +225,7 @@ def _try_extract_archive(archive_path, output_dir, safe_name):
         if len(header) >= 4:
             enc_type = struct.unpack_from('<I', header, 0)[0]
             print(f"    Not a gzip archive (type={enc_type})")
-            if enc_type == 4:
+            if enc_type == AESCRYPT2_ENCRYPTED_TYPE:
                 print(f"    Format: aescrypt2 encrypted config")
                 print(f"    Encrypted with AES-256-CBC (chip-specific key)")
         else:
@@ -277,7 +282,7 @@ def _try_unsquashfs(sqfs_path, extract_dir):
     try:
         result = subprocess.run(
             [unsquashfs, '-d', extract_dir, sqfs_path],
-            capture_output=True, text=True, timeout=300)
+            capture_output=True, text=True, timeout=UNSQUASHFS_TIMEOUT)
         if result.returncode == 0:
             file_count = sum(1 for _ in _walk_count(extract_dir))
             print(f"    Extracted rootfs to: {extract_dir} ({file_count} files)")

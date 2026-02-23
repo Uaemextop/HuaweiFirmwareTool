@@ -84,3 +84,17 @@ $ ./hw_sign -d unpack -k private.pem -o new_signature
 ```
 $ ./hw_verify -d unpack -k public.pem -i new_signature
 ```
+
+## Additional Documentation
+
+### EXE Analysis and Firmware Tools
+- [Complete EXE Analysis Report](EXE_ANALYSIS_REPORT.md) - Detailed analysis of Huawei ONT firmware tools
+- [Análisis en Español](ANALISIS_ES.md) - Documentación completa en español
+- [Analysis Tools](tools/README.md) - Python tools for PE executable analysis
+
+### Topics Covered
+- Static analysis of ONT firmware upgrade tools
+- Unlock methodology for HG8145V5 devices
+- PE32 executable structure analysis
+- Firmware component documentation
+- Security considerations

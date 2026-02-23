@@ -95,6 +95,7 @@ RSA_sign_data(const std::string &sig_data,
         return false;
     }
 
+    // First call with nullptr gets required buffer size
     size_t sig_len = 0;
     if (EVP_DigestSignFinal(ctx.get(), nullptr, &sig_len) != 1) {
         return false;
@@ -108,6 +109,7 @@ RSA_sign_data(const std::string &sig_data,
         return false;
     }
 
+    // Trim to actual signature length (may be smaller than allocated)
     sig_buf.resize(sig_len);
     return true;
 }

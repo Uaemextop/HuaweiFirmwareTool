@@ -1,21 +1,30 @@
 # HuaweiFirmwareTool
 Tools for modify firmware huawei
 
-### Requires on Debian 11
+## Supported Models
+- HG8245 (original)
+- HG8145V5 (V500R020C00SPC270, V500R020C00SPC458)
+
+## Requires on Debian 11+ / Ubuntu 22.04+
 ```
-apt install cmake make g++ openssl zlib1g zlib1g-dev libssl1.1 libssl-dev
+apt install cmake make g++ openssl zlib1g zlib1g-dev libssl-dev
+```
+
+### Optional tools for firmware analysis
+```
+apt install binwalk squashfs-tools radare2 xxd
 ```
 
 ### Build
 ```
-$ git clone https://github.com/0xuserpag3/HuaweiFirmwareTool.git
+$ git clone https://github.com/Uaemextop/HuaweiFirmwareTool.git
 $ cd HuaweiFirmwareTool
 $ mkdir build && cd build
 $ cmake ..
 $ make
 ```
 
-## Example modify firmware on HG8245
+## Example modify firmware on HG8245 / HG8145V5
 ### Usage:
 
 ```
@@ -31,45 +40,48 @@ Usage: ./hw_fmw -d /path/items [-u -f firmware.bin] [-p -o firmware.bin] [-v]
 ### Unpack:
 
 ```
-$ ./hw_fmw -d unpack -u -f /home/user/hg8245hv300r015c10spc130_common_all.bin -v
+$ ./hw_fmw -d unpack -u -f /home/user/HG8145V5_remover5.bin -v
 ```
-Files that will be added to the firmware should be marked with a **'+'** sign in file **upacked/item_list.txt**
+Files that will be added to the firmware should be marked with a **'+'** sign in file **unpacked/item_list.txt**
 ```
 $ head -n 5 unpack/item_list.txt
-HWNP(0x504e5748)
-256 494|4B4|534|5D4|614|;COMMON|CMCC|
+0x504e5748 0 0 0
+256 164C|15AD|;E8C|COMMON|CHINA|CMCC|
 + 0 file:/var/UpgradeCheck.xml UPGRDCHECK NULL 0
-- 1 flash:flash_config FLASH_CONFIG NULL 0
-+ 2 file:/var/hw_flashcfg_256.xml FLASH_CONFIG1 NULL 0
+- 1 flash:signinfo SIGNINFO V500R020C00SPC270B520 0
++ 2 flash:uboot UBOOT NULL 0
 ```
 ### More information about the file "item_list.txt"
 ```
 First line: 
-  (0) HWNP(0x504e5748 - little endian) - "Magic"
+  (0) 0x504e5748 - Magic (HWNP little endian)
+  (1) 0 - unknow_data_1
+  (2) 0 - unknow_data_2
+  (3) 0 - reserved field (1 for encrypted firmware)
 Second line: 
   (0) 256 - size "Product list"
-  (1) 494|... - "Product" list
+  (1) 164C|... - "Product" list (may be empty for some firmware)
 After second line: 
   (0) minus(-) or plus(+) it's "checkbox" for append item to firmware
   (1) 0 - item index
   (2) file:/var/UpgradeCheck.xml - item:path
   (3) UPGRDCHECK - section
   (4) NULL - version
-  (5) 0 - plocicy 
+  (5) 0 - policy 
 ```
 ### Pack:
 ```
-$ ./hw_fmw -d unpack -p -o /home/user/new_hg8245hv300r015c10spc130_common_all.bin -v
+$ ./hw_fmw -d unpack -p -o /home/user/new_firmware.bin -v
 ```
-## Example modify/verify firmware on HG8245 (need support check signature)
+## Example modify/verify firmware on HG8245 / HG8145V5 (need support check signature)
 ### Mark the file to sign
 ```
 $ head -n 5 unpack/sig_item_list.txt 
 + file:/var/UpgradeCheck.xml
-- flash:flash_config
-+ file:/var/hw_flashcfg_256.xml
-- flash:uboot
+- flash:signinfo
++ flash:uboot
 - flash:kernel
+- flash:rootfs
 ```
 ### Generate keys:
 ```
@@ -84,3 +96,19 @@ $ ./hw_sign -d unpack -k private.pem -o new_signature
 ```
 $ ./hw_verify -d unpack -k public.pem -i new_signature
 ```
+
+## Firmware Analysis Notes
+
+### HG8145V5 Firmware Format
+The HG8145V5 firmware uses the standard HWNP header format with `item_sz=360`.
+
+**HG8145V5_remover5.bin** (V500R020C00SPC270B520):
+- Contains: UpgradeCheck, signinfo, uboot, kernel, rootfs, plugins
+- Rootfs: SquashFS with LZMA compression (extractable with `binwalk -e`)
+- Product list: `164C|15AD|;E8C|COMMON|CHINA|CMCC|`
+
+**HG8145V5_V2_HG8145V5.bin** (V500R020C00SPC458B001):
+- Contains: rootfs, efs
+- Rootfs: Encrypted with custom Huawei header (0x16041920)
+- Product list: empty (256 null bytes)
+- Reserved field: 1 (indicates encrypted firmware)

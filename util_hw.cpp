@@ -315,6 +315,7 @@ Firmware::ReadFlashFromFS(const std::string &path_fmw)
         throw_err("Product list corrupted", path_fmw);
     }
 
+    // Use item_sz from firmware header; fall back to sizeof if header has 0
     uint32_t item_sz = this->hdr.item_sz ? this->hdr.item_sz : sizeof(huawei_item);
 
     for (uint32_t i = 0; i < this->hdr.item_counts; ++i) {
@@ -326,6 +327,7 @@ Firmware::ReadFlashFromFS(const std::string &path_fmw)
             throw_err("Item header seek failed", path_fmw);
         }
 
+        // Read up to sizeof(huawei_item) bytes; extra bytes in larger items are skipped
         size_t read_sz = std::min(static_cast<size_t>(item_sz), sizeof(huawei_item));
         if (!fd.read(reinterpret_cast<char *>(&hi), read_sz)) {
             throw_err("Items corrupted", path_fmw);

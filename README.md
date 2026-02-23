@@ -3,7 +3,7 @@ Tools for modify firmware huawei
 
 ## Supported Models
 - HG8245 (original)
-- HG8145V5 (V500R020C00SPC270, V500R020C00SPC458)
+- HG8145V5 (V500R020C00SPC270, V500R020C00SPC458, V500R021C00SPC210)
 
 ## Requires on Debian 11+ / Ubuntu 22.04+
 ```
@@ -97,6 +97,32 @@ $ ./hw_sign -d unpack -k private.pem -o new_signature
 $ ./hw_verify -d unpack -k public.pem -i new_signature
 ```
 
+## Firmware Flash Tool (hw_flash)
+
+Open-source TFTP-based firmware flash tool. Works on Windows and Linux.
+
+### Usage:
+```
+$ ./hw_flash -i firmware.bin                    # Show firmware info
+$ ./hw_flash -s -f firmware.bin                 # Start TFTP server (default: 192.168.1.10:69)
+$ ./hw_flash -s -b 192.168.1.10 -p 69 -f firmware.bin  # Custom bind address
+```
+
+### Flash procedure:
+1. Connect your PC to the ONT via Ethernet
+2. Set your PC IP to `192.168.1.10`
+3. Start the TFTP server: `./hw_flash -s -f firmware.bin`
+4. Power on the ONT while holding the reset button
+5. The ONT will request the firmware via TFTP automatically
+6. Wait for the transfer to complete, then release the reset button
+
+### Building on Windows:
+```
+mkdir build && cd build
+cmake .. -G "Visual Studio 17 2022"
+cmake --build . --config Release
+```
+
 ## Firmware Analysis Notes
 
 ### HG8145V5 Firmware Format
@@ -112,3 +138,10 @@ The HG8145V5 firmware uses the standard HWNP header format with `item_sz=360`.
 - Rootfs: Encrypted with custom Huawei header (0x16041920)
 - Product list: empty (256 null bytes)
 - Reserved field: 1 (indicates encrypted firmware)
+
+**HG8145V5-V500R021C00SPC210.bin** (V500R021C00SPC210B055):
+- Contains: rootfs, efs
+- Rootfs: Encrypted with custom Huawei header (0x16041920)
+- Product list: empty (256 null bytes)
+- Reserved field: 1 (indicates encrypted firmware)
+- Same format as V2, compatible with all tool operations

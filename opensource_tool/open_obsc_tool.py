@@ -49,6 +49,7 @@ from obsc_protocol import (
     DEFAULT_CHUNK_SIZE,
     DEFAULT_RETRY_INTERVAL_MS,
 )
+from presets import PresetManager, RouterPreset, BUILTIN_PRESETS
 
 APP_NAME = "Open OBSC Tool"
 APP_VERSION = "1.0.0"
@@ -219,109 +220,399 @@ class DevicesFrame(ttk.LabelFrame):
 
 
 class SettingsFrame(ttk.LabelFrame):
-    """Frame for network and upgrade settings."""
+    """Frame for network, verification, upgrade-check, encryption and flash settings."""
 
     def __init__(self, parent):
         super().__init__(parent, text="Settings", padding=5)
         self._setup_ui()
 
     def _setup_ui(self):
+        # Preset selector row
+        preset_frame = ttk.Frame(self)
+        preset_frame.pack(fill=tk.X, pady=(0, 4))
+
+        ttk.Label(preset_frame, text="Preset:").pack(side=tk.LEFT, padx=2)
+        self.var_preset = tk.StringVar(value="Custom")
+        self.cmb_preset = ttk.Combobox(
+            preset_frame,
+            textvariable=self.var_preset,
+            values=list(BUILTIN_PRESETS.keys()),
+            width=28,
+            state="readonly",
+        )
+        self.cmb_preset.pack(side=tk.LEFT, padx=2)
+        self.cmb_preset.bind("<<ComboboxSelected>>", self._on_preset_selected)
+
+        self.btn_save_preset = ttk.Button(
+            preset_frame, text="Save", command=self._on_save_preset, width=6
+        )
+        self.btn_save_preset.pack(side=tk.LEFT, padx=2)
+
+        self.btn_delete_preset = ttk.Button(
+            preset_frame, text="Delete", command=self._on_delete_preset, width=6
+        )
+        self.btn_delete_preset.pack(side=tk.LEFT, padx=2)
+
+        self.btn_new_preset = ttk.Button(
+            preset_frame, text="New", command=self._on_new_preset, width=6
+        )
+        self.btn_new_preset.pack(side=tk.LEFT, padx=2)
+
+        # Tabbed notebook
+        self.notebook = ttk.Notebook(self)
+        self.notebook.pack(fill=tk.BOTH, expand=True)
+
+        self._build_network_tab()
+        self._build_verification_tab()
+        self._build_upgradecheck_tab()
+        self._build_encryption_tab()
+        self._build_flash_tab()
+
+        # Preset manager (set externally by the main app)
+        self.preset_manager: Optional[PresetManager] = None
+
+    # ---- Network tab ----
+    def _build_network_tab(self):
+        tab = ttk.Frame(self.notebook, padding=5)
+        self.notebook.add(tab, text="Network")
         row = 0
 
-        # Port
-        ttk.Label(self, text="Broadcast Port:").grid(
+        ttk.Label(tab, text="Broadcast Port:").grid(
             row=row, column=0, sticky=tk.W, padx=2, pady=2
         )
         self.var_port = tk.StringVar(value=str(DEFAULT_BROADCAST_PORT))
-        self.ent_port = ttk.Entry(self, textvariable=self.var_port, width=8)
-        self.ent_port.grid(row=row, column=1, sticky=tk.W, padx=2, pady=2)
+        ttk.Entry(tab, textvariable=self.var_port, width=8).grid(
+            row=row, column=1, sticky=tk.W, padx=2, pady=2
+        )
 
-        # Chunk size
-        ttk.Label(self, text="Chunk Size:").grid(
+        ttk.Label(tab, text="Chunk Size:").grid(
             row=row, column=2, sticky=tk.W, padx=(10, 2), pady=2
         )
         self.var_chunk = tk.StringVar(value=str(DEFAULT_CHUNK_SIZE))
-        self.ent_chunk = ttk.Entry(self, textvariable=self.var_chunk, width=8)
-        self.ent_chunk.grid(row=row, column=3, sticky=tk.W, padx=2, pady=2)
-
+        ttk.Entry(tab, textvariable=self.var_chunk, width=8).grid(
+            row=row, column=3, sticky=tk.W, padx=2, pady=2
+        )
         row += 1
 
-        # Retry interval
-        ttk.Label(self, text="Retry Interval (ms):").grid(
+        ttk.Label(tab, text="Retry Interval (ms):").grid(
             row=row, column=0, sticky=tk.W, padx=2, pady=2
         )
         self.var_interval = tk.StringVar(value=str(DEFAULT_RETRY_INTERVAL_MS))
-        self.ent_interval = ttk.Entry(self, textvariable=self.var_interval, width=8)
-        self.ent_interval.grid(row=row, column=1, sticky=tk.W, padx=2, pady=2)
+        ttk.Entry(tab, textvariable=self.var_interval, width=8).grid(
+            row=row, column=1, sticky=tk.W, padx=2, pady=2
+        )
 
-        # Network interface
-        ttk.Label(self, text="Interface:").grid(
+        ttk.Label(tab, text="Max Retries:").grid(
+            row=row, column=2, sticky=tk.W, padx=(10, 2), pady=2
+        )
+        self.var_max_retries = tk.StringVar(value="3")
+        ttk.Entry(tab, textvariable=self.var_max_retries, width=8).grid(
+            row=row, column=3, sticky=tk.W, padx=2, pady=2
+        )
+        row += 1
+
+        ttk.Label(tab, text="Timeout (ms):").grid(
+            row=row, column=0, sticky=tk.W, padx=2, pady=2
+        )
+        self.var_timeout = tk.StringVar(value="5000")
+        ttk.Entry(tab, textvariable=self.var_timeout, width=8).grid(
+            row=row, column=1, sticky=tk.W, padx=2, pady=2
+        )
+
+        ttk.Label(tab, text="Interface:").grid(
             row=row, column=2, sticky=tk.W, padx=(10, 2), pady=2
         )
         self.var_interface = tk.StringVar(value="0.0.0.0")
         interfaces = ObscBroadcaster.get_network_interfaces()
         iface_names = [i["name"] for i in interfaces]
         self.cmb_interface = ttk.Combobox(
-            self,
-            textvariable=self.var_interface,
-            values=iface_names,
-            width=25,
-            state="readonly",
+            tab, textvariable=self.var_interface, values=iface_names,
+            width=25, state="readonly",
         )
         self.cmb_interface.grid(row=row, column=3, sticky=tk.W, padx=2, pady=2)
         if iface_names:
             self.cmb_interface.current(0)
 
-        row += 1
+        tab.columnconfigure(3, weight=1)
 
-        # Board filter
-        ttk.Label(self, text="Board Filter:").grid(
-            row=row, column=0, sticky=tk.W, padx=2, pady=2
-        )
-        self.var_board_filter = tk.StringVar(value="")
-        self.ent_board_filter = ttk.Entry(
-            self, textvariable=self.var_board_filter, width=40
-        )
-        self.ent_board_filter.grid(
-            row=row, column=1, columnspan=3, sticky=tk.EW, padx=2, pady=2
-        )
+    # ---- Verification tab ----
+    def _build_verification_tab(self):
+        tab = ttk.Frame(self.notebook, padding=5)
+        self.notebook.add(tab, text="Verification")
 
-        row += 1
+        self.var_verify_crc32 = tk.BooleanVar(value=True)
+        ttk.Checkbutton(
+            tab, text="Verify CRC32 checksums", variable=self.var_verify_crc32
+        ).pack(anchor=tk.W, pady=2)
 
-        # UpgradeCheck bypass
+        self.var_verify_signature = tk.BooleanVar(value=False)
+        ttk.Checkbutton(
+            tab, text="Verify firmware signature (RSA)", variable=self.var_verify_signature
+        ).pack(anchor=tk.W, pady=2)
+
+        key_frame = ttk.Frame(tab)
+        key_frame.pack(fill=tk.X, pady=2)
+        ttk.Label(key_frame, text="RSA Public Key:").pack(side=tk.LEFT, padx=2)
+        self.var_rsa_key_path = tk.StringVar(value="")
+        ttk.Entry(key_frame, textvariable=self.var_rsa_key_path, width=40).pack(
+            side=tk.LEFT, fill=tk.X, expand=True, padx=2
+        )
+        ttk.Button(
+            key_frame, text="Browse...", command=self._browse_rsa_key, width=8
+        ).pack(side=tk.LEFT, padx=2)
+
+    def _browse_rsa_key(self):
+        path = filedialog.askopenfilename(
+            title="Select RSA Public Key",
+            filetypes=[("PEM files", "*.pem"), ("All files", "*.*")],
+        )
+        if path:
+            self.var_rsa_key_path.set(path)
+
+    # ---- UpgradeCheck tab ----
+    def _build_upgradecheck_tab(self):
+        tab = ttk.Frame(self.notebook, padding=5)
+        self.notebook.add(tab, text="UpgradeCheck")
+
         self.var_bypass_checks = tk.BooleanVar(value=True)
-        self.chk_bypass = ttk.Checkbutton(
-            self,
-            text="Bypass all hardware checks (UpgradeCheck.xml)",
+        ttk.Checkbutton(
+            tab, text="Bypass ALL hardware checks (disable all below)",
             variable=self.var_bypass_checks,
-        )
-        self.chk_bypass.grid(
-            row=row, column=0, columnspan=4, sticky=tk.W, padx=2, pady=2
+        ).pack(anchor=tk.W, pady=(0, 5))
+
+        checks_frame = ttk.LabelFrame(tab, text="Individual Checks", padding=5)
+        checks_frame.pack(fill=tk.X)
+
+        self.var_hard_ver = tk.BooleanVar(value=False)
+        self.var_lsw_chip = tk.BooleanVar(value=False)
+        self.var_wifi_chip = tk.BooleanVar(value=False)
+        self.var_voice_chip = tk.BooleanVar(value=False)
+        self.var_usb_chip = tk.BooleanVar(value=False)
+        self.var_optical = tk.BooleanVar(value=False)
+        self.var_other_chip = tk.BooleanVar(value=False)
+        self.var_product = tk.BooleanVar(value=False)
+        self.var_program = tk.BooleanVar(value=False)
+        self.var_cfg = tk.BooleanVar(value=False)
+
+        check_defs = [
+            ("HardVer", self.var_hard_ver),
+            ("LswChip", self.var_lsw_chip),
+            ("WifiChip", self.var_wifi_chip),
+            ("VoiceChip", self.var_voice_chip),
+            ("UsbChip", self.var_usb_chip),
+            ("Optical", self.var_optical),
+            ("OtherChip", self.var_other_chip),
+            ("Product", self.var_product),
+            ("Program", self.var_program),
+            ("Cfg", self.var_cfg),
+        ]
+        for i, (label, var) in enumerate(check_defs):
+            r, c = divmod(i, 5)
+            ttk.Checkbutton(checks_frame, text=label, variable=var).grid(
+                row=r, column=c, sticky=tk.W, padx=4, pady=1
+            )
+
+    # ---- Encryption tab ----
+    def _build_encryption_tab(self):
+        tab = ttk.Frame(self.notebook, padding=5)
+        self.notebook.add(tab, text="Encryption")
+
+        ttk.Label(tab, text="AES Key Template:").pack(anchor=tk.W, pady=(0, 2))
+        self.var_aes_key = tk.StringVar(value="Df7!ui%s9(lmV1L8")
+        ttk.Entry(tab, textvariable=self.var_aes_key, width=40).pack(
+            fill=tk.X, pady=(0, 8)
         )
 
-        self.columnconfigure(3, weight=1)
+        ttk.Label(tab, text="Chip ID:").pack(anchor=tk.W, pady=(0, 2))
+        self.var_chip_id = tk.StringVar(value="SD5116H")
+        ttk.Entry(tab, textvariable=self.var_chip_id, width=20).pack(
+            anchor=tk.W, pady=(0, 8)
+        )
+
+    # ---- Flash Options tab ----
+    def _build_flash_tab(self):
+        tab = ttk.Frame(self.notebook, padding=5)
+        self.notebook.add(tab, text="Flash Options")
+
+        ttk.Label(tab, text="Board Filter:").pack(anchor=tk.W, pady=(0, 2))
+        self.var_board_filter = tk.StringVar(value="")
+        ttk.Entry(tab, textvariable=self.var_board_filter, width=60).pack(
+            fill=tk.X, pady=(0, 5)
+        )
+
+        ttk.Label(tab, text="Firmware Version:").pack(anchor=tk.W, pady=(0, 2))
+        self.var_firmware_version = tk.StringVar(value="")
+        ttk.Entry(tab, textvariable=self.var_firmware_version, width=40).pack(
+            anchor=tk.W, pady=(0, 8)
+        )
+
+        toggles_frame = ttk.Frame(tab)
+        toggles_frame.pack(fill=tk.X, pady=2)
+
+        self.var_dry_run = tk.BooleanVar(value=False)
+        ttk.Checkbutton(
+            toggles_frame, text="Dry-run mode (simulate only)",
+            variable=self.var_dry_run
+        ).grid(row=0, column=0, sticky=tk.W, padx=4, pady=1)
+
+        self.var_auto_reboot = tk.BooleanVar(value=True)
+        ttk.Checkbutton(
+            toggles_frame, text="Auto-reboot after flash",
+            variable=self.var_auto_reboot
+        ).grid(row=0, column=1, sticky=tk.W, padx=4, pady=1)
+
+        self.var_enable_telnet = tk.BooleanVar(value=False)
+        ttk.Checkbutton(
+            toggles_frame, text="Enable Telnet",
+            variable=self.var_enable_telnet
+        ).grid(row=1, column=0, sticky=tk.W, padx=4, pady=1)
+
+        self.var_enable_ssh = tk.BooleanVar(value=False)
+        ttk.Checkbutton(
+            toggles_frame, text="Enable SSH",
+            variable=self.var_enable_ssh
+        ).grid(row=1, column=1, sticky=tk.W, padx=4, pady=1)
+
+    # ---- Preset callbacks ----
+    def _on_preset_selected(self, event=None):
+        if not self.preset_manager:
+            return
+        name = self.var_preset.get()
+        preset = self.preset_manager.get_preset(name)
+        if preset:
+            self.apply_preset(preset)
+
+    def _on_save_preset(self):
+        if not self.preset_manager:
+            return
+        name = tk.simpledialog.askstring(
+            "Save Preset", "Preset name:",
+            initialvalue=self.var_preset.get(),
+            parent=self,
+        )
+        if not name:
+            return
+        if self.preset_manager.is_builtin(name):
+            if not messagebox.askyesno(
+                "Overwrite Built-in",
+                f"'{name}' is a built-in preset. Save as a copy instead?",
+                parent=self,
+            ):
+                return
+            name = name + " (User)"
+        preset = self.to_preset(name)
+        self.preset_manager.add_preset(preset)
+        self._refresh_preset_list()
+        self.var_preset.set(name)
+
+    def _on_delete_preset(self):
+        if not self.preset_manager:
+            return
+        name = self.var_preset.get()
+        if self.preset_manager.is_builtin(name):
+            messagebox.showinfo("Info", "Cannot delete built-in presets.")
+            return
+        if self.preset_manager.delete_preset(name):
+            self._refresh_preset_list()
+            self.var_preset.set("Custom")
+
+    def _on_new_preset(self):
+        name = tk.simpledialog.askstring(
+            "New Preset", "New preset name:", parent=self
+        )
+        if not name:
+            return
+        self.var_preset.set(name)
+
+    def _refresh_preset_list(self):
+        if self.preset_manager:
+            self.cmb_preset["values"] = self.preset_manager.list_presets()
+
+    # ---- Preset <-> UI helpers ----
+    def apply_preset(self, preset: RouterPreset):
+        """Load a RouterPreset into the UI controls."""
+        self.var_port.set(str(preset.broadcast_port))
+        self.var_chunk.set(str(preset.chunk_size))
+        self.var_interval.set(str(preset.retry_interval_ms))
+        self.var_max_retries.set(str(preset.max_retries))
+        self.var_timeout.set(str(preset.timeout_ms))
+        self.var_board_filter.set(preset.board_list)
+        self.var_verify_crc32.set(preset.verify_crc32)
+        self.var_verify_signature.set(preset.verify_signature)
+        self.var_rsa_key_path.set(preset.rsa_public_key_path)
+        self.var_bypass_checks.set(preset.bypass_upgrade_checks)
+        self.var_hard_ver.set(preset.hard_ver_check)
+        self.var_lsw_chip.set(preset.lsw_chip_check)
+        self.var_wifi_chip.set(preset.wifi_chip_check)
+        self.var_voice_chip.set(preset.voice_chip_check)
+        self.var_usb_chip.set(preset.usb_chip_check)
+        self.var_optical.set(preset.optical_check)
+        self.var_other_chip.set(preset.other_chip_check)
+        self.var_product.set(preset.product_check)
+        self.var_program.set(preset.program_check)
+        self.var_cfg.set(preset.cfg_check)
+        self.var_aes_key.set(preset.aes_key_template)
+        self.var_chip_id.set(preset.chip_id)
+        self.var_dry_run.set(preset.dry_run)
+        self.var_auto_reboot.set(preset.auto_reboot)
+        self.var_enable_telnet.set(preset.enable_telnet)
+        self.var_enable_ssh.set(preset.enable_ssh)
+        self.var_firmware_version.set(preset.firmware_version)
+
+    def to_preset(self, name: str) -> RouterPreset:
+        """Build a RouterPreset from current UI values."""
+        return RouterPreset(
+            name=name,
+            model=name,
+            description="",
+            broadcast_port=self.get_port(),
+            chunk_size=self.get_chunk_size(),
+            retry_interval_ms=self.get_interval(),
+            max_retries=self._int_var(self.var_max_retries, 3),
+            timeout_ms=self._int_var(self.var_timeout, 5000),
+            board_list=self.var_board_filter.get(),
+            verify_crc32=self.var_verify_crc32.get(),
+            verify_signature=self.var_verify_signature.get(),
+            rsa_public_key_path=self.var_rsa_key_path.get(),
+            bypass_upgrade_checks=self.var_bypass_checks.get(),
+            hard_ver_check=self.var_hard_ver.get(),
+            lsw_chip_check=self.var_lsw_chip.get(),
+            wifi_chip_check=self.var_wifi_chip.get(),
+            voice_chip_check=self.var_voice_chip.get(),
+            usb_chip_check=self.var_usb_chip.get(),
+            optical_check=self.var_optical.get(),
+            other_chip_check=self.var_other_chip.get(),
+            product_check=self.var_product.get(),
+            program_check=self.var_program.get(),
+            cfg_check=self.var_cfg.get(),
+            aes_key_template=self.var_aes_key.get(),
+            chip_id=self.var_chip_id.get(),
+            dry_run=self.var_dry_run.get(),
+            auto_reboot=self.var_auto_reboot.get(),
+            enable_telnet=self.var_enable_telnet.get(),
+            enable_ssh=self.var_enable_ssh.get(),
+            firmware_version=self.var_firmware_version.get(),
+        )
+
+    # ---- Accessor helpers ----
+    @staticmethod
+    def _int_var(var: tk.StringVar, default: int) -> int:
+        try:
+            return int(var.get())
+        except ValueError:
+            return default
 
     def get_port(self) -> int:
-        try:
-            return int(self.var_port.get())
-        except ValueError:
-            return DEFAULT_BROADCAST_PORT
+        return self._int_var(self.var_port, DEFAULT_BROADCAST_PORT)
 
     def get_chunk_size(self) -> int:
-        try:
-            return int(self.var_chunk.get())
-        except ValueError:
-            return DEFAULT_CHUNK_SIZE
+        return self._int_var(self.var_chunk, DEFAULT_CHUNK_SIZE)
 
     def get_interval(self) -> int:
-        try:
-            return int(self.var_interval.get())
-        except ValueError:
-            return DEFAULT_RETRY_INTERVAL_MS
+        return self._int_var(self.var_interval, DEFAULT_RETRY_INTERVAL_MS)
 
     def get_interface(self) -> str:
         val = self.var_interface.get()
-        # Extract IP from display name if needed
         interfaces = ObscBroadcaster.get_network_interfaces()
         for iface in interfaces:
             if iface["name"] == val:
@@ -336,6 +627,29 @@ class SettingsFrame(ttk.LabelFrame):
             "interface": self.get_interface(),
             "board_filter": self.var_board_filter.get(),
             "bypass_checks": self.var_bypass_checks.get(),
+            "max_retries": self._int_var(self.var_max_retries, 3),
+            "timeout_ms": self._int_var(self.var_timeout, 5000),
+            "verify_crc32": self.var_verify_crc32.get(),
+            "verify_signature": self.var_verify_signature.get(),
+            "rsa_public_key_path": self.var_rsa_key_path.get(),
+            "hard_ver_check": self.var_hard_ver.get(),
+            "lsw_chip_check": self.var_lsw_chip.get(),
+            "wifi_chip_check": self.var_wifi_chip.get(),
+            "voice_chip_check": self.var_voice_chip.get(),
+            "usb_chip_check": self.var_usb_chip.get(),
+            "optical_check": self.var_optical.get(),
+            "other_chip_check": self.var_other_chip.get(),
+            "product_check": self.var_product.get(),
+            "program_check": self.var_program.get(),
+            "cfg_check": self.var_cfg.get(),
+            "aes_key_template": self.var_aes_key.get(),
+            "chip_id": self.var_chip_id.get(),
+            "dry_run": self.var_dry_run.get(),
+            "auto_reboot": self.var_auto_reboot.get(),
+            "enable_telnet": self.var_enable_telnet.get(),
+            "enable_ssh": self.var_enable_ssh.get(),
+            "firmware_version": self.var_firmware_version.get(),
+            "active_preset": self.var_preset.get(),
         }
 
     def set_config(self, config: dict):
@@ -349,6 +663,52 @@ class SettingsFrame(ttk.LabelFrame):
             self.var_board_filter.set(config["board_filter"])
         if "bypass_checks" in config:
             self.var_bypass_checks.set(config["bypass_checks"])
+        if "max_retries" in config:
+            self.var_max_retries.set(str(config["max_retries"]))
+        if "timeout_ms" in config:
+            self.var_timeout.set(str(config["timeout_ms"]))
+        if "verify_crc32" in config:
+            self.var_verify_crc32.set(config["verify_crc32"])
+        if "verify_signature" in config:
+            self.var_verify_signature.set(config["verify_signature"])
+        if "rsa_public_key_path" in config:
+            self.var_rsa_key_path.set(config["rsa_public_key_path"])
+        if "hard_ver_check" in config:
+            self.var_hard_ver.set(config["hard_ver_check"])
+        if "lsw_chip_check" in config:
+            self.var_lsw_chip.set(config["lsw_chip_check"])
+        if "wifi_chip_check" in config:
+            self.var_wifi_chip.set(config["wifi_chip_check"])
+        if "voice_chip_check" in config:
+            self.var_voice_chip.set(config["voice_chip_check"])
+        if "usb_chip_check" in config:
+            self.var_usb_chip.set(config["usb_chip_check"])
+        if "optical_check" in config:
+            self.var_optical.set(config["optical_check"])
+        if "other_chip_check" in config:
+            self.var_other_chip.set(config["other_chip_check"])
+        if "product_check" in config:
+            self.var_product.set(config["product_check"])
+        if "program_check" in config:
+            self.var_program.set(config["program_check"])
+        if "cfg_check" in config:
+            self.var_cfg.set(config["cfg_check"])
+        if "aes_key_template" in config:
+            self.var_aes_key.set(config["aes_key_template"])
+        if "chip_id" in config:
+            self.var_chip_id.set(config["chip_id"])
+        if "dry_run" in config:
+            self.var_dry_run.set(config["dry_run"])
+        if "auto_reboot" in config:
+            self.var_auto_reboot.set(config["auto_reboot"])
+        if "enable_telnet" in config:
+            self.var_enable_telnet.set(config["enable_telnet"])
+        if "enable_ssh" in config:
+            self.var_enable_ssh.set(config["enable_ssh"])
+        if "firmware_version" in config:
+            self.var_firmware_version.set(config["firmware_version"])
+        if "active_preset" in config:
+            self.var_preset.set(config["active_preset"])
 
 
 class OpenObscTool(tk.Tk):
@@ -366,9 +726,15 @@ class OpenObscTool(tk.Tk):
         self.firmware_path: str = ""
         self.broadcaster: Optional[ObscBroadcaster] = None
         self.current_progress: Optional[UpgradeProgress] = None
+        self.preset_manager = PresetManager()
 
         self._setup_ui()
         self._setup_menu()
+
+        # Wire preset manager into settings frame
+        self.settings_frame.preset_manager = self.preset_manager
+        self.settings_frame._refresh_preset_list()
+
         self._load_config()
         self._update_button_states()
 
@@ -505,7 +871,29 @@ class OpenObscTool(tk.Tk):
             command=self._on_generate_upgrade_check,
         )
         tools_menu.add_command(
+            label="UpgradeCheck.xml Editor...",
+            command=self._on_upgrade_check_editor,
+        )
+        tools_menu.add_command(
             label="Calculate SHA-256...", command=self._on_calculate_hash
+        )
+
+        # Presets menu
+        presets_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Presets", menu=presets_menu)
+        for preset_name in BUILTIN_PRESETS:
+            presets_menu.add_command(
+                label=preset_name,
+                command=lambda n=preset_name: self._apply_preset_by_name(n),
+            )
+        presets_menu.add_separator()
+        presets_menu.add_command(
+            label="Save Current as Preset...",
+            command=self.settings_frame._on_save_preset,
+        )
+        presets_menu.add_command(
+            label="Delete Current Preset",
+            command=self.settings_frame._on_delete_preset,
         )
 
         # Help menu
@@ -706,6 +1094,15 @@ class OpenObscTool(tk.Tk):
 
         config = self.settings_frame.get_config()
 
+        # Dry-run guard
+        if config.get("dry_run"):
+            self._log(
+                "[DRY-RUN] Flash simulated — no data sent "
+                f"({len(self.firmware_data)} bytes)"
+            )
+            self.lbl_status.config(text="Dry-run complete")
+            return
+
         # Get target
         selected_ip = self.devices_frame.get_selected_device()
         target = selected_ip or "<broadcast>"
@@ -733,9 +1130,19 @@ class OpenObscTool(tk.Tk):
                 on_progress=self._on_progress_callback,
             )
 
+        opts = []
+        if config.get("enable_telnet"):
+            opts.append("telnet")
+        if config.get("enable_ssh"):
+            opts.append("ssh")
+        if config.get("auto_reboot"):
+            opts.append("auto-reboot")
+        opts_str = f" [{', '.join(opts)}]" if opts else ""
+
         self._log(
             f"Flashing firmware ({len(self.firmware_data)} bytes) "
-            f"to {target}..."
+            f"to {target} [retries={config.get('max_retries', 3)}, "
+            f"timeout={config.get('timeout_ms', 5000)}ms]{opts_str}..."
         )
         self.lbl_status.config(text="Flashing...")
         self.progress_bar["value"] = 0
@@ -771,6 +1178,18 @@ class OpenObscTool(tk.Tk):
 
         self._log(f"Generated UpgradeCheck.xml → {path}")
         messagebox.showinfo("Success", f"Saved to:\n{path}")
+
+    def _on_upgrade_check_editor(self):
+        """Open the UpgradeCheck.xml Editor dialog."""
+        UpgradeCheckEditorDialog(self)
+
+    def _apply_preset_by_name(self, name: str):
+        """Apply a preset by name from the Presets menu."""
+        preset = self.preset_manager.get_preset(name)
+        if preset:
+            self.settings_frame.apply_preset(preset)
+            self.settings_frame.var_preset.set(name)
+            self._log(f"Applied preset: {name}")
 
     def _on_calculate_hash(self):
         """Calculate SHA-256 of a file."""
@@ -841,6 +1260,110 @@ class OpenObscTool(tk.Tk):
         self._save_config()
         if self.broadcaster:
             self.broadcaster.stop()
+        self.destroy()
+
+
+class UpgradeCheckEditorDialog(tk.Toplevel):
+    """Dialog for editing UpgradeCheck.xml with per-check toggles and include/exclude lists."""
+
+    CHECK_NAMES = [
+        "HardVer", "LswChip", "WifiChip", "VoiceChip", "UsbChip",
+        "Optical", "OtherChip", "Product", "Program", "Cfg",
+    ]
+
+    def __init__(self, parent: "OpenObscTool"):
+        super().__init__(parent)
+        self.parent_app = parent
+        self.title("UpgradeCheck.xml Editor")
+        self.geometry("520x500")
+        self.transient(parent)
+        self._setup_ui()
+
+    def _setup_ui(self):
+        main = ttk.Frame(self, padding=10)
+        main.pack(fill=tk.BOTH, expand=True)
+
+        # Check toggles
+        checks_frame = ttk.LabelFrame(main, text="Check Enables", padding=5)
+        checks_frame.pack(fill=tk.X, pady=(0, 5))
+
+        self.check_vars: dict = {}
+        for i, name in enumerate(self.CHECK_NAMES):
+            var = tk.BooleanVar(value=False)
+            self.check_vars[name] = var
+            r, c = divmod(i, 5)
+            ttk.Checkbutton(checks_frame, text=name, variable=var).grid(
+                row=r, column=c, sticky=tk.W, padx=4, pady=1
+            )
+
+        # Include list
+        inc_frame = ttk.LabelFrame(main, text="Include List (one per line)", padding=5)
+        inc_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 5))
+        self.txt_include = scrolledtext.ScrolledText(inc_frame, height=4, wrap=tk.WORD)
+        self.txt_include.pack(fill=tk.BOTH, expand=True)
+
+        # Exclude list
+        exc_frame = ttk.LabelFrame(main, text="Exclude List (one per line)", padding=5)
+        exc_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 5))
+        self.txt_exclude = scrolledtext.ScrolledText(exc_frame, height=4, wrap=tk.WORD)
+        self.txt_exclude.pack(fill=tk.BOTH, expand=True)
+
+        # Buttons
+        btn_frame = ttk.Frame(main)
+        btn_frame.pack(fill=tk.X)
+        ttk.Button(btn_frame, text="Generate & Save...", command=self._generate).pack(
+            side=tk.RIGHT, padx=2
+        )
+        ttk.Button(btn_frame, text="Cancel", command=self.destroy).pack(
+            side=tk.RIGHT, padx=2
+        )
+
+    def _generate(self):
+        """Generate UpgradeCheck.xml from editor state and save."""
+        checks = {}
+        for name, var in self.check_vars.items():
+            checks[name] = "1" if var.get() else "0"
+
+        include_lines = [
+            line.strip() for line in self.txt_include.get("1.0", tk.END).splitlines() if line.strip()
+        ]
+        exclude_lines = [
+            line.strip() for line in self.txt_exclude.get("1.0", tk.END).splitlines() if line.strip()
+        ]
+
+        # Build XML manually to match hwnp.py style
+        lines = ['<?xml version="1.0" encoding="UTF-8"?>']
+        lines.append("<upgradecheck>")
+        for name, enable in checks.items():
+            lines.append(f'  <{name} CheckEnable="{enable}"/>')
+        if include_lines:
+            lines.append("  <IncludeList>")
+            for entry in include_lines:
+                lines.append(f"    <Item>{entry}</Item>")
+            lines.append("  </IncludeList>")
+        if exclude_lines:
+            lines.append("  <ExcludeList>")
+            for entry in exclude_lines:
+                lines.append(f"    <Item>{entry}</Item>")
+            lines.append("  </ExcludeList>")
+        lines.append("</upgradecheck>")
+        xml_str = "\n".join(lines)
+
+        path = filedialog.asksaveasfilename(
+            title="Save UpgradeCheck.xml",
+            defaultextension=".xml",
+            filetypes=[("XML files", "*.xml"), ("All files", "*.*")],
+            initialfile="UpgradeCheck.xml",
+            parent=self,
+        )
+        if not path:
+            return
+
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(xml_str)
+
+        self.parent_app._log(f"UpgradeCheck.xml saved → {path}")
+        messagebox.showinfo("Success", f"Saved to:\n{path}", parent=self)
         self.destroy()
 
 

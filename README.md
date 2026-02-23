@@ -61,6 +61,26 @@ After second line:
 ```
 $ ./hw_fmw -d unpack -p -o /home/user/new_hg8245hv300r015c10spc130_common_all.bin -v
 ```
+## ONT Maintenance Tool (English Translation)
+
+The file `ONT_V100R002C00SPC253_EN.exe` is an English-translated version of the Huawei
+ONT maintenance and enable tool (originally in Chinese). The translation was performed
+using `translate_ont_tool.py`, which modifies the PE resource section to replace Chinese
+UI strings with English.
+
+### Recreate the translated EXE
+```
+pip install pefile
+python3 translate_ont_tool.py ONT_V100R002C00SPC253.exe ONT_V100R002C00SPC253_EN.exe
+```
+
+### Translated UI elements
+- Main window: buttons, labels, group boxes, status fields
+- License dialog: registration, expiry, copyright info
+- License input dialog: invitation code, OK/Cancel
+- Warning dialog
+- Menu items and enable package descriptions
+
 ## Example modify/verify firmware on HG8245 (need support check signature)
 ### Mark the file to sign
 ```

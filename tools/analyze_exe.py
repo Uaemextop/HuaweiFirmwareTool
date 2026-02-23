@@ -214,7 +214,8 @@ def parse_pe(filepath):
     if 'MPRESS1' in section_names:
         detections.append('MPRESS Packer')
 
-    # Random section names (packing indicator)
+    # Random section names (packing indicator): sections not using the
+    # standard '.' prefix convention are strong indicators of packing.
     standard_names = {'.text', '.data', '.rdata', '.rsrc', '.reloc', '.bss',
                       '.idata', '.edata', '.tls', '.debug', '.gfids', '.giats', '.CRT'}
     non_standard = [n for n in section_names if n and n not in standard_names and not n.startswith('.')]

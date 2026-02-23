@@ -1,0 +1,4 @@
+PyQt6==6.6.1
+pyserial==3.5
+requests==2.31.0
+pyinstaller==6.3.0

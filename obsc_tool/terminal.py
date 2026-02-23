@@ -356,14 +356,17 @@ class SerialClient:
             ImportError: If pyserial is not installed.
             serial.SerialException: If port cannot be opened.
         """
-        try:
-            import serial
-            SerialClient.SERIAL_AVAILABLE = True
-        except ImportError:
-            if self.on_error:
-                self.on_error("pyserial not installed. Install with: pip install pyserial")
-            raise ImportError("pyserial is required for serial connections. "
-                              "Install with: pip install pyserial")
+        if not SerialClient.SERIAL_AVAILABLE:
+            try:
+                import serial  # noqa: F811
+                SerialClient.SERIAL_AVAILABLE = True
+            except ImportError:
+                if self.on_error:
+                    self.on_error("pyserial not installed. Install with: pip install pyserial")
+                raise ImportError("pyserial is required for serial connections. "
+                                  "Install with: pip install pyserial")
+
+        import serial
 
         try:
             self.serial_conn = serial.Serial(
@@ -473,13 +476,14 @@ class FirmwareDumper:
         self._waiting = False
         self._original_callback = None
 
-    def get_mtd_partitions(self, callback=None):
+    def get_mtd_partitions(self, callback=None, timeout=3):
         """Read MTD partition table from the device.
 
         Sends 'cat /proc/mtd' and parses the output.
 
         Args:
             callback: Function to call with list of partition dicts.
+            timeout: Seconds to wait for device response (default 3).
         """
         self._output_buffer = ""
         self._waiting = True
@@ -490,9 +494,9 @@ class FirmwareDumper:
 
         self.client.send_command("cat /proc/mtd")
 
-        # Wait for output
+        # Wait for output with configurable timeout
         def check_done():
-            time.sleep(2)
+            time.sleep(timeout)
             self.client.on_data = self._original_callback
             self._waiting = False
             self._parse_mtd()
@@ -541,4 +545,6 @@ class FirmwareDumper:
         """Dump all MTD partitions to /tmp on the device."""
         for p in self.partitions:
             self.dump_partition(p['id'])
-            time.sleep(1)  # Wait between dumps
+            # Adaptive delay: ~1s per MB, minimum 1s
+            delay = max(1, p.get('size', 0) / (1024 * 1024))
+            time.sleep(delay)

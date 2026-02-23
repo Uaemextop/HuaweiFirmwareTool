@@ -1310,10 +1310,16 @@ class OBSCToolApp:
         self.term_disconnect_btn.configure(state='normal')
         self._term_append(f"*** Connected to {info}\n")
         self._log(f"Terminal connected: {info}")
-        # Set up firmware dumper
-        client = self.telnet_client if self.telnet_client.connected else self.serial_client
-        self.firmware_dumper = FirmwareDumper(client)
-        self.dump_status_var.set("Connected — Ready to read partitions")
+        # Set up firmware dumper with the active client
+        if self.telnet_client.connected:
+            client = self.telnet_client
+        elif self.serial_client.connected:
+            client = self.serial_client
+        else:
+            client = None
+        if client:
+            self.firmware_dumper = FirmwareDumper(client)
+            self.dump_status_var.set("Connected — Ready to read partitions")
 
     def _term_on_disconnect(self):
         """Handle terminal disconnection."""

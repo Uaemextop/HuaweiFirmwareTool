@@ -371,9 +371,10 @@ def try_decrypt_all_keys(data):
         try:
             decrypted = decrypt_config(data, chip_id)
             # Check if result looks like XML
-            if decrypted and (b'<?xml' in decrypted[:100] or
-                              b'<InternetGatewayDevice' in decrypted[:200] or
-                              b'<Msg' in decrypted[:50]):
+            if decrypted and len(decrypted) > 5 and (
+                    b'<?xml' in decrypted[:100] or
+                    b'<InternetGatewayDevice' in decrypted[:200] or
+                    b'<Msg' in decrypted[:50]):
                 results.append((chip_id, decrypted))
         except Exception:
             pass
@@ -494,8 +495,8 @@ class CfgFileParser:
 
         # Try element pattern
         new_content, count = re.subn(
-            rf'(<{re.escape(search)}>)[^<]*(/{re.escape(search)}>)',
-            rf'\g<1>{value}<\2',
+            rf'(<{re.escape(search)}>)[^<]*(</{re.escape(search)}>)',
+            rf'\g<1>{value}\2',
             self.text_content, count=1
         )
         if count > 0:

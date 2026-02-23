@@ -17,6 +17,12 @@ import struct
 import copy
 import pefile
 
+# PE optional header offsets and data directory indices
+DATA_DIRECTORY_OFFSET = 96      # Offset to DataDirectory in OptionalHeader (PE32)
+SIZE_OF_IMAGE_OFFSET = 56       # Offset to SizeOfImage in OptionalHeader
+BASE_RELOCATION_INDEX = 5       # DataDirectory index for BASE_RELOCATION
+RESOURCE_INDEX = 2              # DataDirectory index for RESOURCE
+
 # ============================================================
 # Translation tables
 # ============================================================
@@ -92,9 +98,14 @@ DIALOG_TRANSLATIONS = {
 # Dialog resource parser/rebuilder (DLGTEMPLATEEX format)
 # ============================================================
 
+def align_to(value, alignment):
+    """Align value up to the given alignment boundary."""
+    return ((value + alignment - 1) // alignment) * alignment
+
+
 def align4(offset):
     """Align offset to 4-byte boundary."""
-    return (offset + 3) & ~3
+    return align_to(offset, 4)
 
 
 def read_word(data, offset):
@@ -387,7 +398,7 @@ def patch_pe_resources(input_path, output_path):
 
     # Round up to file alignment (512)
     file_align = pe.OPTIONAL_HEADER.FileAlignment
-    extra_alloc = ((extra_needed + file_align - 1) // file_align) * file_align
+    extra_alloc = align_to(extra_needed, file_align)
     if extra_alloc == 0:
         extra_alloc = file_align  # minimum one block
 
@@ -396,7 +407,7 @@ def patch_pe_resources(input_path, output_path):
     # Check if we can fit within existing virtual space
     rsrc_virt_end = rsrc.VirtualAddress + rsrc.Misc_VirtualSize
     sect_align = pe.OPTIONAL_HEADER.SectionAlignment
-    next_section_va = ((rsrc_virt_end + sect_align - 1) // sect_align) * sect_align
+    next_section_va = align_to(rsrc_virt_end, sect_align)
     available_virtual = next_section_va - rsrc.VirtualAddress - rsrc.SizeOfRawData
     print(f"  Available virtual padding: {available_virtual} bytes")
 
@@ -435,10 +446,8 @@ def patch_pe_resources(input_path, output_path):
 
     # Update SizeOfImage in optional header
     # Need to recalculate based on new virtual sizes
-    new_rsrc_virt_aligned = ((new_rsrc_virt_size + sect_align - 1) //
-                             sect_align) * sect_align
-    old_rsrc_virt_aligned = ((rsrc.Misc_VirtualSize + sect_align - 1) //
-                             sect_align) * sect_align
+    new_rsrc_virt_aligned = align_to(new_rsrc_virt_size, sect_align)
+    old_rsrc_virt_aligned = align_to(rsrc.Misc_VirtualSize, sect_align)
     image_size_delta = new_rsrc_virt_aligned - old_rsrc_virt_aligned
 
     if image_size_delta > 0:
@@ -448,19 +457,16 @@ def patch_pe_resources(input_path, output_path):
             struct.pack_into('<I', new_file_data, reloc_header_offset + 12,
                              new_reloc_va)
 
-            # Update data directory for relocations (index 5)
-            # The data directory stores the RVA of the relocation table
+            # Update data directory for relocations
             dd_offset = pe.OPTIONAL_HEADER.get_file_offset()
-            # Offset to DataDirectory[5] (BASE_RELOCATION) in optional header
-            # PE32: DataDirectory starts at offset 96 from OptionalHeader
-            # Each entry is 8 bytes (RVA + Size)
-            # Entry 5 is at offset 96 + 5*8 = 136
-            reloc_dd_offset = dd_offset + 96 + 5 * 8
+            reloc_dd_offset = (dd_offset + DATA_DIRECTORY_OFFSET +
+                               BASE_RELOCATION_INDEX * 8)
             struct.pack_into('<I', new_file_data, reloc_dd_offset,
                              new_reloc_va)
 
         # Update SizeOfImage
-        size_of_image_offset = pe.OPTIONAL_HEADER.get_file_offset() + 56
+        size_of_image_offset = (pe.OPTIONAL_HEADER.get_file_offset() +
+                                SIZE_OF_IMAGE_OFFSET)
         new_size_of_image = pe.OPTIONAL_HEADER.SizeOfImage + image_size_delta
         struct.pack_into('<I', new_file_data, size_of_image_offset,
                          new_size_of_image)
@@ -509,8 +515,7 @@ def patch_pe_resources(input_path, output_path):
 
     # Update RESOURCE data directory size
     dd_offset = pe.OPTIONAL_HEADER.get_file_offset()
-    # DataDirectory[2] = RESOURCE, at offset 96 + 2*8 = 112
-    rsrc_dd_offset = dd_offset + 96 + 2 * 8
+    rsrc_dd_offset = dd_offset + DATA_DIRECTORY_OFFSET + RESOURCE_INDEX * 8
     struct.pack_into('<I', new_file_data, rsrc_dd_offset + 4,
                      new_rsrc_virt_size)
 

@@ -15,6 +15,9 @@ hw_verify
 *.bin
 *.img
 
+# Extracted rootfs (too large for git)
+extracted_rootfs/*.bin
+
 # Unpacked firmware directories
 unpacked*/
 extracted*/

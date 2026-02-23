@@ -3,17 +3,18 @@
 
 #include <memory>
 #include <string>
+#include <openssl/evp.h>
 #include <openssl/sha.h>
-#include <openssl/rsa.h>
 
 enum RSA_KEY { PRIVATE, PUBLIC };
 
-using ptr_bio = std::unique_ptr<BIO, decltype(&BIO_free)>;
-using ptr_rsa = std::unique_ptr<RSA, decltype(&RSA_free)>;
+using ptr_evp_pkey = std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)>;
+using ptr_evp_ctx  = std::unique_ptr<EVP_MD_CTX, decltype(&EVP_MD_CTX_free)>;
+using ptr_bio      = std::unique_ptr<BIO, decltype(&BIO_free)>;
 
 std::string sha256_sum(void *raw, size_t raw_sz);
 
-ptr_rsa PEM_read(enum RSA_KEY type_key, const std::string &key_in);
+ptr_evp_pkey PEM_read_key(enum RSA_KEY type_key, const std::string &key_in);
 
 bool RSA_sign_data(const std::string &sig_data,
                    const std::string &key_priv,

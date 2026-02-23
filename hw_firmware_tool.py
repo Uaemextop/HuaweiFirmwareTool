@@ -53,11 +53,6 @@ def read_hwnp_header(data):
     if len(data) < HWNP_HEADER_SIZE:
         return None
 
-    fields = struct.unpack_from('<IIIIIIBHIH', data, 0)
-    # The struct fields based on huawei_header.h:
-    # magic, raw_sz, raw_crc32, hdr_sz, hdr_crc32, item_counts,
-    # _unknow1 (combined u8+u8 read as one byte due to packing),
-    # prod_list_sz, item_sz, reserved
     magic = struct.unpack_from('<I', data, 0)[0]
     if magic != HWNP_MAGIC:
         return None
@@ -309,7 +304,8 @@ def download_firmware(model, version, output_dir='.'):
     versions = KNOWN_FIRMWARE_SOURCES[model]['versions']
 
     if version == 'latest':
-        version = list(versions.keys())[-1]
+        # Sort by version string to find actual latest
+        version = sorted(versions.keys())[-1]
         print(f"[*] Latest version: {version}")
 
     if version == 'all':
@@ -464,7 +460,7 @@ The Huawei HG8145V5 ONT supports three firmware update methods:
 │  b) TFTP Recovery: Hold reset, device requests firmware via TFTP   │
 │     - Device IP: 192.168.1.1 (default)                             │
 │     - TFTP server: 192.168.1.10                                    │
-│     - Use hw_flash tool: ./hw_flash -s -f firmware.bin             │
+│     - Use hw_flash tool (included in this repo): ./hw_flash -s -f firmware.bin│
 └─────────────────────────────────────────────────────────────────────┘
 
 Firmware Validation (from UpgradeCheck.xml):

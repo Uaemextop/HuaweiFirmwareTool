@@ -129,8 +129,12 @@ Key derivation (from disassembly of CTOOL_GetFileConfigCipherKey):
   1. Read 4-byte key length prefix from encrypted file
   2. Read key_length bytes of encrypted key data
   3. CTOOL_GetFileConfigCipherKey calls HW_CTOOL_GetKeyChipStr
-  4. HW_CTOOL_GetKeyChipStr uses template "Df7!ui%s9(lmV1L8" as AES key
-  5. HW_OS_AESCBCEncrypt(data, key_template, key_template_len, output, ...)
+  4. HW_CTOOL_GetKeyChipStr loads the template string "Df7!ui%s9(lmV1L8"
+     The %s is a sprintf placeholder filled with a chip-specific string
+     read from HiSilicon SoC identification (e.g. "SD5116H", "SD5113A").
+     The resulting key (e.g. "Df7!uiSD5116H9(lmV1L8") is used as
+     the AES-CBC key for config file encryption.
+  5. HW_OS_AESCBCEncrypt(data, key_string, key_string_len, output, ...)
 
 Upgrade scripts from EXE (duit9rr.sh):
   HW_Script_Encrypt() {

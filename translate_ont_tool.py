@@ -93,6 +93,51 @@ DIALOG_TRANSLATIONS = {
     },
 }
 
+# Hardcoded UTF-16LE strings in .rdata section
+# Format: {file_offset: (chinese, english, max_bytes)}
+# max_bytes = distance from string start to next string start
+RDATA_TRANSLATIONS = {
+    # ListView table column headers
+    0x3c8520: ("序号", "No.", 8),
+    0x3c8528: ("单板条码", "Board", 12),
+    0x3c8534: ("Mac地址", "MAC", 12),
+    0x3c8540: ("21条码", "21Cod", 12),
+    0x3c854c: ("开始错误码", "StErr", 12),
+    0x3c8558: ("结束错误码", "EnErr", 12),
+    0x3c8564: ("开始时间", "Start", 12),
+    0x3c8570: ("结束时间", "End", 12),
+    0x3c857c: ("耗时(秒)", "T(s)", 12),
+    0x3c8598: ("使能包", "Pkg", 8),
+    # License / error message strings
+    0x3cfe00: ("License不合法，请重新输入合法的License！",
+               "Invalid License,re-enter!", 56),
+    0x3cfe38: ("注册License", "Reg.Lic.", 20),
+    0x3cfe4c: ("License信息被破坏。", "Lic.corrupted", 28),
+    0x3cfe68: ("license未注册或已到期，请输入合法的License",
+               "Lic.expired,enter valid Lic.", 60),
+    0x3cfea4: ("初始化License信息失败", "Init Lic.fail", 32),
+    0x3cfec4: ("试用版", "Tri", 8),
+    0x3cfecc: ("请重新申请License.", "Reapply Lic.", 28),
+    0x3cfee8: (" 是否强制初始化license信息？", " Force init Lic.?", 40),
+    0x3cff10: ("版权所有（c）华", "Copyright(c)Hua", 32),
+}
+
+# Notice text (multi-line, separate because of special handling)
+NOTICE_TRANSLATION = {
+    "offset": 0x3c85b8,
+    "chinese": ("注意：\r\n"
+                "1、此工具仅限代维点维修国内发货版本 \r\n"
+                "2、请勿连接光纤！若已连接，请拔掉光纤并重启后再操作 \r\n"
+                "3、请在光猫重启后5分钟内使用\r\n"
+                "4、请关闭防火墙\r\n\r\n"),
+    "english": ("Note:\r\n"
+                "1.Domestic only\r\n"
+                "2.No fiber!Reboot\r\n"
+                "3.5min after boot\r\n"
+                "4.No firewall\r\n\r\n"),
+    "max_bytes": 172,
+}
+
 
 # ============================================================
 # Dialog resource parser/rebuilder (DLGTEMPLATEEX format)
@@ -336,10 +381,55 @@ def find_reloc_section(pe):
     return None
 
 
+def patch_rdata_strings(file_data):
+    """Patch hardcoded UTF-16LE strings in the .rdata section."""
+    count = 0
+
+    # Patch individual strings
+    for offset, (chinese, english, max_bytes) in RDATA_TRANSLATIONS.items():
+        cn_encoded = chinese.encode('utf-16-le')
+        en_encoded = english.encode('utf-16-le') + b'\x00\x00'
+
+        # Verify the Chinese string is at the expected offset
+        if file_data[offset:offset + len(cn_encoded)] != cn_encoded:
+            print(f"  WARNING: Expected '{chinese}' at 0x{offset:x}, skipping")
+            continue
+
+        if len(en_encoded) > max_bytes:
+            print(f"  WARNING: '{english}' too long for 0x{offset:x}, skipping")
+            continue
+
+        # Write English string and zero-fill remaining space
+        file_data[offset:offset + max_bytes] = (
+            en_encoded + b'\x00' * (max_bytes - len(en_encoded)))
+        count += 1
+
+    # Patch notice text
+    nt = NOTICE_TRANSLATION
+    cn_encoded = nt["chinese"].encode('utf-16-le')
+    en_encoded = nt["english"].encode('utf-16-le') + b'\x00\x00'
+    off = nt["offset"]
+
+    if file_data[off:off + len(cn_encoded)] == cn_encoded:
+        if len(en_encoded) <= nt["max_bytes"]:
+            file_data[off:off + nt["max_bytes"]] = (
+                en_encoded + b'\x00' * (nt["max_bytes"] - len(en_encoded)))
+            count += 1
+        else:
+            print(f"  WARNING: Notice translation too long, skipping")
+    else:
+        print(f"  WARNING: Notice text not found at 0x{off:x}, skipping")
+
+    print(f"  Patched {count} .rdata strings")
+
+
 def patch_pe_resources(input_path, output_path):
     """Main function to patch PE resources with translations."""
     pe = pefile.PE(input_path)
     file_data = bytearray(pe.__data__)
+
+    # Patch hardcoded strings in .rdata section first
+    patch_rdata_strings(file_data)
 
     rsrc = find_rsrc_section(pe)
     reloc = find_reloc_section(pe)

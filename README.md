@@ -80,6 +80,9 @@ python3 translate_ont_tool.py ONT_V100R002C00SPC253.exe ONT_V100R002C00SPC253_EN
 - License input dialog: invitation code, OK/Cancel
 - Warning dialog
 - Menu items and enable package descriptions
+- Table column headers (No., Board, MAC, Start/End Time, etc.)
+- Notice text (tool usage warnings)
+- License error messages
 
 ## Example modify/verify firmware on HG8245 (need support check signature)
 ### Mark the file to sign

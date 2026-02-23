@@ -146,7 +146,85 @@ def extract_rootfs(firmware_path, output_dir):
         if item['section'] == 'ROOTFS' and len(item_data) >= 4:
             _analyze_rootfs(item_data, output_dir, safe_name)
 
+        # Analyze EFS
+        elif item['section'] == 'EFS' and len(item_data) >= 4:
+            _analyze_efs(item_data)
+
+        # Auto-extract tar.gz archives
+        elif safe_name.endswith('.tar.gz') and len(item_data) >= 2:
+            _try_extract_archive(out_path, output_dir, safe_name)
+
     return True
+
+
+def _analyze_efs(item_data):
+    """Parse and display EFS (Equipment Firmware Specification) header."""
+    if len(item_data) < 4:
+        return
+    magic = item_data[0:2]
+    if magic != b'HW':
+        print(f"    EFS: unknown magic {magic.hex()}")
+        return
+
+    version = struct.unpack_from('>H', item_data, 2)[0]
+    equipment = item_data[4:14].split(b'\x00')[0].decode('ascii', errors='replace')
+
+    board_id = ''
+    if len(item_data) >= 52:
+        board_id = item_data[44:52].split(b'\x00')[0].decode('ascii', errors='replace')
+
+    print(f"    EFS version: {version}")
+    print(f"    Platform:    {equipment}")
+    if board_id:
+        print(f"    Board ID:    {board_id}")
+
+
+def _try_extract_archive(archive_path, output_dir, safe_name):
+    """Try to extract a .tar.gz archive, or identify encrypted files."""
+    import tarfile
+    import gzip
+
+    base_name = safe_name.replace('.tar.gz', '')
+    extract_dir = os.path.join(output_dir, base_name + '_contents')
+
+    # Check if it's actually gzip (magic \x1f\x8b)
+    with open(archive_path, 'rb') as f:
+        magic = f.read(2)
+
+    if magic == b'\x1f\x8b':
+        # Real gzip — try to extract
+        if os.path.exists(extract_dir):
+            print(f"    Skipping: {extract_dir} already exists")
+            return
+        try:
+            with tarfile.open(archive_path, 'r:gz') as tar:
+                tar.extractall(path=extract_dir)
+            file_count = sum(1 for _ in _walk_count(extract_dir))
+            print(f"    Extracted archive: {extract_dir} ({file_count} files)")
+        except tarfile.TarError:
+            # Might be just gzip, not a tar
+            try:
+                decompressed_path = os.path.join(output_dir, base_name + '_decompressed')
+                with gzip.open(archive_path, 'rb') as gz:
+                    with open(decompressed_path, 'wb') as out:
+                        out.write(gz.read())
+                print(f"    Decompressed (not tar): {decompressed_path}")
+            except Exception as e:
+                print(f"    Failed to extract: {e}")
+        except Exception as e:
+            print(f"    Failed to extract: {e}")
+    else:
+        # Not gzip — likely encrypted config
+        with open(archive_path, 'rb') as f:
+            header = f.read(4)
+        if len(header) >= 4:
+            enc_type = struct.unpack_from('<I', header, 0)[0]
+            print(f"    Not a gzip archive (type={enc_type})")
+            if enc_type == 4:
+                print(f"    Format: aescrypt2 encrypted config")
+                print(f"    Encrypted with AES-256-CBC (chip-specific key)")
+        else:
+            print(f"    Not a gzip archive (too small)")
 
 
 def _analyze_rootfs(item_data, output_dir, safe_name):

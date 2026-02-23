@@ -110,11 +110,11 @@ RDATA_TRANSLATIONS = {
     0x3c8598: ("使能包", "Pkg", 8),
     # License / error message strings
     0x3cfe00: ("License不合法，请重新输入合法的License！",
-               "Invalid License,re-enter!", 56),
+               "Invalid License, re-enter!", 56),
     0x3cfe38: ("注册License", "Reg.Lic.", 20),
     0x3cfe4c: ("License信息被破坏。", "Lic.corrupted", 28),
     0x3cfe68: ("license未注册或已到期，请输入合法的License",
-               "Lic.expired,enter valid Lic.", 60),
+               "Lic.expired, enter valid Lic.", 60),
     0x3cfea4: ("初始化License信息失败", "Init Lic.fail", 32),
     0x3cfec4: ("试用版", "Tri", 8),
     0x3cfecc: ("请重新申请License.", "Reapply Lic.", 28),
@@ -132,7 +132,7 @@ NOTICE_TRANSLATION = {
                 "4、请关闭防火墙\r\n\r\n"),
     "english": ("Note:\r\n"
                 "1.Domestic only\r\n"
-                "2.No fiber!Reboot\r\n"
+                "2.No fiber! Reboot\r\n"
                 "3.5min after boot\r\n"
                 "4.No firewall\r\n\r\n"),
     "max_bytes": 172,

@@ -50,18 +50,98 @@ Hardware Root Key (eFuse/OTP, per-device)
 
 ### Encrypted Rootfs Format (V2/SPC210/SPC458)
 
-```
-Header (96 bytes):
-  0x00: uint32 magic     = 0x20190416
-  0x10: uint32 sections  = 7
-  0x14: uint32 enc_type  = 1
-  0x18: byte[16] md5_hash
-  0x28: uint32 data_size
-  0x2C: uint32 header_sz = 0x60
-  0x34: uint32 crc32
-  0x38: char[36] version_string
+Verified by reverse-engineering `SWM_CheckEncryptFileHead` and `SWM_IsEncryptFileHead`
+in `libhw_swm_dll.so`, and `DM_DecryptFlashData` in `libsmp_api.so`.
 
-Payload: AES-256 encrypted, key from hardware eFuse/OTP
+```
+Header (0x60 = 96 bytes):
+  Offset  Size  Field            Value / Description
+  0x00    4     magicA           0x20190416 (checked by SWM_CheckEncryptFileHead)
+  0x04    4     magicB           0x00343520 = " 54\0" (second magic check)
+  0x08    4     field_08         1
+  0x0C    4     field_0C         1
+  0x10    4     sections         7 (number of flash partition sections)
+  0x14    4     enc_type         1 (AES-256-CBC)
+  0x18    16    md5_hash         MD5 of PLAINTEXT rootfs before encryption
+  0x28    4     data_size        Size of encrypted payload (after header)
+  0x2C    4     header_size      0x60 (always 96)
+  0x30    4     total_padded     header_size + data_size, padded to alignment
+  0x34    4     crc32            CRC32 of encrypted payload
+  0x38    36    version_string   e.g. "V500R020C00SPC458B001"
+  0x5C    4     padding          zeros
+
+After header:
+  0x60    16    md5_prefix       Same as md5_hash (plaintext verification prefix)
+  0x70    ...   encrypted_data   AES-256-CBC encrypted SquashFS rootfs
+```
+
+#### Decryption Call Chain (from disassembly)
+
+```
+SWM_IsEncryptFileHead(header)
+  → checks header[0] == 0x20190416 && header[4] == 0x343520
+  → reads header[0x20] & 1 as "reservedFlag"
+
+HW_SWM_EncryptFlashWrite(...)
+  → SWM_GenerateEncryptFlashHead(key_buf, 32)
+    → calls into DM layer (0x1316c) to get eFuse key
+  → DM_FlashWriteEncryptAllsystem(...)
+    → core flash write (0xe430, PLT stub to hardware layer)
+
+DM_DecryptFlashData(input, key_len, output, out_len, key_buf)
+  → HW_SSL_AesSetKeyDec(ctx, key_buf, 256)     // AES-256 key setup
+  → HW_SSL_AesCryptCbc(ctx, DECRYPT, in, out, len, iv)  // AES-256-CBC decrypt
+
+DM_FlashEfuseEncrypt(callback)
+  → Gets hardware driver callback at offset r5+0x7c
+  → Callback reads key from HiSilicon SoC eFuse OTP memory
+```
+
+#### Why Software Decryption Is Not Possible
+
+The AES-256 key is stored in the HiSilicon SD5116H SoC's eFuse (One-Time Programmable)
+memory region. This key:
+- Is written once during manufacturing and cannot be read via software API
+- Is only accessible through the SoC's internal hardware crypto engine
+- Is unique per device (each manufactured unit has a different key)
+- Cannot be extracted via JTAG without destructive chip decapping
+
+Tested key candidates that do NOT work:
+- All-zero key with zero IV
+- All-zero key with MD5-as-IV
+- `Df7!ui9(lmV1L8` (empty %s) - SHA256 hash and raw
+- `Df7!uiSD50009(lmV1L8` - SHA256 hash and raw
+- `Df7!uiSD5113A9(lmV1L8` - SHA256 hash and raw
+- `BOARDINFO(lmV1L8` - SHA256 hash and raw
+
+### aescrypt2 Tool Analysis (from ONT_V100R002C00SPC253.exe)
+
+The ONT EXE embeds multiple HWNP firmware templates for different device generations.
+The `aescrypt2` tool (ARM ELF, found in rootfs at `bin/aescrypt2`) handles
+**config file encryption only** (hw_ctree.xml), NOT rootfs encryption.
+
+```
+Usage: aescrypt2 <mode> <input> <output>
+  mode 0 = encrypt
+  mode 1 = decrypt
+
+Key derivation (from disassembly of CTOOL_GetFileConfigCipherKey):
+  1. Read 4-byte key length prefix from encrypted file
+  2. Read key_length bytes of encrypted key data
+  3. CTOOL_GetFileConfigCipherKey calls HW_CTOOL_GetKeyChipStr
+  4. HW_CTOOL_GetKeyChipStr uses template "Df7!ui%s9(lmV1L8" as AES key
+  5. HW_OS_AESCBCEncrypt(data, key_template, key_template_len, output, ...)
+
+Upgrade scripts from EXE (duit9rr.sh):
+  HW_Script_Encrypt() {
+      if [ $1 -eq 1 ]; then
+          gzip -f $2
+          mv $2".gz" $2
+          aescrypt2 0 $2 $2"_tmp"   # encrypt
+      fi
+  }
+  # Decrypt: aescrypt2 1 <file> <file_tmp>
+  # Encrypt: aescrypt2 0 <file> <file_tmp>
 ```
 
 ### Critical Binaries (from remover SPC270 rootfs)

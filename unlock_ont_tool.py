@@ -88,10 +88,48 @@ LICENSE_CHECK_5 = {
     'description': 'License validation bypass 5 (always skip Init Lic.fail)',
 }
 
+# Patches 4A-4E: NOP the AfxMessageBox calls in each error display block
+# Even if execution somehow reaches the error display code (e.g. via exception
+# handler or computed jump), these NOPs prevent the MessageBox from appearing.
+# Replace "call AfxMessageBox" (e8 XX XX XX XX) with "xor eax,eax; nop; nop; nop"
+# so eax=0 is returned (no dialog result).
+MSGBOX_NOP_1 = {
+    'offset': 0x047927,
+    'original': b'\xe8\x94\x3a\xfc\xff',
+    'patched': b'\x33\xc0\x90\x90\x90',
+    'description': 'NOP AfxMessageBox in error block 1',
+}
+MSGBOX_NOP_2 = {
+    'offset': 0x047b06,
+    'original': b'\xe8\xb5\x38\xfc\xff',
+    'patched': b'\x33\xc0\x90\x90\x90',
+    'description': 'NOP AfxMessageBox in error block 2',
+}
+MSGBOX_NOP_3 = {
+    'offset': 0x047dde,
+    'original': b'\xe8\xdd\x35\xfc\xff',
+    'patched': b'\x33\xc0\x90\x90\x90',
+    'description': 'NOP AfxMessageBox in error block 3',
+}
+MSGBOX_NOP_4 = {
+    'offset': 0x048108,
+    'original': b'\xe8\xb3\x32\xfc\xff',
+    'patched': b'\x33\xc0\x90\x90\x90',
+    'description': 'NOP AfxMessageBox in error block 4',
+}
+MSGBOX_NOP_5 = {
+    'offset': 0x04a152,
+    'original': b'\xe8\x69\x12\xfc\xff',
+    'patched': b'\x33\xc0\x90\x90\x90',
+    'description': 'NOP AfxMessageBox in error block 5',
+}
+
 CODE_PATCHES = [
     TIMER_BYPASS, MENU_ENABLE_1, MENU_ENABLE_2,
     LICENSE_CHECK_1, LICENSE_CHECK_2, LICENSE_CHECK_3,
     LICENSE_CHECK_4, LICENSE_CHECK_5,
+    MSGBOX_NOP_1, MSGBOX_NOP_2, MSGBOX_NOP_3,
+    MSGBOX_NOP_4, MSGBOX_NOP_5,
 ]
 
 # Remaining untranslated UTF-16LE strings
@@ -103,6 +141,16 @@ REMAINING_UTF16_TRANSLATIONS = {
                'Lic invalid!Close %ds!', 48),
     0x3cff30: ('2020-$year 保留一切权利',
                '2020-$year (C)', 36),
+}
+
+# Error string to blank out as final safety net
+# Even if all other patches fail, blanking this string ensures no alarming
+# error message is shown to the user
+ERROR_STRING_BLANK = {
+    'offset': 0x3cfea4,
+    'original_text': '初始化License信息失败',
+    'replacement_text': 'OK',
+    'translated_text': 'Init Lic.fail',
 }
 
 
@@ -153,6 +201,30 @@ def patch_remaining_strings(file_data):
     return count
 
 
+def blank_error_string(file_data):
+    """Replace the 'Init Lic.fail' error string with 'OK' as final safety net."""
+    info = ERROR_STRING_BLANK
+    offset = info['offset']
+    orig_cn = info['original_text'].encode('utf-16-le')
+    translated = info['translated_text'].encode('utf-16-le')
+    replacement = info['replacement_text'].encode('utf-16-le')
+    orig_len = len(orig_cn)
+
+    actual = bytes(file_data[offset:offset + orig_len])
+    if actual[:len(translated)] == translated or actual[:len(orig_cn)] == orig_cn:
+        if len(replacement) > orig_len:
+            print(f'  WARNING: replacement too long for 0x{offset:06x}, skipping')
+            return
+        # Replace with short benign text + null padding
+        file_data[offset:offset + orig_len] = (
+            replacement + b'\x00' * (orig_len - len(replacement)))
+        print(f'  Blanked error string at 0x{offset:06x}: -> "{info["replacement_text"]}"')
+    elif actual[:len(replacement)] == replacement:
+        print(f'  Error string already blanked at 0x{offset:06x}')
+    else:
+        print(f'  WARNING: Unexpected content at 0x{offset:06x}, skipping')
+
+
 def fixup_pe_checksum(file_data):
     """Recalculate and update the PE checksum."""
     # PE header offset
@@ -199,6 +271,9 @@ def main():
 
     # Translate remaining strings
     patch_remaining_strings(file_data)
+
+    # Blank the error string as final safety net
+    blank_error_string(file_data)
 
     # Fix PE checksum
     fixup_pe_checksum(file_data)

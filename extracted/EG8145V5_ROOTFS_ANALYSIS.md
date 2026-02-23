@@ -243,3 +243,89 @@ Board ID:  H801EPBA
 Format: aescrypt2 encrypted (type=4)
 This is a compressed device specification tree, encrypted with the
 chip-specific AES key. Cannot be decrypted without device access.
+
+## Full Shell Access (SU Challenge Bypass)
+
+### WAP CLI Architecture
+
+The router's telnet service provides a **restricted WAP CLI** (not a Linux shell).
+The access chain is:
+
+```
+telnet port 23 → clid (WAP CLI daemon)
+                  → restricted command tree
+                  → 'su' command → RSA challenge-response → full shell (SU_root>)
+```
+
+### SU RSA Key (FACTORED — 256-bit, trivially weak)
+
+The SU challenge uses a 256-bit RSA key stored in `/etc/wap/su_pub_key`.
+This key was factored instantly via factordb.com:
+
+```
+Public key:  /etc/wap/su_pub_key (256-bit RSA)
+Modulus (n): cdb6cda2aa36179aa239fc1d48ce9e82194cc577a631897a2df50dfd1f20dad5
+Exponent:    65537
+
+FACTORED PRIMES:
+  p = 297098113301310309198580524816784910303
+  q = 313186503727240930873981527043146130379
+
+Private exponent (d):
+  b79dc0a4bdeb345c690afab724e2906593e134bc0fec90a5afa79b91c6751d2d
+```
+
+Private key saved to: `etc/wap/su_private_key.pem`
+
+### How to Get Full Shell
+
+1. **Telnet** to the router: `telnet 192.168.1.1`
+2. Login with WAP CLI credentials (e.g., root/admin or ISP-provided)
+3. Type `su` — the router sends a hex challenge
+4. Run: `python3 hw_su_challenge.py solve <challenge_hex>`
+5. Paste the response → full shell access (`SU_root>` prompt)
+
+Or automated: `python3 hw_su_challenge.py auto 192.168.1.1 -u root -p admin`
+
+### Alternative Shell Access Methods
+
+| Method | Feature Flag | Default | Description |
+|--------|-------------|---------|-------------|
+| SU Challenge | `FT_SSMP_CLI_SU_CHALLENGE` | 0 (off) | RSA challenge (factorable key) |
+| Direct Shell | `FT_CLI_DEFAULT_TO_SHELL` | 0 (off) | CLI login → direct shell |
+| TDE Shell | `SSMP_FT_TDE_OPEN_SHELL` | 1 (on for TDE) | Open shell for TDE profiles |
+| No Auth | `SSMP_FT_CLI_NO_AUTH` | 0 (off) | Skip authentication |
+| China Mode | `HW_SSMP_FEATURE_CLI_CHINA_MODE` | 0 (off) | SU → transparent mode |
+| Equipment Test | CLI command | off | `huaweiequiptestmode-on` |
+| Debug Flag | File | absent | Create `/etc/wap/DebugVersionFlag` |
+
+### Transparent Mode (Direct Linux Shell)
+
+After SU authentication, the commands `dcom transparent on boardid` or
+`transparent on arm` provide direct passthrough to the underlying Linux shell.
+
+## Config Field Encryption ($2...$ Format)
+
+Inside `hw_ctree.xml` (once decrypted at file level), passwords and secrets
+are stored as `$2....$` encrypted strings using:
+
+- **Algorithm**: AES-256-CBC
+- **Key**: `6fc6e3436a53b6310dc09a475494ac774e7afb21b9e58fc8e58b5660e48e2498` (hardcoded, universal)
+- **Encoding**: Custom base-93 + ASCII visibility mapping
+- **IV**: Embedded in the last 20 encoded bytes of each string
+
+This is the **same key** used by:
+- [huawei-utility-page](https://github.com/andreluis034/huawei-utility-page)
+- [Ratr/Hwdecode](https://github.com/Jakiboy/Ratr) (via Jakiboy/Hwdecode)
+
+Tool: `python3 hw_config_decrypt.py --decrypt '$2<encrypted>$'`
+
+### Encryption Layers Summary
+
+| Layer | Algorithm | Key Source | Decryptable? |
+|-------|-----------|-----------|-------------|
+| File-level (aescrypt2 type=1) | AES-256-CBC | KMC/eFuse hardware key | ❌ Requires device |
+| File-level (aescrypt2 type=4) | AES-256-CBC | KMC/eFuse hardware key | ❌ Requires device |
+| Field-level ($2...$) | AES-256-CBC | Hardcoded universal key | ✅ `hw_config_decrypt.py` |
+| PEM private keys | AES-256-CBC | KMC-derived password | ❌ Requires device |
+| SU challenge | RSA-256 | Public key in su_pub_key | ✅ `hw_su_challenge.py` |

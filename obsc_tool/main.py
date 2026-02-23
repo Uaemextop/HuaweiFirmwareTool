@@ -35,6 +35,13 @@ from obsc_tool.protocol import (
     OBSC_SEND_PORT, OBSC_RECV_PORT
 )
 from obsc_tool.presets import PresetManager, PRESET_TEMPLATE
+from obsc_tool.config_crypto import (
+    encrypt_config, decrypt_config, try_decrypt_all_keys,
+    CfgFileParser, KNOWN_CHIP_IDS, derive_key
+)
+from obsc_tool.terminal import (
+    TelnetClient, SerialClient, FirmwareDumper, ONT_COMMANDS
+)
 
 logger = logging.getLogger("obsc_tool")
 
@@ -95,6 +102,9 @@ class OBSCToolApp:
         self.transport = None
         self.log_entries = []
         self.preset_manager = PresetManager()
+        self.telnet_client = TelnetClient()
+        self.serial_client = SerialClient()
+        self.firmware_dumper = None
 
         # Setup logging
         self._setup_logging()
@@ -187,17 +197,32 @@ class OBSCToolApp:
         self.notebook.add(self.tab_verify, text=" 🔒 Verification ")
         self._build_verification_tab()
 
-        # Tab 4: Settings
+        # Tab 4: Config Crypto
+        self.tab_crypto = ttk.Frame(self.notebook, padding=10)
+        self.notebook.add(self.tab_crypto, text=" 🔐 Config Crypto ")
+        self._build_crypto_tab()
+
+        # Tab 5: Terminal
+        self.tab_terminal = ttk.Frame(self.notebook, padding=10)
+        self.notebook.add(self.tab_terminal, text=" 💻 Terminal ")
+        self._build_terminal_tab()
+
+        # Tab 6: Firmware Dump
+        self.tab_dump = ttk.Frame(self.notebook, padding=10)
+        self.notebook.add(self.tab_dump, text=" 💾 Firmware Dump ")
+        self._build_dump_tab()
+
+        # Tab 7: Settings
         self.tab_settings = ttk.Frame(self.notebook, padding=10)
         self.notebook.add(self.tab_settings, text=" ⚙️ Settings ")
         self._build_settings_tab()
 
-        # Tab 5: Firmware Info
+        # Tab 8: Firmware Info
         self.tab_info = ttk.Frame(self.notebook, padding=10)
         self.notebook.add(self.tab_info, text=" 📋 Firmware Info ")
         self._build_info_tab()
 
-        # Tab 6: Log
+        # Tab 9: Log
         self.tab_log = ttk.Frame(self.notebook, padding=10)
         self.notebook.add(self.tab_log, text=" 📝 Log ")
         self._build_log_tab()
@@ -643,6 +668,248 @@ class OBSCToolApp:
                   font=('Segoe UI', 8), justify=tk.LEFT,
                   ).pack(fill=tk.X, pady=(2, 0))
 
+    def _build_crypto_tab(self):
+        """Build the config file encryption/decryption tab."""
+        tab = self.tab_crypto
+
+        # ── Encrypt / Decrypt ────────────────────────────────────
+        op_frame = ttk.LabelFrame(tab, text="Config File Encryption (aescrypt2)", padding=10)
+        op_frame.pack(fill=tk.X, pady=(0, 10))
+
+        # Input file
+        row = ttk.Frame(op_frame)
+        row.pack(fill=tk.X, pady=2)
+        ttk.Label(row, text="Input File:", width=14).pack(side=tk.LEFT)
+        self.crypto_input_var = tk.StringVar()
+        ttk.Entry(row, textvariable=self.crypto_input_var, width=45).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Button(row, text="Browse", command=self._browse_crypto_input, width=8).pack(side=tk.LEFT)
+
+        # Output file
+        row = ttk.Frame(op_frame)
+        row.pack(fill=tk.X, pady=2)
+        ttk.Label(row, text="Output File:", width=14).pack(side=tk.LEFT)
+        self.crypto_output_var = tk.StringVar()
+        ttk.Entry(row, textvariable=self.crypto_output_var, width=45).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Button(row, text="Browse", command=self._browse_crypto_output, width=8).pack(side=tk.LEFT)
+
+        # Chip ID
+        row = ttk.Frame(op_frame)
+        row.pack(fill=tk.X, pady=2)
+        ttk.Label(row, text="Chip ID:", width=14).pack(side=tk.LEFT)
+        self.crypto_chip_var = tk.StringVar(value="SD5116H")
+        ttk.Combobox(
+            row, textvariable=self.crypto_chip_var,
+            values=KNOWN_CHIP_IDS + ["Custom"],
+            width=15,
+        ).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Label(row, text="Key template: Df7!ui%s9(lmV1L8", font=('Segoe UI', 8)).pack(side=tk.LEFT)
+
+        # Custom chip ID
+        row = ttk.Frame(op_frame)
+        row.pack(fill=tk.X, pady=2)
+        ttk.Label(row, text="Custom Chip:", width=14).pack(side=tk.LEFT)
+        self.crypto_custom_chip_var = tk.StringVar()
+        ttk.Entry(row, textvariable=self.crypto_custom_chip_var, width=20).pack(side=tk.LEFT)
+        ttk.Label(row, text="(only if Chip ID = Custom)", font=('Segoe UI', 8)).pack(side=tk.LEFT, padx=5)
+
+        # Buttons
+        btn_row = ttk.Frame(op_frame)
+        btn_row.pack(fill=tk.X, pady=(8, 0))
+        ttk.Button(btn_row, text="🔓 Decrypt", command=self._crypto_decrypt, width=15).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Button(btn_row, text="🔒 Encrypt", command=self._crypto_encrypt, width=15).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Button(btn_row, text="🔍 Auto-Detect Key", command=self._crypto_auto_detect, width=18).pack(side=tk.LEFT)
+
+        # ── Config Editor (cfgtool) ──────────────────────────────
+        edit_frame = ttk.LabelFrame(tab, text="Config Editor (cfgtool)", padding=10)
+        edit_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 5))
+
+        # Search
+        search_row = ttk.Frame(edit_frame)
+        search_row.pack(fill=tk.X, pady=(0, 5))
+        ttk.Label(search_row, text="Search:").pack(side=tk.LEFT)
+        self.cfg_search_var = tk.StringVar()
+        ttk.Entry(search_row, textvariable=self.cfg_search_var, width=30).pack(side=tk.LEFT, padx=5)
+        ttk.Button(search_row, text="Search", command=self._cfg_search, width=8).pack(side=tk.LEFT)
+        ttk.Button(search_row, text="Load File", command=self._cfg_load, width=10).pack(side=tk.LEFT, padx=5)
+
+        # Config text viewer
+        self.cfg_text = scrolledtext.ScrolledText(
+            edit_frame, wrap=tk.WORD,
+            font=('Consolas', 9),
+            height=12,
+        )
+        self.cfg_text.pack(fill=tk.BOTH, expand=True)
+
+    def _build_terminal_tab(self):
+        """Build the serial/telnet terminal tab."""
+        tab = self.tab_terminal
+
+        # ── Connection ───────────────────────────────────────────
+        conn_frame = ttk.LabelFrame(tab, text="Connection", padding=8)
+        conn_frame.pack(fill=tk.X, pady=(0, 8))
+
+        # Connection type
+        type_row = ttk.Frame(conn_frame)
+        type_row.pack(fill=tk.X, pady=2)
+        ttk.Label(type_row, text="Type:", width=12).pack(side=tk.LEFT)
+        self.term_type_var = tk.StringVar(value="Telnet")
+        ttk.Combobox(
+            type_row, textvariable=self.term_type_var,
+            values=["Telnet", "Serial"],
+            state='readonly', width=10,
+        ).pack(side=tk.LEFT, padx=(0, 10))
+
+        ttk.Label(type_row, text="Host/Port:", width=10).pack(side=tk.LEFT)
+        self.term_host_var = tk.StringVar(value="192.168.1.1")
+        ttk.Entry(type_row, textvariable=self.term_host_var, width=18).pack(side=tk.LEFT, padx=(0, 5))
+
+        ttk.Label(type_row, text="Port:").pack(side=tk.LEFT)
+        self.term_port_var = tk.StringVar(value="23")
+        ttk.Entry(type_row, textvariable=self.term_port_var, width=6).pack(side=tk.LEFT, padx=(0, 5))
+
+        # Serial settings row
+        serial_row = ttk.Frame(conn_frame)
+        serial_row.pack(fill=tk.X, pady=2)
+        ttk.Label(serial_row, text="COM Port:", width=12).pack(side=tk.LEFT)
+        self.term_com_var = tk.StringVar()
+        self.term_com_combo = ttk.Combobox(
+            serial_row, textvariable=self.term_com_var,
+            width=15,
+        )
+        self.term_com_combo.pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Button(serial_row, text="🔃", command=self._refresh_com_ports, width=3).pack(side=tk.LEFT, padx=(0, 10))
+
+        ttk.Label(serial_row, text="Baud:").pack(side=tk.LEFT)
+        self.term_baud_var = tk.StringVar(value="115200")
+        ttk.Combobox(
+            serial_row, textvariable=self.term_baud_var,
+            values=["9600", "19200", "38400", "57600", "115200"],
+            width=8,
+        ).pack(side=tk.LEFT, padx=(0, 10))
+
+        # Connect/disconnect buttons
+        btn_row = ttk.Frame(conn_frame)
+        btn_row.pack(fill=tk.X, pady=(5, 0))
+        self.term_connect_btn = ttk.Button(
+            btn_row, text="🔌 Connect", command=self._term_connect, width=14)
+        self.term_connect_btn.pack(side=tk.LEFT, padx=(0, 5))
+        self.term_disconnect_btn = ttk.Button(
+            btn_row, text="❌ Disconnect", command=self._term_disconnect,
+            width=14, state='disabled')
+        self.term_disconnect_btn.pack(side=tk.LEFT, padx=(0, 10))
+
+        self.term_status_var = tk.StringVar(value="Disconnected")
+        ttk.Label(btn_row, textvariable=self.term_status_var,
+                  font=('Segoe UI', 9)).pack(side=tk.LEFT)
+
+        # ── Quick Commands ───────────────────────────────────────
+        cmd_frame = ttk.LabelFrame(tab, text="Quick Commands (WAP CLI)", padding=5)
+        cmd_frame.pack(fill=tk.X, pady=(0, 8))
+
+        cmd_grid = ttk.Frame(cmd_frame)
+        cmd_grid.pack(fill=tk.X)
+        quick_cmds = [
+            ("System Info", "display sysinfo"),
+            ("Version", "display version"),
+            ("SN", "display sn"),
+            ("MAC", "display mac"),
+            ("WAN Config", "display wan config"),
+            ("Optical", "display optic 0"),
+            ("CPU", "display cpu"),
+            ("Memory", "display memory"),
+            ("Flash", "display flash"),
+            ("Partitions", "cat /proc/mtd"),
+            ("Processes", "ps"),
+            ("Config", "display current-config"),
+        ]
+        for i, (label, cmd) in enumerate(quick_cmds):
+            r, c = divmod(i, 6)
+            ttk.Button(
+                cmd_grid, text=label, width=14,
+                command=lambda c=cmd: self._term_send_command(c),
+            ).grid(row=r, column=c, padx=1, pady=1)
+
+        # ── Terminal Output ──────────────────────────────────────
+        term_frame = ttk.Frame(tab)
+        term_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 5))
+
+        self.term_output = scrolledtext.ScrolledText(
+            term_frame, wrap=tk.WORD,
+            font=('Consolas', 9),
+            state='disabled',
+            bg='#0C0C0C', fg='#CCCCCC',
+            insertbackground='#CCCCCC',
+        )
+        self.term_output.pack(fill=tk.BOTH, expand=True)
+
+        # ── Input ────────────────────────────────────────────────
+        input_row = ttk.Frame(tab)
+        input_row.pack(fill=tk.X)
+        ttk.Label(input_row, text="Command:").pack(side=tk.LEFT)
+        self.term_input_var = tk.StringVar()
+        self.term_input_entry = ttk.Entry(
+            input_row, textvariable=self.term_input_var, width=60)
+        self.term_input_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
+        self.term_input_entry.bind('<Return>', lambda e: self._term_send_input())
+        ttk.Button(input_row, text="Send", command=self._term_send_input, width=8).pack(side=tk.LEFT)
+
+    def _build_dump_tab(self):
+        """Build the firmware dump tab."""
+        tab = self.tab_dump
+
+        # ── Info ─────────────────────────────────────────────────
+        info_frame = ttk.LabelFrame(tab, text="Firmware Dump (via Telnet)", padding=10)
+        info_frame.pack(fill=tk.X, pady=(0, 10))
+
+        ttk.Label(info_frame,
+                  text="Firmware dump requires an active Telnet connection to the ONT device.\n"
+                       "The device must have Telnet enabled (flash 1-TELNET.bin first).\n"
+                       "Connect via the Terminal tab, then use the controls below to dump partitions.",
+                  font=('Segoe UI', 9), justify=tk.LEFT,
+                  ).pack(fill=tk.X)
+
+        # ── Partition List ───────────────────────────────────────
+        part_frame = ttk.LabelFrame(tab, text="MTD Partitions", padding=10)
+        part_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+
+        btn_row = ttk.Frame(part_frame)
+        btn_row.pack(fill=tk.X, pady=(0, 5))
+        ttk.Button(btn_row, text="🔍 Read Partitions",
+                   command=self._dump_read_partitions, width=18).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Button(btn_row, text="💾 Dump Selected",
+                   command=self._dump_selected, width=15).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Button(btn_row, text="💾 Dump All",
+                   command=self._dump_all, width=12).pack(side=tk.LEFT)
+
+        self.dump_status_var = tk.StringVar(value="Connect via Terminal tab first")
+        ttk.Label(btn_row, textvariable=self.dump_status_var,
+                  font=('Segoe UI', 9)).pack(side=tk.LEFT, padx=10)
+
+        # Partition table
+        columns = ('id', 'name', 'size', 'erasesize')
+        self.dump_tree = ttk.Treeview(
+            part_frame, columns=columns, show='headings', height=8)
+        self.dump_tree.heading('id', text='MTD #')
+        self.dump_tree.heading('name', text='Partition Name')
+        self.dump_tree.heading('size', text='Size')
+        self.dump_tree.heading('erasesize', text='Erase Size')
+        self.dump_tree.column('id', width=60)
+        self.dump_tree.column('name', width=200)
+        self.dump_tree.column('size', width=120)
+        self.dump_tree.column('erasesize', width=120)
+        self.dump_tree.pack(fill=tk.BOTH, expand=True)
+
+        # ── Dump Output ──────────────────────────────────────────
+        out_frame = ttk.LabelFrame(tab, text="Dump Output", padding=5)
+        out_frame.pack(fill=tk.X, pady=(0, 5))
+
+        self.dump_output = scrolledtext.ScrolledText(
+            out_frame, wrap=tk.WORD,
+            font=('Consolas', 9),
+            state='disabled', height=6,
+        )
+        self.dump_output.pack(fill=tk.BOTH, expand=True)
+
     def _build_info_tab(self):
         """Build the firmware information tab."""
         tab = self.tab_info
@@ -808,6 +1075,357 @@ class OBSCToolApp:
         if path:
             self.pubkey_path_var.set(path)
 
+    # ── Config Crypto Handlers ───────────────────────────────────
+
+    def _get_chip_id(self):
+        """Get the selected chip ID."""
+        chip = self.crypto_chip_var.get()
+        if chip == "Custom":
+            custom = self.crypto_custom_chip_var.get().strip()
+            if not custom:
+                messagebox.showwarning("No Chip ID", "Enter a custom chip ID.")
+                return None
+            return custom
+        return chip
+
+    def _browse_crypto_input(self):
+        """Browse for config file input."""
+        path = filedialog.askopenfilename(
+            title="Select Config File",
+            filetypes=[
+                ("XML files", "*.xml"),
+                ("Binary files", "*.bin"),
+                ("All files", "*.*"),
+            ],
+        )
+        if path:
+            self.crypto_input_var.set(path)
+            # Auto-set output
+            base, ext = os.path.splitext(path)
+            self.crypto_output_var.set(base + "_out" + ext)
+
+    def _browse_crypto_output(self):
+        """Browse for config file output."""
+        path = filedialog.asksaveasfilename(
+            title="Save Decrypted/Encrypted File",
+            filetypes=[
+                ("XML files", "*.xml"),
+                ("Binary files", "*.bin"),
+                ("All files", "*.*"),
+            ],
+        )
+        if path:
+            self.crypto_output_var.set(path)
+
+    def _crypto_decrypt(self):
+        """Decrypt a config file."""
+        in_path = self.crypto_input_var.get().strip()
+        out_path = self.crypto_output_var.get().strip()
+        if not in_path or not out_path:
+            messagebox.showwarning("Missing Path", "Select input and output files.")
+            return
+        chip_id = self._get_chip_id()
+        if not chip_id:
+            return
+        try:
+            with open(in_path, 'rb') as f:
+                encrypted_data = f.read()
+            decrypted = decrypt_config(encrypted_data, chip_id)
+            with open(out_path, 'wb') as f:
+                f.write(decrypted)
+            # Show in editor
+            try:
+                text = decrypted.decode('utf-8', errors='replace')
+                self.cfg_text.delete('1.0', tk.END)
+                self.cfg_text.insert('1.0', text)
+            except Exception:
+                pass
+            self._log(f"Decrypted {in_path} -> {out_path} (chip: {chip_id})")
+            messagebox.showinfo("Success",
+                                f"Decrypted successfully.\n"
+                                f"Key: Df7!ui{chip_id}9(lmV1L8\n"
+                                f"Output: {out_path}")
+        except Exception as e:
+            messagebox.showerror("Decrypt Error", str(e))
+            self._log(f"Decrypt error: {e}")
+
+    def _crypto_encrypt(self):
+        """Encrypt a config file."""
+        in_path = self.crypto_input_var.get().strip()
+        out_path = self.crypto_output_var.get().strip()
+        if not in_path or not out_path:
+            messagebox.showwarning("Missing Path", "Select input and output files.")
+            return
+        chip_id = self._get_chip_id()
+        if not chip_id:
+            return
+        try:
+            with open(in_path, 'rb') as f:
+                plain_data = f.read()
+            encrypted = encrypt_config(plain_data, chip_id)
+            with open(out_path, 'wb') as f:
+                f.write(encrypted)
+            self._log(f"Encrypted {in_path} -> {out_path} (chip: {chip_id})")
+            messagebox.showinfo("Success",
+                                f"Encrypted successfully.\n"
+                                f"Key: Df7!ui{chip_id}9(lmV1L8\n"
+                                f"Output: {out_path}")
+        except Exception as e:
+            messagebox.showerror("Encrypt Error", str(e))
+            self._log(f"Encrypt error: {e}")
+
+    def _crypto_auto_detect(self):
+        """Try decrypting with all known chip IDs."""
+        in_path = self.crypto_input_var.get().strip()
+        if not in_path:
+            messagebox.showwarning("No File", "Select an encrypted config file first.")
+            return
+        try:
+            with open(in_path, 'rb') as f:
+                data = f.read()
+            results = try_decrypt_all_keys(data)
+            if results:
+                chip_id, decrypted = results[0]
+                self.crypto_chip_var.set(chip_id)
+                text = decrypted.decode('utf-8', errors='replace')
+                self.cfg_text.delete('1.0', tk.END)
+                self.cfg_text.insert('1.0', text)
+                self._log(f"Auto-detected key: {chip_id} for {in_path}")
+                messagebox.showinfo("Key Detected",
+                                    f"Detected chip ID: {chip_id}\n"
+                                    f"Key: Df7!ui{chip_id}9(lmV1L8\n"
+                                    f"Config loaded in editor.")
+            else:
+                messagebox.showwarning("No Match",
+                                       "Could not decrypt with any known chip ID.\n"
+                                       "Try entering a custom chip ID.")
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+
+    def _cfg_load(self):
+        """Load a config file into the editor."""
+        path = filedialog.askopenfilename(
+            title="Load Config File",
+            filetypes=[("XML files", "*.xml"), ("All files", "*.*")],
+        )
+        if not path:
+            return
+        try:
+            parser = CfgFileParser()
+            chip_id = self._get_chip_id()
+            parser.load(path, chip_id=chip_id)
+            self.cfg_text.delete('1.0', tk.END)
+            self.cfg_text.insert('1.0', parser.text_content)
+            if parser.is_encrypted:
+                self.crypto_chip_var.set(parser.chip_id)
+                self._log(f"Loaded encrypted config: {path} (chip: {parser.chip_id})")
+            else:
+                self._log(f"Loaded plaintext config: {path}")
+        except Exception as e:
+            messagebox.showerror("Load Error", str(e))
+
+    def _cfg_search(self):
+        """Search for a value in the config editor."""
+        query = self.cfg_search_var.get().strip()
+        if not query:
+            return
+        content = self.cfg_text.get('1.0', tk.END)
+        # Clear previous highlights
+        self.cfg_text.tag_remove('search', '1.0', tk.END)
+        # Find and highlight
+        start = '1.0'
+        count = 0
+        while True:
+            pos = self.cfg_text.search(query, start, stopindex=tk.END, nocase=True)
+            if not pos:
+                break
+            end = f"{pos}+{len(query)}c"
+            self.cfg_text.tag_add('search', pos, end)
+            start = end
+            count += 1
+        self.cfg_text.tag_configure('search', background='yellow', foreground='black')
+        if count > 0:
+            self.cfg_text.see(self.cfg_text.tag_ranges('search')[0])
+        self._log(f"Config search '{query}': {count} match(es)")
+
+    # ── Terminal Handlers ────────────────────────────────────────
+
+    def _refresh_com_ports(self):
+        """Refresh serial port list."""
+        ports = SerialClient.list_ports()
+        self.term_com_combo['values'] = [f"{p[0]} - {p[1]}" for p in ports]
+        if ports:
+            self.term_com_combo.current(0)
+
+    def _term_connect(self):
+        """Connect via telnet or serial."""
+        conn_type = self.term_type_var.get()
+        try:
+            if conn_type == "Telnet":
+                host = self.term_host_var.get().strip()
+                port = int(self.term_port_var.get().strip())
+                if not host:
+                    messagebox.showwarning("No Host", "Enter the ONT IP address.")
+                    return
+
+                self.telnet_client = TelnetClient()
+                self.telnet_client.on_data = self._term_on_data
+                self.telnet_client.on_connect = lambda h, p: self._term_on_connect(f"Telnet {h}:{p}")
+                self.telnet_client.on_disconnect = self._term_on_disconnect
+                self.telnet_client.on_error = lambda msg: self._term_append(f"\n*** Error: {msg}\n")
+                self.telnet_client.connect(host, port)
+
+            else:  # Serial
+                com = self.term_com_var.get().strip()
+                if not com:
+                    messagebox.showwarning("No Port", "Select a COM port.")
+                    return
+                port_name = com.split(' - ')[0].strip()
+                baud = int(self.term_baud_var.get())
+
+                self.serial_client = SerialClient()
+                self.serial_client.on_data = self._term_on_data
+                self.serial_client.on_connect = lambda p, b: self._term_on_connect(f"Serial {p} @ {b}")
+                self.serial_client.on_disconnect = self._term_on_disconnect
+                self.serial_client.on_error = lambda msg: self._term_append(f"\n*** Error: {msg}\n")
+                self.serial_client.connect(port_name, baud)
+
+        except ImportError as e:
+            messagebox.showerror("Missing Library", str(e))
+        except Exception as e:
+            messagebox.showerror("Connection Error", str(e))
+            self._log(f"Terminal connect error: {e}")
+
+    def _term_disconnect(self):
+        """Disconnect terminal."""
+        if self.telnet_client.connected:
+            self.telnet_client.disconnect()
+        if self.serial_client.connected:
+            self.serial_client.disconnect()
+
+    def _term_on_connect(self, info):
+        """Handle terminal connection."""
+        self.term_status_var.set(f"Connected: {info}")
+        self.term_connect_btn.configure(state='disabled')
+        self.term_disconnect_btn.configure(state='normal')
+        self._term_append(f"*** Connected to {info}\n")
+        self._log(f"Terminal connected: {info}")
+        # Set up firmware dumper
+        client = self.telnet_client if self.telnet_client.connected else self.serial_client
+        self.firmware_dumper = FirmwareDumper(client)
+        self.dump_status_var.set("Connected — Ready to read partitions")
+
+    def _term_on_disconnect(self):
+        """Handle terminal disconnection."""
+        def _update():
+            self.term_status_var.set("Disconnected")
+            self.term_connect_btn.configure(state='normal')
+            self.term_disconnect_btn.configure(state='disabled')
+            self._term_append("\n*** Disconnected\n")
+            self._log("Terminal disconnected")
+            self.firmware_dumper = None
+            self.dump_status_var.set("Connect via Terminal tab first")
+        self.root.after(0, _update)
+
+    def _term_on_data(self, text):
+        """Handle incoming terminal data."""
+        self.root.after(0, lambda: self._term_append(text))
+
+    def _term_append(self, text):
+        """Append text to terminal output."""
+        self.term_output.configure(state='normal')
+        self.term_output.insert(tk.END, text)
+        self.term_output.see(tk.END)
+        self.term_output.configure(state='disabled')
+
+    def _term_send_input(self):
+        """Send user input from the command entry."""
+        text = self.term_input_var.get()
+        self.term_input_var.set("")
+        self._term_send_command(text)
+
+    def _term_send_command(self, command):
+        """Send a command to the connected device."""
+        if self.telnet_client.connected:
+            self.telnet_client.send_command(command)
+            self._term_append(f"{command}\n")
+        elif self.serial_client.connected:
+            self.serial_client.send_command(command)
+            self._term_append(f"{command}\n")
+        else:
+            self._term_append("*** Not connected. Use Connect button first.\n")
+
+    # ── Firmware Dump Handlers ───────────────────────────────────
+
+    def _dump_read_partitions(self):
+        """Read MTD partition table from connected device."""
+        if not self.firmware_dumper:
+            messagebox.showwarning("Not Connected",
+                                   "Connect to the device via the Terminal tab first.")
+            return
+        self.dump_status_var.set("Reading partitions...")
+        self._dump_log("Sending: cat /proc/mtd\n")
+        self.firmware_dumper.get_mtd_partitions(callback=self._dump_partitions_loaded)
+
+    def _dump_partitions_loaded(self, partitions):
+        """Callback when partitions have been read."""
+        def _update():
+            # Clear existing items
+            for item in self.dump_tree.get_children():
+                self.dump_tree.delete(item)
+            # Add partitions
+            for p in partitions:
+                size_str = f"{p['size']:,} bytes ({p['size'] / 1024 / 1024:.1f} MB)"
+                erase_str = f"{p['erasesize']:,} bytes"
+                self.dump_tree.insert('', tk.END, values=(
+                    f"mtd{p['id']}", p['name'], size_str, erase_str))
+            self.dump_status_var.set(f"Found {len(partitions)} partition(s)")
+            self._dump_log(f"Found {len(partitions)} MTD partitions\n")
+        self.root.after(0, _update)
+
+    def _dump_selected(self):
+        """Dump the selected partition."""
+        if not self.firmware_dumper:
+            messagebox.showwarning("Not Connected",
+                                   "Connect to the device via the Terminal tab first.")
+            return
+        selected = self.dump_tree.selection()
+        if not selected:
+            messagebox.showwarning("No Selection", "Select a partition to dump.")
+            return
+        for item in selected:
+            values = self.dump_tree.item(item, 'values')
+            mtd_id = int(values[0].replace('mtd', ''))
+            name = values[1]
+            self._dump_log(f"Dumping mtd{mtd_id} ({name}) to /tmp/mtd{mtd_id}.bin...\n")
+            self.firmware_dumper.dump_partition(mtd_id)
+            self._log(f"Firmware dump: mtd{mtd_id} ({name})")
+
+    def _dump_all(self):
+        """Dump all partitions."""
+        if not self.firmware_dumper:
+            messagebox.showwarning("Not Connected",
+                                   "Connect to the device via the Terminal tab first.")
+            return
+        if not self.firmware_dumper.partitions:
+            messagebox.showwarning("No Partitions",
+                                   "Read partitions first.")
+            return
+        if not messagebox.askyesno("Dump All",
+                                    f"Dump all {len(self.firmware_dumper.partitions)} "
+                                    f"partitions to /tmp on the device?"):
+            return
+        self._dump_log(f"Dumping all {len(self.firmware_dumper.partitions)} partitions...\n")
+        self.firmware_dumper.dump_all_partitions()
+        self._log("Firmware dump: all partitions")
+
+    def _dump_log(self, text):
+        """Append text to dump output."""
+        self.dump_output.configure(state='normal')
+        self.dump_output.insert(tk.END, text)
+        self.dump_output.see(tk.END)
+        self.dump_output.configure(state='disabled')
+
     # ── Theme ────────────────────────────────────────────────────
 
     def _apply_theme(self):
@@ -886,7 +1504,8 @@ class OBSCToolApp:
 
         # Update text widgets
         colors = THEMES[self.current_theme]
-        for text_widget in [self.log_text, self.info_text, self.preset_details_text]:
+        for text_widget in [self.log_text, self.info_text, self.preset_details_text,
+                            self.cfg_text, self.dump_output]:
             text_widget.configure(
                 bg=colors['log_bg'],
                 fg=colors['log_fg'],
@@ -1271,6 +1890,12 @@ class OBSCToolApp:
                                        "An upgrade is in progress. Exit anyway?"):
                 return
             self.worker.stop()
+
+        # Close terminal connections
+        if self.telnet_client.connected:
+            self.telnet_client.disconnect()
+        if self.serial_client.connected:
+            self.serial_client.disconnect()
 
         if self.transport:
             self.transport.close()

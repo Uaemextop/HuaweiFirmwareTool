@@ -395,11 +395,9 @@ class OBSCWorker:
                     data=chunk,
                 )
 
-                sent = False
-                for attempt in range(max(1, self.data_retries + 1)):
+                for attempt in range(self.data_retries + 1):
                     try:
                         self.transport.send(pkt.serialize(), broadcast_ip, OBSC_SEND_PORT)
-                        sent = True
                         break
                     except OSError as e:
                         if attempt < self.data_retries:
@@ -410,9 +408,6 @@ class OBSCWorker:
                             self._emit(self.on_error,
                                        f"Data send error at frame {seq}: {e}")
                             return
-
-                if not sent:
-                    return
 
                 # Progress callback
                 progress = (seq + 1) / total_frames * 100

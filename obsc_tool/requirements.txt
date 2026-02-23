@@ -1,0 +1,4 @@
+# OBSC Firmware Tool - Dependencies
+# No external dependencies required for the GUI application (uses tkinter).
+# PyInstaller is only needed for building the standalone .exe.
+pyinstaller>=6.0

@@ -1,0 +1,115 @@
+name: Build ONT Broadcast Tool
+
+on:
+  # Build on every push to a version tag (v*)
+  push:
+    tags:
+      - 'v*'
+  # Manual trigger from GitHub Actions UI (any branch)
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create a GitHub Release?'
+        required: false
+        default: 'false'
+        type: boolean
+
+permissions:
+  contents: write   # needed to create releases and upload assets
+
+jobs:
+  build-windows:
+    name: Build Windows EXE
+    runs-on: windows-latest
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Set up Python ─────────────────────────────────────────
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: ont_tool/requirements.txt
+
+      # ── 3. Install dependencies ──────────────────────────────────
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r ont_tool/requirements.txt
+          pip install pyinstaller
+
+      # ── 4. Verify imports ────────────────────────────────────────
+      - name: Verify core modules import correctly
+        run: |
+          cd ont_tool
+          python -c "from src.hwnp import parse_hwnp, HWNPPackage; print('hwnp OK')"
+          python -c "from src.config import load_settings; print('config OK')"
+          python -c "from src.network import get_interfaces; print('network OK')"
+          python -c "from src.broadcaster import BroadcastEngine; print('broadcaster OK')"
+
+      # ── 5. Build EXE ─────────────────────────────────────────────
+      - name: Build with PyInstaller
+        run: |
+          cd ont_tool
+          pyinstaller ONTTool.spec --clean --noconfirm
+
+      # ── 6. Verify EXE was created ────────────────────────────────
+      - name: Verify build output
+        run: |
+          if (Test-Path "ont_tool\dist\ONTBroadcastTool.exe") {
+            $size = (Get-Item "ont_tool\dist\ONTBroadcastTool.exe").Length / 1MB
+            Write-Output ("EXE created: {0:N1} MB" -f $size)
+          } else {
+            Write-Error "EXE not found!"
+            exit 1
+          }
+        shell: pwsh
+
+      # ── 7. Upload build artifact ─────────────────────────────────
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ONTBroadcastTool-windows
+          path: ont_tool/dist/ONTBroadcastTool.exe
+          if-no-files-found: error
+          retention-days: 30
+
+      # ── 8. Create GitHub Release (on tag push or manual trigger) ─
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.create_release == 'true')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
+          name: ${{ startsWith(github.ref, 'refs/tags/') && format('ONT Broadcast Tool {0}', github.ref_name) || format('ONT Broadcast Tool (manual build {0})', github.run_number) }}
+          body: |
+            ## ONT Broadcast Tool — Windows EXE
+
+            Open-source replacement for the Huawei OBSCTool / OntSoftwareBroadcaster.
+
+            ### What's included
+            - `ONTBroadcastTool.exe` — standalone Windows executable (no install required)
+
+            ### How to use
+            1. Download `ONTBroadcastTool.exe`
+            2. Run it (Windows 11 compatible, no installation needed)
+            3. Select your network interface and firmware package
+            4. Click **Start** to broadcast
+
+            ### Requirements
+            - Windows 10/11 (64-bit)
+            - Local network with Huawei ONT devices
+
+            ### Notes
+            - Default port: **1400**, default interval: **5 ms** (as recommended for HG8145V5)
+            - Place `pkg1.bin` / `pkg2.bin` / `pkg3.bin` alongside the EXE for built-in packages,
+              or select **Custom firmware file** to load any `.bin` HWNP package
+
+            Built from commit: ${{ github.sha }}
+          files: |
+            ont_tool/dist/ONTBroadcastTool.exe
+          draft: ${{ !startsWith(github.ref, 'refs/tags/') }}
+          prerelease: false

@@ -3,9 +3,12 @@ presets.py — Router preset management for Open OBSC Tool.
 """
 
 import json
+import logging
 import os
 from dataclasses import dataclass, field, asdict
 from typing import Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 PRESETS_FILE = "router_presets.json"
 
@@ -144,8 +147,8 @@ class PresetManager:
                 data = json.load(f)
             for name, preset_dict in data.items():
                 self.presets[name] = RouterPreset(**preset_dict)
-        except Exception:
-            pass
+        except (json.JSONDecodeError, IOError, TypeError) as e:
+            logger.warning("Failed to load user presets: %s", e)
 
     def save_user_presets(self):
         """Save user presets to file (excluding built-ins)."""
@@ -157,8 +160,8 @@ class PresetManager:
         try:
             with open(path, "w", encoding="utf-8") as f:
                 json.dump(user_presets, f, indent=2)
-        except Exception:
-            pass
+        except (IOError, PermissionError) as e:
+            logger.warning("Failed to save user presets: %s", e)
 
     def get_preset(self, name: str) -> Optional[RouterPreset]:
         return self.presets.get(name)

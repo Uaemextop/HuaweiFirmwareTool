@@ -106,14 +106,31 @@ class BroadcastEngine:
         operation_timeout_s: int = 60,
         retry_count: int = 3,
         chunk_size: int = CHUNK_SIZE_DEFAULT,
+        # New options
+        dry_run: bool = False,
+        send_repeat_count: int = 1,
+        inter_repeat_delay_s: float = 5.0,
+        verify_crc32: bool = True,
+        verify_signature: bool = False,
+        signature_key_path: str = '',
+        socket_ttl: int = 64,
+        socket_buf_size: int = 65536,
     ):
-        self.broadcast_addr     = broadcast_addr
-        self.port               = port
-        self.interface_ip       = interface_ip
-        self.packet_interval_ms = packet_interval_ms
-        self.operation_timeout_s = operation_timeout_s
-        self.retry_count        = retry_count
-        self.chunk_size         = chunk_size
+        self.broadcast_addr       = broadcast_addr
+        self.port                 = port
+        self.interface_ip         = interface_ip
+        self.packet_interval_ms   = packet_interval_ms
+        self.operation_timeout_s  = operation_timeout_s
+        self.retry_count          = retry_count
+        self.chunk_size           = chunk_size
+        self.dry_run              = dry_run
+        self.send_repeat_count    = max(1, send_repeat_count)
+        self.inter_repeat_delay_s = inter_repeat_delay_s
+        self.verify_crc32         = verify_crc32
+        self.verify_signature     = verify_signature
+        self.signature_key_path   = signature_key_path
+        self.socket_ttl           = socket_ttl
+        self.socket_buf_size      = socket_buf_size
 
         self._socket: Optional[socket.socket] = None
         self._running  = threading.Event()
@@ -141,6 +158,22 @@ class BroadcastEngine:
             self._log("ERROR: Invalid HWNP package")
             return
 
+        # Pre-flight verification
+        if self.verify_crc32 or self.verify_signature:
+            from .hwnp import verify_package
+            ok, msgs = verify_package(
+                package,
+                verify_crc32=self.verify_crc32,
+                verify_signature=self.verify_signature,
+                signature_key_path=self.signature_key_path,
+            )
+            for msg in msgs:
+                self._log(f"[VERIFY] {msg}")
+            if not ok:
+                self._log("ERROR: Package verification failed – broadcast aborted")
+                self._status("Verification failed")
+                return
+
         self._sessions.clear()
         self._running.set()
         self._thread = threading.Thread(
@@ -149,7 +182,8 @@ class BroadcastEngine:
             daemon=True,
         )
         self._thread.start()
-        self._log(f"Broadcast started → {self.broadcast_addr}:{self.port}")
+        mode = "[DRY RUN] " if self.dry_run else ""
+        self._log(f"{mode}Broadcast started → {self.broadcast_addr}:{self.port}")
 
     def stop(self) -> None:
         """Stop the broadcast engine."""
@@ -193,6 +227,12 @@ class BroadcastEngine:
                              socket.IPPROTO_UDP)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.setsockopt(socket.IPPROTO_IP, socket.IP_TTL,
+                        max(1, min(255, self.socket_ttl)))
+        try:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, self.socket_buf_size)
+        except OSError:
+            pass
         sock.settimeout(2.0)
 
         if self.interface_ip:
@@ -223,78 +263,110 @@ class BroadcastEngine:
     def _broadcast_loop(self, package: HWNPPackage) -> None:
         """Main broadcast loop running in background thread."""
         try:
-            self._socket = self._open_socket()
-            self._status("Broadcasting…")
+            if self.dry_run:
+                self._log("[DRY RUN] Simulating broadcast (no packets sent)")
+                self._status("[DRY RUN] Simulating…")
+            else:
+                self._socket = self._open_socket()
+                self._status("Broadcasting…")
+
             self._log(
                 f"Package: {package.size_kb:.1f} KB, "
                 f"{package.item_counts} items, "
                 f"products: {package.product_list[:40] or 'all'}"
             )
 
-            payload = package.raw_bytes
-            total   = len(payload)
+            payload  = package.raw_bytes
+            total    = len(payload)
             interval = self.packet_interval_ms / 1000.0
 
-            # Track a synthetic session for broadcast progress display
-            session = DeviceSession(
-                ont_sn='BROADCAST',
-                equip_sn='--',
-                ip=self.broadcast_addr,
-                start_time=datetime.now(),
-                total_bytes=total,
-                status=DeviceStatus.UPGRADING,
-            )
-            self._log(f"{session.log_id} Start upgrade!")
-            with self._lock:
-                self._sessions[session.ont_sn] = session
-            self._notify_device(session)
+            for repeat_idx in range(self.send_repeat_count):
+                if not self._running.is_set():
+                    break
 
-            # Send the HWNP package in chunks
-            offset = 0
-            attempt = 0
-            while self._running.is_set() and offset < total:
-                chunk = payload[offset: offset + self.chunk_size]
-                sent  = self._send_packet(chunk, self._socket)
+                if repeat_idx > 0:
+                    self._log(
+                        f"Repeat {repeat_idx + 1}/{self.send_repeat_count} "
+                        f"(waiting {self.inter_repeat_delay_s:.1f}s)…"
+                    )
+                    # Sleep in small increments so stop() is responsive
+                    waited = 0.0
+                    while waited < self.inter_repeat_delay_s and self._running.is_set():
+                        time.sleep(0.1)
+                        waited += 0.1
 
-                if sent:
-                    offset += len(chunk)
-                    session.bytes_sent = offset
-                    self._notify_device(session)
-                else:
-                    attempt += 1
-                    if attempt >= self.retry_count:
-                        session.status   = DeviceStatus.FAILED
-                        session.ret_code = 0xF7204007
-                        session.end_time = datetime.now()
-                        self._log(
-                            f"{session.log_id} Finish upgrade!"
-                            f"uiRet=0x{session.ret_code:08X}"
-                        )
-                        self._notify_device(session)
-                        self._running.clear()
-                        return
+                if not self._running.is_set():
+                    break
 
-                # Respect packet interval
-                if interval > 0:
-                    time.sleep(interval)
-
-            if self._running.is_set():
-                # Completed
-                session.status   = DeviceStatus.SUCCESS
-                session.ret_code = 0x00000000
-                session.end_time = datetime.now()
-                self._log(
-                    f"{session.log_id} Finish upgrade!"
-                    f"uiRet=0x{session.ret_code:08X}"
+                # Track a synthetic session for broadcast progress display
+                session_key = f"BROADCAST-{repeat_idx + 1}"
+                session = DeviceSession(
+                    ont_sn=session_key,
+                    equip_sn='--',
+                    ip=self.broadcast_addr,
+                    start_time=datetime.now(),
+                    total_bytes=total,
+                    status=DeviceStatus.UPGRADING,
                 )
-                self._status("Done – waiting for device reboot")
-            else:
-                session.status   = DeviceStatus.FAILED
-                session.end_time = datetime.now()
-                self._log(f"{session.log_id} Upgrade cancelled")
-                self._status("Cancelled")
+                self._log(f"{session.log_id} Start upgrade!")
+                with self._lock:
+                    self._sessions[session.ont_sn] = session
+                self._notify_device(session)
 
-            self._notify_device(session)
+                # Send the HWNP package in chunks
+                offset  = 0
+                attempt = 0
+                while self._running.is_set() and offset < total:
+                    chunk = payload[offset: offset + self.chunk_size]
+
+                    if self.dry_run:
+                        sent = True   # simulate success
+                    else:
+                        sent = self._send_packet(chunk, self._socket)
+
+                    if sent:
+                        offset += len(chunk)
+                        session.bytes_sent = offset
+                        self._notify_device(session)
+                    else:
+                        attempt += 1
+                        if attempt >= self.retry_count:
+                            session.status   = DeviceStatus.FAILED
+                            session.ret_code = 0xF7204007
+                            session.end_time = datetime.now()
+                            self._log(
+                                f"{session.log_id} Finish upgrade!"
+                                f"uiRet=0x{session.ret_code:08X}"
+                            )
+                            self._notify_device(session)
+                            self._running.clear()
+                            return
+
+                    if interval > 0:
+                        time.sleep(interval)
+
+                if self._running.is_set():
+                    session.status   = DeviceStatus.SUCCESS
+                    session.ret_code = 0x00000000
+                    session.end_time = datetime.now()
+                    self._log(
+                        f"{session.log_id} Finish upgrade!"
+                        f"uiRet=0x{session.ret_code:08X}"
+                    )
+                    if repeat_idx + 1 < self.send_repeat_count:
+                        self._status(
+                            f"Pass {repeat_idx + 1}/{self.send_repeat_count} done"
+                        )
+                    else:
+                        dry_label = " [DRY RUN]" if self.dry_run else ""
+                        self._status(f"Done{dry_label} – waiting for device reboot")
+                else:
+                    session.status   = DeviceStatus.FAILED
+                    session.end_time = datetime.now()
+                    self._log(f"{session.log_id} Upgrade cancelled")
+                    self._status("Cancelled")
+
+                self._notify_device(session)
 
         except Exception as e:
             self._log(f"ERROR: {e}")

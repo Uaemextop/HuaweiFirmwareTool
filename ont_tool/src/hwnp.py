@@ -258,6 +258,120 @@ def load_hwnp_file(path: str) -> HWNPPackage:
     return parse_hwnp(data)
 
 
+def verify_package(
+    pkg: HWNPPackage,
+    verify_crc32: bool = True,
+    verify_signature: bool = False,
+    signature_key_path: str = '',
+) -> tuple:
+    """
+    Verify an HWNP package's integrity.
+
+    Args:
+        pkg: Parsed HWNP package.
+        verify_crc32: Check the CRC32 checksum in the header.
+        verify_signature: Verify the RSA signature in the SIGNINFO item
+                          (requires OpenSSL + a public key PEM file).
+        signature_key_path: Path to a PEM-encoded RSA public key file.
+
+    Returns:
+        (ok: bool, messages: list[str])
+        ok is True only when all enabled checks pass.
+    """
+    messages: List[str] = []
+    ok = True
+
+    if not pkg.is_valid:
+        messages.append("FAIL: Not a valid HWNP package (bad magic)")
+        return False, messages
+
+    if verify_crc32:
+        if pkg.crc32_verify():
+            messages.append("OK:   CRC32 checksum valid")
+        else:
+            messages.append("FAIL: CRC32 checksum mismatch — package may be corrupt")
+            ok = False
+
+    if verify_signature:
+        if not signature_key_path:
+            messages.append("WARN: Signature verification requested but no key file provided")
+        elif not os.path.isfile(signature_key_path):
+            messages.append(f"WARN: Key file not found: {signature_key_path}")
+        else:
+            sig_item = pkg.get_item_by_section(SECTION_SIGNINFO)
+            if sig_item is None:
+                sig_item = pkg.get_item_by_section(SECTION_SIGNATURE)
+
+            if sig_item is None or not sig_item.data:
+                messages.append("FAIL: No SIGNINFO/SIGNATURE item found in package")
+                ok = False
+            else:
+                try:
+                    result = _rsa_verify(sig_item.data, signature_key_path)
+                    if result:
+                        messages.append("OK:   RSA signature valid")
+                    else:
+                        messages.append("FAIL: RSA signature invalid")
+                        ok = False
+                except Exception as e:
+                    messages.append(f"FAIL: RSA verification error: {e}")
+                    ok = False
+
+    return ok, messages
+
+
+def _rsa_verify(sig_data: bytes, key_path: str) -> bool:
+    """
+    Verify RSA signature using OpenSSL (via the cryptography library or subprocess).
+    Returns True if signature is valid.
+    """
+    try:
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import padding
+        from cryptography.hazmat.backends import default_backend
+
+        with open(key_path, 'rb') as f:
+            pub_key = serialization.load_pem_public_key(f.read(), backend=default_backend())
+
+        # Huawei signature format: last 256 bytes = RSA-2048 signature,
+        # everything before = signed data
+        if len(sig_data) <= 256:
+            return False
+
+        signed_data = sig_data[:-256]
+        signature   = sig_data[-256:]
+
+        pub_key.verify(signature, signed_data, padding.PKCS1v15(), hashes.SHA256())
+        return True
+
+    except ImportError:
+        # cryptography not available – try OpenSSL subprocess
+        import subprocess
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.bin') as tf:
+            tf.write(sig_data[:-256])
+            data_file = tf.name
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.sig') as tf:
+            tf.write(sig_data[-256:])
+            sig_file = tf.name
+
+        try:
+            result = subprocess.run(
+                ['openssl', 'dgst', '-sha256', '-verify', key_path,
+                 '-signature', sig_file, data_file],
+                capture_output=True, timeout=10
+            )
+            return result.returncode == 0
+        finally:
+            os.unlink(data_file)
+            os.unlink(sig_file)
+
+    except Exception:
+        return False
+
+
 def describe_package(pkg: HWNPPackage) -> str:
     """Return a human-readable description of an HWNP package."""
     lines = [

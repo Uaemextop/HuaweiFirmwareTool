@@ -186,6 +186,8 @@ class OBSCWorker:
         self.upgrade_type = UpgradeType.STANDARD
         self.machine_filter = ""
         self.timeout = 600  # 10 minutes
+        self.ctrl_retries = 3
+        self.data_retries = 0
 
         # State
         self._running = False
@@ -355,7 +357,7 @@ class OBSCWorker:
             )
             self._emit(self.on_log, "Sending control packet...")
 
-            for _ in range(3):  # Retry control packet
+            for _ in range(self.ctrl_retries):  # Retry control packet
                 if not self._running:
                     return
                 try:
@@ -393,10 +395,23 @@ class OBSCWorker:
                     data=chunk,
                 )
 
-                try:
-                    self.transport.send(pkt.serialize(), broadcast_ip, OBSC_SEND_PORT)
-                except OSError as e:
-                    self._emit(self.on_error, f"Data send error at frame {seq}: {e}")
+                sent = False
+                for attempt in range(max(1, self.data_retries + 1)):
+                    try:
+                        self.transport.send(pkt.serialize(), broadcast_ip, OBSC_SEND_PORT)
+                        sent = True
+                        break
+                    except OSError as e:
+                        if attempt < self.data_retries:
+                            self._emit(self.on_log,
+                                       f"Data send retry {attempt + 1} at frame {seq}: {e}")
+                            time.sleep(0.01)
+                        else:
+                            self._emit(self.on_error,
+                                       f"Data send error at frame {seq}: {e}")
+                            return
+
+                if not sent:
                     return
 
                 # Progress callback

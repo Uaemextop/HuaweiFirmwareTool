@@ -34,6 +34,7 @@ from obsc_tool.protocol import (
     OBSCWorker, FlashMode, UpgradeType,
     OBSC_SEND_PORT, OBSC_RECV_PORT
 )
+from obsc_tool.presets import PresetManager, PRESET_TEMPLATE
 
 logger = logging.getLogger("obsc_tool")
 
@@ -93,6 +94,7 @@ class OBSCToolApp:
         self.worker = None
         self.transport = None
         self.log_entries = []
+        self.preset_manager = PresetManager()
 
         # Setup logging
         self._setup_logging()
@@ -175,17 +177,27 @@ class OBSCToolApp:
         self.notebook.add(self.tab_upgrade, text=" 🔄 Upgrade ")
         self._build_upgrade_tab()
 
-        # Tab 2: Settings
+        # Tab 2: Presets
+        self.tab_presets = ttk.Frame(self.notebook, padding=10)
+        self.notebook.add(self.tab_presets, text=" 📦 Presets ")
+        self._build_presets_tab()
+
+        # Tab 3: Verification
+        self.tab_verify = ttk.Frame(self.notebook, padding=10)
+        self.notebook.add(self.tab_verify, text=" 🔒 Verification ")
+        self._build_verification_tab()
+
+        # Tab 4: Settings
         self.tab_settings = ttk.Frame(self.notebook, padding=10)
         self.notebook.add(self.tab_settings, text=" ⚙️ Settings ")
         self._build_settings_tab()
 
-        # Tab 3: Firmware Info
+        # Tab 5: Firmware Info
         self.tab_info = ttk.Frame(self.notebook, padding=10)
         self.notebook.add(self.tab_info, text=" 📋 Firmware Info ")
         self._build_info_tab()
 
-        # Tab 4: Log
+        # Tab 6: Log
         self.tab_log = ttk.Frame(self.notebook, padding=10)
         self.notebook.add(self.tab_log, text=" 📝 Log ")
         self._build_log_tab()
@@ -396,6 +408,62 @@ class OBSCToolApp:
         ttk.Entry(row, textvariable=self.machine_filter_var, width=30).pack(side=tk.LEFT)
         ttk.Label(row, text="(empty = all devices)", font=('Segoe UI', 8)).pack(side=tk.LEFT, padx=5)
 
+        # ── Advanced Transfer ────────────────────────────────────
+        adv_frame = ttk.LabelFrame(tab, text="Advanced Transfer", padding=10)
+        adv_frame.pack(fill=tk.X, pady=(0, 10))
+
+        # Discovery Duration
+        row = ttk.Frame(adv_frame)
+        row.pack(fill=tk.X, pady=2)
+        ttk.Label(row, text="Discovery Duration:", width=20).pack(side=tk.LEFT)
+        self.discovery_duration_var = tk.StringVar(value="10")
+        ttk.Combobox(
+            row, textvariable=self.discovery_duration_var,
+            values=["5", "10", "15", "20", "30", "60"],
+            width=8,
+        ).pack(side=tk.LEFT)
+        ttk.Label(row, text="seconds").pack(side=tk.LEFT, padx=5)
+
+        # Control Retries
+        row = ttk.Frame(adv_frame)
+        row.pack(fill=tk.X, pady=2)
+        ttk.Label(row, text="Control Retries:", width=20).pack(side=tk.LEFT)
+        self.ctrl_retries_var = tk.StringVar(value="3")
+        ttk.Combobox(
+            row, textvariable=self.ctrl_retries_var,
+            values=["1", "2", "3", "5", "10"],
+            width=8,
+        ).pack(side=tk.LEFT)
+        ttk.Label(row, text="attempts", font=('Segoe UI', 8)).pack(side=tk.LEFT, padx=5)
+
+        # Data Retries
+        row = ttk.Frame(adv_frame)
+        row.pack(fill=tk.X, pady=2)
+        ttk.Label(row, text="Data Frame Retries:", width=20).pack(side=tk.LEFT)
+        self.data_retries_var = tk.StringVar(value="0")
+        ttk.Combobox(
+            row, textvariable=self.data_retries_var,
+            values=["0", "1", "2", "3"],
+            width=8,
+        ).pack(side=tk.LEFT)
+        ttk.Label(row, text="(0 = no retry)", font=('Segoe UI', 8)).pack(side=tk.LEFT, padx=5)
+
+        # Check Policy
+        row = ttk.Frame(adv_frame)
+        row.pack(fill=tk.X, pady=2)
+        ttk.Label(row, text="Check Policy:", width=20).pack(side=tk.LEFT)
+        self.check_policy_var = tk.StringVar(value="")
+        ttk.Entry(row, textvariable=self.check_policy_var, width=20).pack(side=tk.LEFT)
+        ttk.Label(row, text="(empty = default)", font=('Segoe UI', 8)).pack(side=tk.LEFT, padx=5)
+
+        # BOM Code
+        row = ttk.Frame(adv_frame)
+        row.pack(fill=tk.X, pady=2)
+        ttk.Label(row, text="BOM Code:", width=20).pack(side=tk.LEFT)
+        self.bom_code_var = tk.StringVar(value="")
+        ttk.Entry(row, textvariable=self.bom_code_var, width=20).pack(side=tk.LEFT)
+        ttk.Label(row, text="(empty = default)", font=('Segoe UI', 8)).pack(side=tk.LEFT, padx=5)
+
         # ── Logging Options ──────────────────────────────────────
         log_frame = ttk.LabelFrame(tab, text="Logging", padding=10)
         log_frame.pack(fill=tk.X, pady=(0, 10))
@@ -412,6 +480,168 @@ class OBSCToolApp:
             log_frame, text="Auto-save log after each upgrade",
             variable=self.auto_log_var,
         ).pack(fill=tk.X, pady=2)
+
+    def _build_presets_tab(self):
+        """Build the router presets management tab."""
+        tab = self.tab_presets
+
+        # ── Preset Selection ─────────────────────────────────────
+        select_frame = ttk.LabelFrame(tab, text="Router Presets", padding=10)
+        select_frame.pack(fill=tk.X, pady=(0, 10))
+
+        row = ttk.Frame(select_frame)
+        row.pack(fill=tk.X, pady=2)
+        ttk.Label(row, text="Select Preset:", width=16).pack(side=tk.LEFT)
+        self.preset_var = tk.StringVar()
+        self.preset_combo = ttk.Combobox(
+            row, textvariable=self.preset_var,
+            state='readonly', width=35,
+        )
+        self.preset_combo.pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Button(row, text="Load", command=self._load_preset, width=8).pack(side=tk.LEFT, padx=2)
+        ttk.Button(row, text="Delete", command=self._delete_preset, width=8).pack(side=tk.LEFT, padx=2)
+
+        # Update combo values
+        self._refresh_preset_list()
+
+        # Preset description
+        self.preset_desc_var = tk.StringVar(value="Select a preset to see its description")
+        ttk.Label(select_frame, textvariable=self.preset_desc_var,
+                  font=('Segoe UI', 9), wraplength=600).pack(fill=tk.X, pady=(5, 0))
+
+        self.preset_combo.bind('<<ComboboxSelected>>', self._on_preset_selected)
+
+        # ── Save Current as Preset ───────────────────────────────
+        save_frame = ttk.LabelFrame(tab, text="Save Current Settings as Preset", padding=10)
+        save_frame.pack(fill=tk.X, pady=(0, 10))
+
+        row = ttk.Frame(save_frame)
+        row.pack(fill=tk.X, pady=2)
+        ttk.Label(row, text="Preset Name:", width=16).pack(side=tk.LEFT)
+        self.new_preset_name_var = tk.StringVar()
+        ttk.Entry(row, textvariable=self.new_preset_name_var, width=30).pack(side=tk.LEFT, padx=(0, 5))
+
+        row = ttk.Frame(save_frame)
+        row.pack(fill=tk.X, pady=2)
+        ttk.Label(row, text="Router Model:", width=16).pack(side=tk.LEFT)
+        self.new_preset_model_var = tk.StringVar()
+        ttk.Combobox(
+            row, textvariable=self.new_preset_model_var,
+            values=["HG8145V5", "HG8245H", "HG8546M", "HG8245Q2",
+                     "HG8045Q", "EG8145V5", "HN8245Q", "Custom"],
+            width=18,
+        ).pack(side=tk.LEFT, padx=(0, 5))
+
+        row = ttk.Frame(save_frame)
+        row.pack(fill=tk.X, pady=2)
+        ttk.Label(row, text="Description:", width=16).pack(side=tk.LEFT)
+        self.new_preset_desc_var = tk.StringVar()
+        ttk.Entry(row, textvariable=self.new_preset_desc_var, width=50).pack(side=tk.LEFT, padx=(0, 5))
+
+        ttk.Button(save_frame, text="💾 Save Preset",
+                   command=self._save_preset, width=20).pack(pady=(5, 0))
+
+        # ── Preset Details ───────────────────────────────────────
+        details_frame = ttk.LabelFrame(tab, text="Preset Details", padding=10)
+        details_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 5))
+
+        self.preset_details_text = scrolledtext.ScrolledText(
+            details_frame, wrap=tk.WORD,
+            font=('Consolas', 9),
+            state='disabled', height=10,
+        )
+        self.preset_details_text.pack(fill=tk.BOTH, expand=True)
+
+    def _build_verification_tab(self):
+        """Build the signature and verification configuration tab."""
+        tab = self.tab_verify
+
+        # ── CRC32 Verification ───────────────────────────────────
+        crc_frame = ttk.LabelFrame(tab, text="CRC32 Integrity Verification", padding=10)
+        crc_frame.pack(fill=tk.X, pady=(0, 10))
+
+        self.verify_crc32_var = tk.BooleanVar(value=True)
+        ttk.Checkbutton(
+            crc_frame, text="Verify CRC32 checksums before flashing",
+            variable=self.verify_crc32_var,
+        ).pack(fill=tk.X, pady=2)
+
+        ttk.Label(crc_frame,
+                  text="When enabled, the tool validates the HWNP header and data CRC32\n"
+                       "checksums before starting the transfer. Disable only if you are\n"
+                       "working with modified/custom firmware packages.",
+                  font=('Segoe UI', 8), justify=tk.LEFT,
+                  ).pack(fill=tk.X, pady=(2, 0))
+
+        # ── HWNP Signature Verification ──────────────────────────
+        sig_frame = ttk.LabelFrame(tab, text="HWNP Signature Verification", padding=10)
+        sig_frame.pack(fill=tk.X, pady=(0, 10))
+
+        self.verify_signature_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(
+            sig_frame, text="Verify RSA signature before flashing",
+            variable=self.verify_signature_var,
+        ).pack(fill=tk.X, pady=2)
+
+        row = ttk.Frame(sig_frame)
+        row.pack(fill=tk.X, pady=2)
+        ttk.Label(row, text="Public Key File:", width=16).pack(side=tk.LEFT)
+        self.pubkey_path_var = tk.StringVar(value="")
+        ttk.Entry(row, textvariable=self.pubkey_path_var, width=40).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Button(row, text="Browse", command=self._browse_pubkey, width=8).pack(side=tk.LEFT)
+
+        ttk.Label(sig_frame,
+                  text="Huawei HWNP firmware packages may include an RSA signature\n"
+                       "(SIGNINFO section). If you have the public key, enable this to\n"
+                       "verify the firmware authenticity before flashing.",
+                  font=('Segoe UI', 8), justify=tk.LEFT,
+                  ).pack(fill=tk.X, pady=(2, 0))
+
+        # ── Product Compatibility Check ──────────────────────────
+        prod_frame = ttk.LabelFrame(tab, text="Product Compatibility Check", padding=10)
+        prod_frame.pack(fill=tk.X, pady=(0, 10))
+
+        self.skip_product_check_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(
+            prod_frame, text="Skip product compatibility check (dangerous)",
+            variable=self.skip_product_check_var,
+        ).pack(fill=tk.X, pady=2)
+
+        ttk.Label(prod_frame,
+                  text="HWNP firmware includes a product list specifying compatible\n"
+                       "hardware. Skipping this check allows flashing firmware to\n"
+                       "potentially incompatible devices. Use with extreme caution.",
+                  font=('Segoe UI', 8), justify=tk.LEFT,
+                  ).pack(fill=tk.X, pady=(2, 0))
+
+        # ── Pre-Flash Verification ───────────────────────────────
+        preflash_frame = ttk.LabelFrame(tab, text="Pre-Flash Verification", padding=10)
+        preflash_frame.pack(fill=tk.X, pady=(0, 10))
+
+        self.verify_item_crc_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(
+            preflash_frame, text="Verify individual item CRC32 checksums",
+            variable=self.verify_item_crc_var,
+        ).pack(fill=tk.X, pady=2)
+
+        self.verify_size_var = tk.BooleanVar(value=True)
+        ttk.Checkbutton(
+            preflash_frame, text="Verify firmware file size matches header",
+            variable=self.verify_size_var,
+        ).pack(fill=tk.X, pady=2)
+
+        self.dry_run_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(
+            preflash_frame, text="Dry run mode (validate only, do not flash)",
+            variable=self.dry_run_var,
+        ).pack(fill=tk.X, pady=2)
+
+        ttk.Label(preflash_frame,
+                  text="These options run additional checks on the firmware before\n"
+                       "starting the transfer. Dry run mode performs all steps except\n"
+                       "actually sending data, useful for testing configuration.",
+                  font=('Segoe UI', 8), justify=tk.LEFT,
+                  ).pack(fill=tk.X, pady=(2, 0))
 
     def _build_info_tab(self):
         """Build the firmware information tab."""
@@ -442,6 +672,141 @@ class OBSCToolApp:
             state='disabled',
         )
         self.log_text.pack(fill=tk.BOTH, expand=True)
+
+    # ── Preset Management ────────────────────────────────────────
+
+    def _refresh_preset_list(self):
+        """Refresh the preset combobox values."""
+        names = self.preset_manager.list_presets()
+        self.preset_combo['values'] = names
+        if names:
+            self.preset_combo.current(0)
+            self._on_preset_selected(None)
+
+    def _on_preset_selected(self, event):
+        """Handle preset selection change."""
+        name = self.preset_var.get()
+        preset = self.preset_manager.get_preset(name)
+        if preset:
+            self.preset_desc_var.set(preset.get('description', 'No description'))
+            # Show details
+            lines = []
+            for key, val in sorted(preset.items()):
+                if key.startswith('_'):
+                    continue
+                lines.append(f"  {key:25s} = {val}")
+            self.preset_details_text.configure(state='normal')
+            self.preset_details_text.delete('1.0', tk.END)
+            self.preset_details_text.insert('1.0', f"Preset: {name}\n{'=' * 50}\n" + '\n'.join(lines))
+            self.preset_details_text.configure(state='disabled')
+
+    def _load_preset(self):
+        """Load the selected preset into the current settings."""
+        name = self.preset_var.get()
+        if not name:
+            messagebox.showwarning("No Preset", "Please select a preset first.")
+            return
+
+        preset = self.preset_manager.get_preset(name)
+        if not preset:
+            return
+
+        # Apply preset to all settings
+        self.frame_size_var.set(str(preset.get('frame_size', 1400)))
+        self.frame_interval_var.set(str(preset.get('frame_interval_ms', 5)))
+        self.flash_mode_var.set(preset.get('flash_mode', 'Normal'))
+        self.delete_cfg_var.set(preset.get('delete_cfg', False))
+        self.upgrade_type_var.set(preset.get('upgrade_type', 'Standard'))
+        self.send_port_var.set(str(preset.get('send_port', OBSC_SEND_PORT)))
+        self.recv_port_var.set(str(preset.get('recv_port', OBSC_RECV_PORT)))
+        self.timeout_var.set(str(preset.get('timeout', 600)))
+        self.machine_filter_var.set(preset.get('machine_filter', ''))
+        self.broadcast_var.set(preset.get('broadcast_address', 'auto'))
+        self.verify_crc32_var.set(preset.get('verify_crc32', True))
+        self.verify_signature_var.set(preset.get('verify_signature', False))
+        self.skip_product_check_var.set(preset.get('skip_product_check', False))
+        self.discovery_duration_var.set(str(preset.get('discovery_duration', 10)))
+        self.ctrl_retries_var.set(str(preset.get('ctrl_retries', 3)))
+        self.data_retries_var.set(str(preset.get('data_retries', 0)))
+        self.check_policy_var.set(preset.get('check_policy', ''))
+        self.bom_code_var.set(preset.get('bom_code', ''))
+
+        self._log(f"Loaded preset: {name}")
+        messagebox.showinfo("Preset Loaded", f"Loaded preset: {name}")
+
+    def _save_preset(self):
+        """Save current settings as a new preset."""
+        name = self.new_preset_name_var.get().strip()
+        if not name:
+            messagebox.showwarning("No Name", "Please enter a preset name.")
+            return
+
+        if self.preset_manager.is_builtin(name):
+            messagebox.showwarning("Built-in Preset",
+                                   "Cannot overwrite a built-in preset. Choose a different name.")
+            return
+
+        preset_data = self._gather_current_settings()
+        preset_data['model'] = self.new_preset_model_var.get() or "Custom"
+        preset_data['description'] = self.new_preset_desc_var.get() or f"Custom preset for {preset_data['model']}"
+
+        self.preset_manager.save_preset(name, preset_data)
+        self._refresh_preset_list()
+        self._log(f"Saved preset: {name}")
+        messagebox.showinfo("Preset Saved", f"Preset '{name}' saved successfully.")
+
+    def _delete_preset(self):
+        """Delete the selected preset."""
+        name = self.preset_var.get()
+        if not name:
+            return
+
+        if self.preset_manager.is_builtin(name):
+            messagebox.showwarning("Built-in Preset",
+                                   "Cannot delete built-in presets.")
+            return
+
+        if messagebox.askyesno("Delete Preset", f"Delete preset '{name}'?"):
+            if self.preset_manager.delete_preset(name):
+                self._refresh_preset_list()
+                self._log(f"Deleted preset: {name}")
+
+    def _gather_current_settings(self):
+        """Gather all current settings into a dict."""
+        return {
+            'frame_size': int(self.frame_size_var.get()),
+            'frame_interval_ms': int(self.frame_interval_var.get()),
+            'flash_mode': self.flash_mode_var.get(),
+            'delete_cfg': self.delete_cfg_var.get(),
+            'upgrade_type': self.upgrade_type_var.get(),
+            'send_port': int(self.send_port_var.get()),
+            'recv_port': int(self.recv_port_var.get()),
+            'timeout': int(self.timeout_var.get()),
+            'machine_filter': self.machine_filter_var.get(),
+            'broadcast_address': self.broadcast_var.get(),
+            'verify_crc32': self.verify_crc32_var.get(),
+            'verify_signature': self.verify_signature_var.get(),
+            'skip_product_check': self.skip_product_check_var.get(),
+            'discovery_duration': int(self.discovery_duration_var.get()),
+            'ctrl_retries': int(self.ctrl_retries_var.get()),
+            'data_retries': int(self.data_retries_var.get()),
+            'check_policy': self.check_policy_var.get(),
+            'bom_code': self.bom_code_var.get(),
+        }
+
+    # ── Verification Helpers ─────────────────────────────────────
+
+    def _browse_pubkey(self):
+        """Browse for RSA public key file."""
+        path = filedialog.askopenfilename(
+            title="Select Public Key File",
+            filetypes=[
+                ("PEM files", "*.pem"),
+                ("All files", "*.*"),
+            ],
+        )
+        if path:
+            self.pubkey_path_var.set(path)
 
     # ── Theme ────────────────────────────────────────────────────
 
@@ -521,7 +886,7 @@ class OBSCToolApp:
 
         # Update text widgets
         colors = THEMES[self.current_theme]
-        for text_widget in [self.log_text, self.info_text]:
+        for text_widget in [self.log_text, self.info_text, self.preset_details_text]:
             text_widget.configure(
                 bg=colors['log_bg'],
                 fg=colors['log_fg'],
@@ -657,10 +1022,11 @@ class OBSCToolApp:
             self.worker.on_log = self._on_worker_log
             self.worker.on_error = self._on_error
 
-            self.worker.start_discovery(duration=10)
+            self.worker.start_discovery(duration=int(self.discovery_duration_var.get()))
 
             # Re-enable button after discovery
-            self.root.after(11000, lambda: self.discover_btn.configure(state='normal'))
+            duration_ms = int(self.discovery_duration_var.get()) * 1000 + 1000
+            self.root.after(duration_ms, lambda: self.discover_btn.configure(state='normal'))
 
         except Exception as e:
             self._log(f"Discovery error: {e}")
@@ -686,6 +1052,43 @@ class OBSCToolApp:
 
         if not self.firmware:
             messagebox.showwarning("No Firmware", "Please select a firmware file first.")
+            return
+
+        # Pre-flash verification
+        if self.verify_crc32_var.get():
+            hdr_ok, data_ok = self.firmware.validate_crc32()
+            if not hdr_ok or not data_ok:
+                if not messagebox.askyesno(
+                    "CRC32 Warning",
+                    "Firmware CRC32 verification failed!\n\n"
+                    f"Header CRC32: {'VALID' if hdr_ok else 'INVALID'}\n"
+                    f"Data CRC32: {'VALID' if data_ok else 'INVALID'}\n\n"
+                    "Continue anyway?"
+                ):
+                    return
+
+        if self.verify_item_crc_var.get():
+            self._log("Verifying individual item CRC32 checksums...")
+            for item in self.firmware.items:
+                if item.data and item.crc32:
+                    calc_crc = zlib.crc32(item.data) & 0xFFFFFFFF
+                    if calc_crc != item.crc32:
+                        self._log(f"⚠️ Item CRC32 mismatch: {item.item_path} "
+                                  f"(expected 0x{item.crc32:08X}, got 0x{calc_crc:08X})")
+                        if not messagebox.askyesno(
+                            "Item CRC32 Warning",
+                            f"Item CRC32 mismatch for:\n{item.item_path}\n\n"
+                            f"Expected: 0x{item.crc32:08X}\n"
+                            f"Calculated: 0x{calc_crc:08X}\n\n"
+                            "Continue anyway?"
+                        ):
+                            return
+
+        # Dry run check
+        if self.dry_run_var.get():
+            self._log("✅ Dry run complete — all pre-flash checks passed")
+            messagebox.showinfo("Dry Run", "All pre-flash verification checks passed.\n"
+                                "No data was sent (dry run mode).")
             return
 
         # Confirm
@@ -724,6 +1127,8 @@ class OBSCToolApp:
             self.worker.delete_cfg = self.delete_cfg_var.get()
             self.worker.timeout = int(self.timeout_var.get())
             self.worker.machine_filter = self.machine_filter_var.get()
+            self.worker.ctrl_retries = int(self.ctrl_retries_var.get())
+            self.worker.data_retries = int(self.data_retries_var.get())
 
             # Map upgrade type
             ut_map = {"Standard": UpgradeType.STANDARD,

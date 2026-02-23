@@ -52,7 +52,47 @@ MENU_ENABLE_2 = {
     'description': 'Enable menu items in bulk-disable function 2 (7 items)',
 }
 
-CODE_PATCHES = [TIMER_BYPASS, MENU_ENABLE_1, MENU_ENABLE_2]
+# Patches 3A-3E: License validation bypass
+# Five code paths check the license init result and display "Init Lic.fail" (string
+# ID 0x07e7) when the check fails. Four use "test eax,eax; jnz skip_error" where
+# eax!=0 means success; we change jnz to jmp (always skip error). The fifth uses
+# "test esi,esi; jnz show_error" where esi!=0 means failure; we NOP the jnz.
+LICENSE_CHECK_1 = {
+    'offset': 0x04790e,
+    'original': b'\x75',  # jnz (skip error if eax!=0)
+    'patched': b'\xeb',   # jmp (always skip error)
+    'description': 'License validation bypass 1 (always skip Init Lic.fail)',
+}
+LICENSE_CHECK_2 = {
+    'offset': 0x047aed,
+    'original': b'\x75',
+    'patched': b'\xeb',
+    'description': 'License validation bypass 2 (always skip Init Lic.fail)',
+}
+LICENSE_CHECK_3 = {
+    'offset': 0x047dc5,
+    'original': b'\x75',
+    'patched': b'\xeb',
+    'description': 'License validation bypass 3 (always skip Init Lic.fail)',
+}
+LICENSE_CHECK_4 = {
+    'offset': 0x048092,
+    'original': b'\x75\x5a',  # jnz +0x5a (jump to error if esi!=0)
+    'patched': b'\x90\x90',   # nop nop (never jump to error)
+    'description': 'License validation bypass 4 (never show Init Lic.fail)',
+}
+LICENSE_CHECK_5 = {
+    'offset': 0x04a139,
+    'original': b'\x75',
+    'patched': b'\xeb',
+    'description': 'License validation bypass 5 (always skip Init Lic.fail)',
+}
+
+CODE_PATCHES = [
+    TIMER_BYPASS, MENU_ENABLE_1, MENU_ENABLE_2,
+    LICENSE_CHECK_1, LICENSE_CHECK_2, LICENSE_CHECK_3,
+    LICENSE_CHECK_4, LICENSE_CHECK_5,
+]
 
 # Remaining untranslated UTF-16LE strings
 # Format: {file_offset: (chinese, english, max_bytes)}

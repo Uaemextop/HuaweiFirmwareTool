@@ -87,8 +87,11 @@ python3 unlock_ont_tool.py ONT_V100R002C00SPC253_EN.exe ONT_V100R002C00SPC253_EN
 - 124 internal error/log messages (GBK): license, registry, trial, XML, etc.
 
 ### Unlocked features
+- **License validation bypass**: All 5 code paths that check the license init result and
+  display "Init Lic.fail" are patched to always take the success path. The app no longer
+  shows license errors at startup.
 - **License timer bypass**: The 5-second countdown that closes the app when the license
-  is invalid has been disabled. The tool now starts without license restrictions.
+  is invalid has been disabled.
 - **Menu items enabled**: All 9 greyed-out menu commands (0x420E-0x4216) are now always
   enabled. These include firmware management operations that were previously gated behind
   license validation and connection state checks.

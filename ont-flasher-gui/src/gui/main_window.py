@@ -8,14 +8,18 @@ from PyQt6.QtWidgets import (
     QTabWidget, QGroupBox, QLabel, QPushButton,
     QComboBox, QLineEdit, QTextEdit, QProgressBar,
     QFileDialog, QSpinBox, QCheckBox, QMessageBox,
-    QStatusBar, QMenuBar, QMenu
+    QStatusBar, QMenuBar, QMenu, QInputDialog, QDialog
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QSettings
 from PyQt6.QtGui import QAction, QFont, QTextCursor
 
 from core.serial_manager import SerialManager
 from core.firmware_flasher import FirmwareFlasher
+from core.preset_manager import PresetManager
+from core.signature_verifier import SignatureVerifier
+from gui.preset_dialog import PresetManagerDialog
 from utils.logger import get_logger
+import os
 
 class FlashWorker(QThread):
     """Worker thread for firmware flashing operations"""
@@ -83,11 +87,14 @@ class MainWindow(QMainWindow):
         self.settings = QSettings()
         self.serial_manager = SerialManager()
         self.firmware_flasher = FirmwareFlasher()
+        self.preset_manager = PresetManager()
+        self.signature_verifier = SignatureVerifier()
         self.flash_worker = None
 
         self.init_ui()
         self.load_settings()
         self.refresh_ports()
+        self.refresh_preset_selector()
 
     def init_ui(self):
         """Initialize user interface"""
@@ -290,25 +297,35 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(tab)
 
         # Presets group
-        preset_group = QGroupBox("Quick Presets")
+        preset_group = QGroupBox("Device Presets")
         preset_layout = QVBoxLayout()
 
-        preset_info = QLabel("Select a preset configuration for common devices:")
+        preset_info = QLabel("Select a preset configuration for your device:")
         preset_layout.addWidget(preset_info)
 
+        # Preset selector
+        preset_selector_layout = QHBoxLayout()
+        preset_selector_layout.addWidget(QLabel("Preset:"))
+        self.preset_combo = QComboBox()
+        self.preset_combo.currentIndexChanged.connect(self.on_preset_changed)
+        preset_selector_layout.addWidget(self.preset_combo, stretch=1)
+
+        apply_preset_btn = QPushButton("Apply")
+        apply_preset_btn.clicked.connect(self.apply_selected_preset)
+        preset_selector_layout.addWidget(apply_preset_btn)
+
+        preset_layout.addLayout(preset_selector_layout)
+
+        # Preset management buttons
         preset_buttons_layout = QHBoxLayout()
 
-        hg8145v5_btn = QPushButton("HG8145V5 Unlock")
-        hg8145v5_btn.clicked.connect(lambda: self.apply_preset("HG8145V5"))
-        preset_buttons_layout.addWidget(hg8145v5_btn)
+        manage_btn = QPushButton("Manage Presets...")
+        manage_btn.clicked.connect(self.manage_presets)
+        preset_buttons_layout.addWidget(manage_btn)
 
-        hg8245_btn = QPushButton("HG8245 Standard")
-        hg8245_btn.clicked.connect(lambda: self.apply_preset("HG8245"))
-        preset_buttons_layout.addWidget(hg8245_btn)
-
-        custom_btn = QPushButton("Custom")
-        custom_btn.clicked.connect(lambda: self.apply_preset("Custom"))
-        preset_buttons_layout.addWidget(custom_btn)
+        new_preset_btn = QPushButton("Save as New Preset...")
+        new_preset_btn.clicked.connect(self.save_current_as_preset)
+        preset_buttons_layout.addWidget(new_preset_btn)
 
         preset_buttons_layout.addStretch()
         preset_layout.addLayout(preset_buttons_layout)
@@ -316,8 +333,57 @@ class MainWindow(QMainWindow):
         preset_group.setLayout(preset_layout)
         layout.addWidget(preset_group)
 
+        # Signature verification group
+        sig_group = QGroupBox("Signature Verification")
+        sig_layout = QVBoxLayout()
+
+        sig_info = QLabel("Configure firmware signature verification:")
+        sig_layout.addWidget(sig_info)
+
+        # Verification method
+        method_layout = QHBoxLayout()
+        method_layout.addWidget(QLabel("Method:"))
+        self.sig_method_combo = QComboBox()
+        self.sig_method_combo.addItems(["NONE", "MD5", "SHA256", "RSA"])
+        self.sig_method_combo.currentTextChanged.connect(self.on_sig_method_changed)
+        method_layout.addWidget(self.sig_method_combo)
+        method_layout.addStretch()
+        sig_layout.addLayout(method_layout)
+
+        # Expected checksum
+        checksum_layout = QHBoxLayout()
+        checksum_layout.addWidget(QLabel("Expected Checksum:"))
+        self.expected_checksum = QLineEdit()
+        self.expected_checksum.setPlaceholderText("Optional - leave empty to skip verification")
+        checksum_layout.addWidget(self.expected_checksum)
+        sig_layout.addLayout(checksum_layout)
+
+        # Public key for RSA
+        key_layout = QHBoxLayout()
+        key_layout.addWidget(QLabel("Public Key:"))
+        self.public_key_path = QLineEdit()
+        self.public_key_path.setPlaceholderText("Path to public key file (for RSA)")
+        self.public_key_path.setEnabled(False)
+        key_layout.addWidget(self.public_key_path)
+
+        browse_key_btn = QPushButton("Browse...")
+        browse_key_btn.clicked.connect(self.browse_public_key)
+        browse_key_btn.setEnabled(False)
+        self.browse_key_btn = browse_key_btn
+        key_layout.addWidget(browse_key_btn)
+
+        sig_layout.addLayout(key_layout)
+
+        # Generate signature button
+        gen_sig_btn = QPushButton("Generate Signature File from Firmware...")
+        gen_sig_btn.clicked.connect(self.generate_signature)
+        sig_layout.addWidget(gen_sig_btn)
+
+        sig_group.setLayout(sig_layout)
+        layout.addWidget(sig_group)
+
         # Custom settings group
-        custom_group = QGroupBox("Custom Settings")
+        custom_group = QGroupBox("Additional Options")
         custom_layout = QVBoxLayout()
 
         # Verify after flash
@@ -337,6 +403,10 @@ class MainWindow(QMainWindow):
         # Verbose logging
         self.verbose_check = QCheckBox("Enable verbose logging")
         custom_layout.addWidget(self.verbose_check)
+
+        # Power safe mode
+        self.power_safe_check = QCheckBox("Power-safe mode (slower but more reliable)")
+        custom_layout.addWidget(self.power_safe_check)
 
         custom_group.setLayout(custom_layout)
         layout.addWidget(custom_group)
@@ -511,6 +581,156 @@ class MainWindow(QMainWindow):
             self.reboot_check.setChecked(True)
 
         self.status_bar.showMessage(f"Applied preset: {preset_name}")
+
+    def refresh_preset_selector(self):
+        """Refresh preset selector combo box"""
+        self.preset_combo.clear()
+        for preset_id, preset_name in self.preset_manager.get_preset_list():
+            self.preset_combo.addItem(preset_name, preset_id)
+
+    def on_preset_changed(self, index):
+        """Handle preset selection change"""
+        if index >= 0:
+            preset_id = self.preset_combo.currentData()
+            preset = self.preset_manager.get_preset(preset_id)
+            if preset:
+                # Show preset description in status bar
+                desc = preset.get('description', '')
+                self.status_bar.showMessage(desc if desc else f"Preset: {preset['name']}")
+
+    def apply_selected_preset(self):
+        """Apply selected preset from combo box"""
+        preset_id = self.preset_combo.currentData()
+        if not preset_id:
+            return
+
+        preset = self.preset_manager.get_preset(preset_id)
+        if not preset:
+            return
+
+        self.log(f"Applying preset: {preset['name']}")
+
+        # Apply all settings
+        self.baud_combo.setCurrentText(str(preset.get('baudrate', 115200)))
+        self.timeout_spin.setValue(preset.get('timeout', 1400))
+        self.delay_spin.setValue(preset.get('delay', 5))
+        self.chunk_spin.setValue(preset.get('chunk_size', 1024))
+        self.retry_spin.setValue(preset.get('retry_count', 3))
+        self.verify_check.setChecked(preset.get('verify', True))
+        self.reboot_check.setChecked(preset.get('reboot', True))
+
+        # Apply signature check if present
+        if 'signature_check' in preset:
+            if preset['signature_check']:
+                self.sig_method_combo.setCurrentText('MD5')
+            else:
+                self.sig_method_combo.setCurrentText('NONE')
+
+        self.status_bar.showMessage(f"Applied preset: {preset['name']}")
+
+    def manage_presets(self):
+        """Open preset manager dialog"""
+        dialog = PresetManagerDialog(self, self.preset_manager)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.refresh_preset_selector()
+
+    def save_current_as_preset(self):
+        """Save current configuration as new preset"""
+        name, ok = QInputDialog.getText(
+            self,
+            "Save Preset",
+            "Enter preset name:",
+            text="My Custom Preset"
+        )
+
+        if not ok or not name:
+            return
+
+        preset_id = name.replace(' ', '_').replace('-', '_')
+
+        preset_data = {
+            'name': name,
+            'description': f"Custom preset saved on {QSettings().value('timestamp', '')}",
+            'baudrate': int(self.baud_combo.currentText()),
+            'timeout': self.timeout_spin.value(),
+            'delay': self.delay_spin.value(),
+            'chunk_size': self.chunk_spin.value(),
+            'retry_count': self.retry_spin.value(),
+            'verify': self.verify_check.isChecked(),
+            'reboot': self.reboot_check.isChecked(),
+            'signature_check': self.sig_method_combo.currentText() != 'NONE'
+        }
+
+        if self.preset_manager.add_preset(preset_id, preset_data):
+            self.refresh_preset_selector()
+            # Select the new preset
+            index = self.preset_combo.findData(preset_id)
+            if index >= 0:
+                self.preset_combo.setCurrentIndex(index)
+            QMessageBox.information(self, "Success", f"Preset '{name}' saved successfully")
+        else:
+            QMessageBox.critical(self, "Error", "Failed to save preset")
+
+    def on_sig_method_changed(self, method):
+        """Handle signature method change"""
+        self.signature_verifier.set_verification_method(method)
+
+        # Enable/disable RSA-specific controls
+        if method == 'RSA':
+            self.public_key_path.setEnabled(True)
+            self.browse_key_btn.setEnabled(True)
+        else:
+            self.public_key_path.setEnabled(False)
+            self.browse_key_btn.setEnabled(False)
+
+    def browse_public_key(self):
+        """Browse for public key file"""
+        filename, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select Public Key",
+            "",
+            "PEM Files (*.pem);;All Files (*.*)"
+        )
+
+        if filename:
+            self.public_key_path.setText(filename)
+            if self.signature_verifier.load_public_key(filename):
+                self.log(f"Public key loaded: {filename}")
+            else:
+                QMessageBox.warning(self, "Error", "Failed to load public key")
+
+    def generate_signature(self):
+        """Generate signature file for firmware"""
+        if not self.firmware_path.text():
+            QMessageBox.warning(self, "No Firmware", "Please select a firmware file first")
+            return
+
+        firmware_file = self.firmware_path.text()
+        if not os.path.exists(firmware_file):
+            QMessageBox.warning(self, "File Not Found", "Firmware file does not exist")
+            return
+
+        method = self.sig_method_combo.currentText()
+        if method == 'NONE':
+            QMessageBox.information(self, "Select Method", "Please select a signature method (MD5 or SHA256)")
+            return
+
+        output_file = firmware_file + f'.{method.lower()}'
+
+        if self.signature_verifier.generate_signature_file(firmware_file, output_file):
+            # Read and display the signature
+            with open(output_file, 'r') as f:
+                sig = f.read().strip()
+
+            self.expected_checksum.setText(sig)
+            self.log(f"Generated {method} signature: {sig}")
+            QMessageBox.information(
+                self,
+                "Success",
+                f"Signature file created:\n{output_file}\n\n{method}: {sig}"
+            )
+        else:
+            QMessageBox.critical(self, "Error", "Failed to generate signature file")
 
     def start_flash(self):
         """Start firmware flashing"""

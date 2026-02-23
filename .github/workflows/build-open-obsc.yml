@@ -15,6 +15,8 @@ jobs:
   build-windows-exe:
     name: Build Windows Executable
     runs-on: windows-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout repository
@@ -46,6 +48,8 @@ jobs:
   test-python:
     name: Test Python Modules
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout repository

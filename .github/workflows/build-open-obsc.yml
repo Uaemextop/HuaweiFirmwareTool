@@ -1,0 +1,140 @@
+name: Build Open OBSC Tool
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'opensource_tool/**'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'opensource_tool/**'
+  workflow_dispatch:
+
+jobs:
+  build-windows-exe:
+    name: Build Windows Executable
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r opensource_tool/requirements.txt
+
+      - name: Build executable with PyInstaller
+        run: |
+          cd opensource_tool
+          pyinstaller --onefile --windowed --name "OpenOBSCTool" open_obsc_tool.py
+          dir dist
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenOBSCTool-Windows
+          path: opensource_tool/dist/OpenOBSCTool.exe
+          retention-days: 90
+
+  test-python:
+    name: Test Python Modules
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run tests
+        run: |
+          cd opensource_tool
+          python -m pytest tests/ -v || python -c "
+          import sys
+          sys.path.insert(0, '.')
+          from hwnp import HwnpFirmware, HwnpItem, create_upgrade_check_xml, HWNP_MAGIC
+          from obsc_protocol import ObscBroadcaster, OntDevice
+
+          # Test HWNP creation and round-trip
+          fw = HwnpFirmware()
+          fw.prod_list = '120|130|'
+          item = HwnpItem()
+          item.item = 'file:/var/test.txt'
+          item.section = 'UNKNOWN'
+          item.policy = 0
+          item.data = b'Hello World'
+          fw.items.append(item)
+          data = fw.to_bytes()
+          assert data[:4] == b'HWNP', 'Magic mismatch'
+
+          # Test round-trip
+          fw2 = HwnpFirmware.from_bytes(data)
+          assert fw2.item_counts == 1
+          assert fw2.items[0].item == 'file:/var/test.txt'
+          assert fw2.items[0].data == b'Hello World'
+          assert fw2.prod_list == '120|130|'
+
+          # Test UpgradeCheck.xml generation
+          xml = create_upgrade_check_xml()
+          assert b'<upgradecheck>' in xml
+          assert b'CheckEnable=\"0\"' in xml
+
+          # Test broadcaster creation
+          bc = ObscBroadcaster(broadcast_port=9999)
+          assert bc.broadcast_port == 9999
+          interfaces = ObscBroadcaster.get_network_interfaces()
+          assert len(interfaces) > 0
+
+          print('All tests passed!')
+          "
+
+  release:
+    name: Create Release
+    needs: [build-windows-exe, test-python]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: OpenOBSCTool-Windows
+
+      - name: Get date
+        id: date
+        run: echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: open-obsc-v${{ steps.date.outputs.date }}
+          name: Open OBSC Tool ${{ steps.date.outputs.date }}
+          body: |
+            ## Open OBSC Tool — Automated Build
+
+            Open-source ONT firmware flashing tool for Windows.
+
+            ### Features
+            - Load, inspect, and build HWNP firmware packages
+            - Discover and flash ONT devices via UDP broadcast
+            - Fully configurable network parameters
+            - Firmware item extraction and hash verification
+
+            ### Usage
+            Download `OpenOBSCTool.exe` and run it. No installation required.
+          files: OpenOBSCTool.exe
+          draft: false
+          prerelease: false

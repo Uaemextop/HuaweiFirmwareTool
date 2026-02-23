@@ -2,8 +2,15 @@ name: Build OBSC Firmware Tool
 
 on:
   push:
+    branches:
+      - main
+      - 'copilot/**'
     tags:
       - 'v*'
+  pull_request:
+    branches:
+      - main
+      - 'copilot/**'
   workflow_dispatch:
 
 permissions:

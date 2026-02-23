@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# PyInstaller build artifacts
+ont_tool/build/
+ont_tool/dist/
+*.spec.bak
+
+# Distribution / packaging
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+wheels/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# C++ build artifacts
+build/
+*.o
+*.a
+
+# IDE / editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Settings
+.env

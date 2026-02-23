@@ -1,0 +1,64 @@
+# Build directories
+build/
+cmake-build-*/
+
+# Compiled binaries
+*.o
+*.a
+*.so
+*.exe
+hw_fmw
+hw_sign
+hw_verify
+
+# Firmware files (large binary files)
+*.bin
+*.img
+
+# Extracted rootfs (too large for git)
+extracted_rootfs/*.bin
+
+# Unpacked firmware directories
+unpacked*/
+extracted*/
+
+# Signature and key files (security sensitive)
+*.pem
+*.key
+signature
+*_signature
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Analysis outputs
+binwalk_output/
+radare2_project/

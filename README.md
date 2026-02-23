@@ -82,7 +82,9 @@ python3 translate_ont_tool.py ONT_V100R002C00SPC253.exe ONT_V100R002C00SPC253_EN
 - Menu items and enable package descriptions
 - Table column headers (No., Board, MAC, Start/End Time, etc.)
 - Notice text (tool usage warnings)
-- License error messages
+- License error messages (UTF-16LE)
+- Bug tracking fields: Issue ID, Baseline, Severity, etc. (GBK)
+- 124 internal error/log messages (GBK): license, registry, trial, XML, etc.
 
 ## Example modify/verify firmware on HG8245 (need support check signature)
 ### Mark the file to sign

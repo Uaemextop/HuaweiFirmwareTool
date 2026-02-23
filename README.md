@@ -84,3 +84,42 @@ $ ./hw_sign -d unpack -k private.pem -o new_signature
 ```
 $ ./hw_verify -d unpack -k public.pem -i new_signature
 ```
+
+## ONT Flasher GUI - Open Source Tool
+
+**NEW!** We've developed an open-source GUI application for flashing Huawei ONT firmware:
+
+📦 [**ONT Flasher GUI**](ont-flasher-gui/) - Modern Windows 11 application with graphical interface
+
+Features:
+- ✨ Modern PyQt6 interface for Windows 11
+- 🔌 Serial communication with ONT devices
+- ⚙️ Highly configurable timing and protocol settings
+- 📊 Real-time progress tracking and logging
+- 🎯 Quick presets for common devices (HG8145V5, HG8245)
+- 💾 Save/Load configuration profiles
+- 🔍 Firmware verification support
+- 🔄 Automatic device reboot
+- 🐛 Debug and dry-run modes
+
+**Download:** Check [Releases](https://github.com/Uaemextop/HuaweiFirmwareTool/releases) for pre-built executables
+
+**Documentation:**
+- [User Guide (English)](ont-flasher-gui/docs/USER_GUIDE.md)
+- [Guía de Usuario (Español)](ont-flasher-gui/docs/USER_GUIDE_ES.md)
+- [Project README](ont-flasher-gui/README.md)
+
+## Additional Documentation
+
+### EXE Analysis and Firmware Tools
+- [Complete EXE Analysis Report](EXE_ANALYSIS_REPORT.md) - Detailed analysis of Huawei ONT firmware tools
+- [Análisis en Español](ANALISIS_ES.md) - Documentación completa en español
+- [Analysis Tools](tools/README.md) - Python tools for PE executable analysis
+
+### Topics Covered
+- Static analysis of ONT firmware upgrade tools
+- Unlock methodology for HG8145V5 devices
+- PE32 executable structure analysis
+- Firmware component documentation
+- Security considerations
+- Open-source GUI implementation

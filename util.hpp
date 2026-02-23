@@ -1,6 +1,7 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include <cstdint>
 #include <string>
 #include <fstream>
 #include <unistd.h>

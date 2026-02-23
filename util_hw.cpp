@@ -204,8 +204,6 @@ Firmware::PathItemOnFmw(const std::string &raw_path_item)
 void
 Firmware::PackToMem()
 {
-    this->hdr._unknow_data_1 = 0x00;
-    this->hdr._unknow_data_2 = 0x00;
     this->hdr.prod_list_sz   = this->prod_list.size();
 
     this->hdr.item_sz     = sizeof(huawei_item);
@@ -247,7 +245,11 @@ Firmware::UnpackToFS(const std::string &path_items,
     //    list_metadata.write(reinterpret_cast<char *>(&this->hdr.magic_huawei),
     //                        sizeof(this->hdr.magic_huawei));
     //    list_metadata << std::endl;
-    list_metadata << std::showbase << std::hex << this->hdr.magic_huawei << std::endl;
+    list_metadata << std::showbase << std::hex << this->hdr.magic_huawei;
+    list_metadata << ' ' << std::dec << static_cast<int>(this->hdr._unknow_data_1);
+    list_metadata << ' ' << static_cast<int>(this->hdr._unknow_data_2);
+    list_metadata << ' ' << this->hdr.reserved;
+    list_metadata << std::endl;
 
     list_metadata << std::dec << this->hdr.prod_list_sz << ' ' << this->prod_list.c_str()
                   << std::endl;
@@ -313,10 +315,21 @@ Firmware::ReadFlashFromFS(const std::string &path_fmw)
         throw_err("Product list corrupted", path_fmw);
     }
 
-    for (uint32_t i = 0; i < this->hdr.item_counts; ++i) {
-        struct huawei_item hi;
+    // Use item_sz from firmware header; fall back to sizeof if header has 0
+    uint32_t item_sz = this->hdr.item_sz ? this->hdr.item_sz : sizeof(huawei_item);
 
-        if (!fd.read(reinterpret_cast<char *>(&hi), sizeof(huawei_item))) {
+    for (uint32_t i = 0; i < this->hdr.item_counts; ++i) {
+        struct huawei_item hi = {};
+
+        auto item_start = sizeof(huawei_header) + this->hdr.prod_list_sz +
+                          static_cast<std::streamoff>(i) * item_sz;
+        if (!fd.seekg(item_start)) {
+            throw_err("Item header seek failed", path_fmw);
+        }
+
+        // Read up to sizeof(huawei_item) bytes; extra bytes in larger items are skipped
+        size_t read_sz = std::min(static_cast<size_t>(item_sz), sizeof(huawei_item));
+        if (!fd.read(reinterpret_cast<char *>(&hi), read_sz)) {
             throw_err("Items corrupted", path_fmw);
         }
 
@@ -400,18 +413,40 @@ Firmware::ReadHeaderFromFS(std::stringstream &fd)
         fd >> std::hex >> this->hdr.magic_huawei; // read new format
     }
 
+    // Try to read extended header fields (unknow_data_1, unknow_data_2, reserved)
+    std::string header_line;
+    std::getline(fd, header_line);
+    {
+        std::istringstream hdr_stream(header_line);
+        int u1 = 0, u2 = 0;
+        uint32_t reserved = 0;
+        if (hdr_stream >> u1 >> u2 >> reserved) {
+            this->hdr._unknow_data_1 = static_cast<uint8_t>(u1);
+            this->hdr._unknow_data_2 = static_cast<uint8_t>(u2);
+            this->hdr.reserved = reserved;
+        }
+    }
+
     fd >> std::dec >> this->hdr.prod_list_sz;
-    fd >> std::setw(this->hdr.prod_list_sz) >> this->prod_list;
+
+    // Read product list from the rest of the line to handle empty product lists
+    std::string prod_line;
+    std::getline(fd, prod_line);
+
+    // Remove leading space if present
+    if (!prod_line.empty() && prod_line.front() == ' ') {
+        prod_line.erase(0, 1);
+    }
+
+    this->prod_list = prod_line;
 
     // Check max value product_list_size
-    if (this->prod_list.size() != this->hdr.prod_list_sz) {
-
-        if (this->hdr.prod_list_sz > 256) {
-            this->hdr.prod_list_sz = 256;
-        }
-
-        this->prod_list.resize(this->hdr.prod_list_sz);
+    if (this->hdr.prod_list_sz > 256) {
+        this->hdr.prod_list_sz = 256;
     }
+
+    // Pad product list with null bytes to match prod_list_sz
+    this->prod_list.resize(this->hdr.prod_list_sz);
 }
 
 bool

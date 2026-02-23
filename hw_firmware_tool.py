@@ -26,7 +26,9 @@ Download command templates (from libhw_swm_dll.so):
 import argparse
 import hashlib
 import os
+import shutil
 import struct
+import subprocess
 import sys
 import urllib.request
 import urllib.error
@@ -164,7 +166,10 @@ def _analyze_rootfs(item_data, output_dir, safe_name):
             with open(sqfs_path, 'wb') as f:
                 f.write(item_data[sqfs_off:])
             print(f"    Saved SquashFS: {sqfs_path}")
-            print(f"    Extract with: unsquashfs -d {output_dir}/rootfs_extracted {sqfs_path}")
+
+            # Try to extract SquashFS automatically
+            extract_dir = os.path.join(output_dir, 'rootfs_extracted')
+            _try_unsquashfs(sqfs_path, extract_dir)
 
         # Find uImage
         uimg_off = item_data.find(UIMAGE_MAGIC)
@@ -176,6 +181,42 @@ def _analyze_rootfs(item_data, output_dir, safe_name):
         _analyze_encrypted_rootfs(item_data, output_dir, safe_name)
     else:
         print(f"    Format: Unknown (magic 0x{magic32:08x})")
+
+
+def _try_unsquashfs(sqfs_path, extract_dir):
+    """Try to extract SquashFS using unsquashfs if available."""
+    unsquashfs = shutil.which('unsquashfs')
+    if not unsquashfs:
+        print(f"    unsquashfs not found; install squashfs-tools to auto-extract")
+        print(f"    Extract with: unsquashfs -d {extract_dir} {sqfs_path}")
+        return
+
+    if os.path.exists(extract_dir):
+        print(f"    Skipping extraction: {extract_dir} already exists")
+        return
+
+    print(f"    Extracting SquashFS with unsquashfs...")
+    try:
+        result = subprocess.run(
+            [unsquashfs, '-d', extract_dir, sqfs_path],
+            capture_output=True, text=True, timeout=300)
+        if result.returncode == 0:
+            file_count = sum(1 for _ in _walk_count(extract_dir))
+            print(f"    Extracted rootfs to: {extract_dir} ({file_count} files)")
+        else:
+            print(f"    unsquashfs failed: {result.stderr.strip()}")
+            print(f"    Extract manually: unsquashfs -d {extract_dir} {sqfs_path}")
+    except subprocess.TimeoutExpired:
+        print(f"    unsquashfs timed out after 300s")
+    except Exception as e:
+        print(f"    unsquashfs error: {e}")
+        print(f"    Extract manually: unsquashfs -d {extract_dir} {sqfs_path}")
+
+
+def _walk_count(path):
+    """Count files in a directory tree."""
+    for root, dirs, files in os.walk(path):
+        yield from files
 
 
 def _analyze_encrypted_rootfs(item_data, output_dir, safe_name):
@@ -275,6 +316,16 @@ KNOWN_FIRMWARE_SOURCES = {
                 'url': 'https://github.com/Eduardob3677/mtkclient/releases/download/v3/HG8145V5-V500R021C00SPC210.bin',
                 'description': 'SPC210 - Encrypted rootfs',
                 'encrypted_rootfs': True,
+            },
+        },
+    },
+    'EG8145V5': {
+        'description': 'Huawei EG8145V5 ONT (GPON)',
+        'versions': {
+            'V500R022C00SPC340': {
+                'url': 'https://github.com/Uaemextop/HuaweiFirmwareTool/releases/download/V2/EG8145V5-V500R022C00SPC340B019.bin',
+                'description': 'SPC340B019 - Full firmware with SquashFS rootfs (unencrypted)',
+                'encrypted_rootfs': False,
             },
         },
     },

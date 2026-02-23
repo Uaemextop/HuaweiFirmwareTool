@@ -61,6 +61,41 @@ After second line:
 ```
 $ ./hw_fmw -d unpack -p -o /home/user/new_hg8245hv300r015c10spc130_common_all.bin -v
 ```
+## ONT Maintenance Tool (English Translation + Unlocked)
+
+The file `ONT_V100R002C00SPC253_EN.exe` is an English-translated and unlocked version of
+the Huawei ONT maintenance and enable tool (originally in Chinese). The translation was
+performed using `translate_ont_tool.py` and the unlock using `unlock_ont_tool.py`.
+
+### Recreate the translated and unlocked EXE
+```
+pip install pefile
+python3 translate_ont_tool.py ONT_V100R002C00SPC253.exe ONT_V100R002C00SPC253_EN.exe
+python3 unlock_ont_tool.py ONT_V100R002C00SPC253_EN.exe ONT_V100R002C00SPC253_EN.exe
+```
+
+### Translated UI elements
+- Main window: buttons, labels, group boxes, status fields
+- License dialog: registration, expiry, copyright info
+- License input dialog: invitation code, OK/Cancel
+- Warning dialog
+- Menu items and enable package descriptions
+- Table column headers (No., Board, MAC, Start/End Time, etc.)
+- Notice text (tool usage warnings)
+- License error messages (UTF-16LE)
+- Bug tracking fields: Issue ID, Baseline, Severity, etc. (GBK)
+- 124 internal error/log messages (GBK): license, registry, trial, XML, etc.
+
+### Unlocked features
+- **License validation bypass**: All 5 code paths that check the license init result and
+  display "Init Lic.fail" are patched to always take the success path. The app no longer
+  shows license errors at startup.
+- **License timer bypass**: The 5-second countdown that closes the app when the license
+  is invalid has been disabled.
+- **Menu items enabled**: All 9 greyed-out menu commands (0x420E-0x4216) are now always
+  enabled. These include firmware management operations that were previously gated behind
+  license validation and connection state checks.
+
 ## Example modify/verify firmware on HG8245 (need support check signature)
 ### Mark the file to sign
 ```

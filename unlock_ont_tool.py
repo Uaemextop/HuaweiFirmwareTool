@@ -56,6 +56,7 @@ CODE_PATCHES = [TIMER_BYPASS, MENU_ENABLE_1, MENU_ENABLE_2]
 
 # Remaining untranslated UTF-16LE strings
 # Format: {file_offset: (chinese, english, max_bytes)}
+# Note: '$year' is a literal placeholder in the original binary, not a variable
 REMAINING_UTF16_TRANSLATIONS = {
     0x3cfdb8: ('License已注册', 'Lic. OK', 24),
     0x3cfdd0: ('程序License无效！程序将在%d秒后关闭！',
@@ -95,7 +96,7 @@ def patch_remaining_strings(file_data):
         cn_encoded = chinese.encode('utf-16-le')
         en_encoded = english.encode('utf-16-le')
 
-        if len(en_encoded) + 2 > max_bytes:
+        if len(en_encoded) + 2 > max_bytes:  # +2 for UTF-16LE null terminator
             print(f'  WARNING: "{english}" too long for 0x{offset:x}, skipping')
             continue
 
@@ -124,9 +125,12 @@ def fixup_pe_checksum(file_data):
     # Calculate new checksum (PE checksum algorithm)
     checksum = 0
     size = len(file_data)
-    for i in range(0, size - 1, 2):
+    for i in range(0, size & ~1, 2):
         val = struct.unpack_from('<H', file_data, i)[0]
         checksum += val
+        checksum = (checksum & 0xFFFF) + (checksum >> 16)
+    if size % 2:
+        checksum += file_data[-1]
         checksum = (checksum & 0xFFFF) + (checksum >> 16)
     checksum = (checksum & 0xFFFF) + (checksum >> 16)
     checksum += size

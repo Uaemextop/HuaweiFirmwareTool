@@ -10,7 +10,7 @@ Features:
   - Configurable transfer parameters (frame size, interval, flash mode)
   - Real-time progress with speed and ETA
   - Device discovery list
-  - Audit log with export
+  - Audit log with export (OBSC_LOG format)
   - Dark / Light theme toggle
 """
 
@@ -826,11 +826,12 @@ class OBSCToolApp:
 
     def _export_log(self):
         """Export log to file."""
+        # Log filename matches original Huawei tool format (OSBC_LOG_*)
         path = filedialog.asksaveasfilename(
             title="Export Log",
             defaultextension=".log",
             filetypes=[("Log files", "*.log"), ("Text files", "*.txt")],
-            initialfile=f"OSBC_LOG_{datetime.datetime.now().strftime('%Y-%m-%d_%H')}.log",
+            initialfile=f"OBSC_LOG_{datetime.datetime.now().strftime('%Y-%m-%d_%H')}.log",
         )
         if path:
             with open(path, 'w', encoding='utf-8') as f:
@@ -842,7 +843,7 @@ class OBSCToolApp:
         try:
             log_dir = self.log_dir_var.get()
             os.makedirs(log_dir, exist_ok=True)
-            filename = f"OSBC_LOG_{datetime.datetime.now().strftime('%Y-%m-%d_%H')}.log"
+            filename = f"OBSC_LOG_{datetime.datetime.now().strftime('%Y-%m-%d_%H')}.log"
             path = os.path.join(log_dir, filename)
             with open(path, 'w', encoding='utf-8') as f:
                 f.write('\n'.join(self.log_entries))

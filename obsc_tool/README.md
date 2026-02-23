@@ -17,7 +17,7 @@ to ONT (Optical Network Terminal) devices via the OBSC UDP protocol.
   - Machine filter by serial number
 - **Real-time progress** with transfer speed and ETA
 - **Device discovery** — finds ONT devices in bootloader mode
-- **Audit logging** — OSBC_LOG format compatible with original tool
+- **Audit logging** — OBSC_LOG format
 - **Dark / Light theme** — Windows 11 native look
 - **Advanced settings:**
   - Custom send/receive ports

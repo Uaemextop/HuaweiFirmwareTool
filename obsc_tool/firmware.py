@@ -177,22 +177,29 @@ class HWNPFirmware:
     def validate_crc32(self):
         """Validate CRC32 checksums of the firmware.
 
+        Note: The original C++ code uses crc32_combine for a chained
+        calculation across header, product list, items, and data.
+        This simplified validator zeros CRC fields and recomputes over
+        the full data, which may not match the original algorithm.
+
         Returns:
             Tuple of (header_valid, data_valid) booleans.
         """
         # Header CRC32: calculated over the header area
+        item_size = self.item_header_size if self.item_header_size > 0 else HWNP_ITEM_SIZE
         header_end = HWNP_HEADER_SIZE + self.prod_list_size + \
-            self.item_count * HWNP_ITEM_SIZE
+            self.item_count * item_size
         header_data = bytearray(self.raw_data[:header_end])
         # Zero out the CRC fields for recalculation
-        struct.pack_into('<I', header_data, 0x0C, 0)  # raw_crc32
-        struct.pack_into('<I', header_data, 0x14, 0)  # header_crc32
+        # raw_crc32 is at offset 8, hdr_crc32 is at offset 16
+        struct.pack_into('<I', header_data, 0x08, 0)  # raw_crc32
+        struct.pack_into('<I', header_data, 0x10, 0)  # hdr_crc32
         calc_hdr_crc = zlib.crc32(bytes(header_data[:header_end])) & 0xFFFFFFFF
         header_valid = (calc_hdr_crc == self.header_crc32)
 
         # Raw CRC32: calculated over the entire file
         raw_copy = bytearray(self.raw_data)
-        struct.pack_into('<I', raw_copy, 0x0C, 0)  # zero raw_crc32
+        struct.pack_into('<I', raw_copy, 0x08, 0)  # zero raw_crc32
         calc_raw_crc = zlib.crc32(bytes(raw_copy)) & 0xFFFFFFFF
         data_valid = (calc_raw_crc == self.raw_crc32)
 

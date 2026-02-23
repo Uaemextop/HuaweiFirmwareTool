@@ -1,4 +1,8 @@
 # OBSC Firmware Tool - Dependencies
-# No external dependencies required for the GUI application (uses tkinter).
+#
+# Core: zero external dependencies (uses tkinter from stdlib).
+# Optional: pyserial — required for serial/UART terminal access.
+#
 # PyInstaller is only needed for building the standalone .exe.
 pyinstaller>=6.0
+pyserial>=3.5

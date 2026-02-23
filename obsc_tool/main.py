@@ -29,7 +29,11 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from obsc_tool import __version__
 from obsc_tool.firmware import HWNPFirmware
-from obsc_tool.network import discover_adapters, UDPTransport
+from obsc_tool.network import (
+    discover_adapters, UDPTransport,
+    configure_adapter_ip, set_adapter_dhcp, test_socket_bind,
+    list_serial_ports,
+)
 from obsc_tool.protocol import (
     OBSCWorker, FlashMode, UpgradeType,
     OBSC_SEND_PORT, OBSC_RECV_PORT
@@ -250,6 +254,17 @@ class OBSCToolApp:
             command=self._refresh_adapters, width=12,
         )
         refresh_btn.pack(side=tk.RIGHT)
+
+        # Adapter details panel
+        self.adapter_detail_var = tk.StringVar(value="")
+        adapter_detail_label = ttk.Label(
+            adapter_frame, textvariable=self.adapter_detail_var,
+            font=('Consolas', 8), justify=tk.LEFT,
+        )
+        adapter_detail_label.pack(fill=tk.X, pady=(5, 0))
+
+        # Update details when adapter selection changes
+        self.adapter_combo.bind('<<ComboboxSelected>>', self._on_adapter_selected)
 
         # ── Firmware File ────────────────────────────────────────
         fw_frame = ttk.LabelFrame(tab, text="Firmware File", padding=8)
@@ -506,6 +521,62 @@ class OBSCToolApp:
             variable=self.auto_log_var,
         ).pack(fill=tk.X, pady=2)
 
+        # ── Network Configuration ────────────────────────────────
+        net_frame = ttk.LabelFrame(tab, text="Network Configuration", padding=10)
+        net_frame.pack(fill=tk.X, pady=(0, 10))
+
+        # Adapter selector for configuration
+        row = ttk.Frame(net_frame)
+        row.pack(fill=tk.X, pady=2)
+        ttk.Label(row, text="Configure Adapter:", width=20).pack(side=tk.LEFT)
+        self.cfg_adapter_var = tk.StringVar()
+        self.cfg_adapter_combo = ttk.Combobox(
+            row, textvariable=self.cfg_adapter_var,
+            state='readonly', width=30,
+        )
+        self.cfg_adapter_combo.pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Button(row, text="🔃", command=self._refresh_cfg_adapters, width=3).pack(side=tk.LEFT)
+
+        # IP Address
+        row = ttk.Frame(net_frame)
+        row.pack(fill=tk.X, pady=2)
+        ttk.Label(row, text="IP Address:", width=20).pack(side=tk.LEFT)
+        self.cfg_ip_var = tk.StringVar(value="192.168.1.100")
+        ttk.Entry(row, textvariable=self.cfg_ip_var, width=18).pack(side=tk.LEFT)
+
+        # Subnet Mask
+        ttk.Label(row, text="  Subnet:", width=8).pack(side=tk.LEFT)
+        self.cfg_mask_var = tk.StringVar(value="255.255.255.0")
+        ttk.Entry(row, textvariable=self.cfg_mask_var, width=18).pack(side=tk.LEFT)
+
+        # Gateway
+        row = ttk.Frame(net_frame)
+        row.pack(fill=tk.X, pady=2)
+        ttk.Label(row, text="Gateway:", width=20).pack(side=tk.LEFT)
+        self.cfg_gw_var = tk.StringVar(value="")
+        ttk.Entry(row, textvariable=self.cfg_gw_var, width=18).pack(side=tk.LEFT)
+        ttk.Label(row, text="(optional)", font=('Segoe UI', 8)).pack(side=tk.LEFT, padx=5)
+
+        # Buttons
+        btn_row = ttk.Frame(net_frame)
+        btn_row.pack(fill=tk.X, pady=(5, 0))
+        ttk.Button(
+            btn_row, text="📝 Apply Static IP",
+            command=self._apply_static_ip, width=18,
+        ).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Button(
+            btn_row, text="🔄 Set DHCP",
+            command=self._apply_dhcp, width=14,
+        ).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Button(
+            btn_row, text="🔌 Test Socket",
+            command=self._test_socket, width=14,
+        ).pack(side=tk.LEFT)
+
+        self.net_status_var = tk.StringVar(value="")
+        ttk.Label(net_frame, textvariable=self.net_status_var,
+                  font=('Segoe UI', 9)).pack(fill=tk.X, pady=(5, 0))
+
     def _build_presets_tab(self):
         """Build the router presets management tab."""
         tab = self.tab_presets
@@ -526,10 +597,7 @@ class OBSCToolApp:
         ttk.Button(row, text="Load", command=self._load_preset, width=8).pack(side=tk.LEFT, padx=2)
         ttk.Button(row, text="Delete", command=self._delete_preset, width=8).pack(side=tk.LEFT, padx=2)
 
-        # Update combo values
-        self._refresh_preset_list()
-
-        # Preset description
+        # Preset description (must be created before _refresh_preset_list)
         self.preset_desc_var = tk.StringVar(value="Select a preset to see its description")
         ttk.Label(select_frame, textvariable=self.preset_desc_var,
                   font=('Segoe UI', 9), wraplength=600).pack(fill=tk.X, pady=(5, 0))
@@ -576,6 +644,9 @@ class OBSCToolApp:
             state='disabled', height=10,
         )
         self.preset_details_text.pack(fill=tk.BOTH, expand=True)
+
+        # Populate preset list (must be after all widgets are created)
+        self._refresh_preset_list()
 
     def _build_verification_tab(self):
         """Build the signature and verification configuration tab."""
@@ -1527,7 +1598,21 @@ class OBSCToolApp:
         self.adapter_combo['values'] = names
         if names:
             self.adapter_combo.current(0)
+            self._on_adapter_selected(None)
         self._log(f"Found {len(self.adapters)} network adapter(s)")
+        # Also refresh the config adapter combo in Settings tab
+        self._refresh_cfg_adapters()
+
+    def _on_adapter_selected(self, event):
+        """Update adapter detail display when selection changes."""
+        adapter = self._get_selected_adapter()
+        if adapter:
+            details = adapter.details_dict()
+            text = "  |  ".join(f"{k}: {v}" for k, v in details.items()
+                                if v and v != "N/A" and k not in ("Name",))
+            self.adapter_detail_var.set(text)
+        else:
+            self.adapter_detail_var.set("")
 
     def _get_selected_adapter(self):
         """Get the currently selected NetworkAdapter."""
@@ -1535,6 +1620,80 @@ class OBSCToolApp:
         if idx >= 0 and idx < len(self.adapters):
             return self.adapters[idx]
         return None
+
+    def _refresh_cfg_adapters(self):
+        """Refresh the adapter list in the Network Configuration section."""
+        if hasattr(self, 'cfg_adapter_combo'):
+            names = [a.name for a in self.adapters]
+            self.cfg_adapter_combo['values'] = names
+            if names:
+                self.cfg_adapter_combo.current(0)
+
+    def _apply_static_ip(self):
+        """Apply static IP configuration to the selected adapter."""
+        adapter_name = self.cfg_adapter_var.get()
+        if not adapter_name:
+            messagebox.showwarning("No Adapter", "Select an adapter to configure.")
+            return
+
+        ip = self.cfg_ip_var.get().strip()
+        mask = self.cfg_mask_var.get().strip()
+        gw = self.cfg_gw_var.get().strip()
+
+        if not ip or not mask:
+            messagebox.showwarning("Missing Info", "IP address and subnet mask are required.")
+            return
+
+        if not messagebox.askyesno(
+            "Confirm Network Change",
+            f"Set {adapter_name} to:\n\n"
+            f"  IP: {ip}\n  Mask: {mask}\n  GW: {gw or 'none'}\n\n"
+            "⚠️ Requires administrator privileges.\n"
+            "This may temporarily disconnect the adapter."
+        ):
+            return
+
+        self.net_status_var.set("Applying...")
+        self.root.update_idletasks()
+
+        ok, msg = configure_adapter_ip(adapter_name, ip, mask, gw)
+        self.net_status_var.set(("✅ " if ok else "❌ ") + msg)
+        self._log(f"Network config: {msg}")
+        if ok:
+            self.root.after(2000, self._refresh_adapters)
+
+    def _apply_dhcp(self):
+        """Set the selected adapter to DHCP mode."""
+        adapter_name = self.cfg_adapter_var.get()
+        if not adapter_name:
+            messagebox.showwarning("No Adapter", "Select an adapter to configure.")
+            return
+
+        if not messagebox.askyesno(
+            "Confirm DHCP",
+            f"Set {adapter_name} to DHCP?\n\n"
+            "⚠️ Requires administrator privileges."
+        ):
+            return
+
+        self.net_status_var.set("Applying DHCP...")
+        self.root.update_idletasks()
+
+        ok, msg = set_adapter_dhcp(adapter_name)
+        self.net_status_var.set(("✅ " if ok else "❌ ") + msg)
+        self._log(f"Network config: {msg}")
+        if ok:
+            self.root.after(3000, self._refresh_adapters)
+
+    def _test_socket(self):
+        """Test socket binding to verify network is ready."""
+        adapter = self._get_selected_adapter()
+        bind_ip = adapter.ip if adapter else "0.0.0.0"
+        bind_port = int(self.recv_port_var.get())
+
+        ok, msg = test_socket_bind(bind_ip, bind_port, broadcast=True)
+        self.net_status_var.set(("✅ " if ok else "❌ ") + msg)
+        self._log(f"Socket test: {msg}")
 
     # ── Firmware Management ──────────────────────────────────────
 

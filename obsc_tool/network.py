@@ -19,15 +19,21 @@ logger = logging.getLogger("obsc_tool.network")
 class NetworkAdapter:
     """Represents a network interface/adapter."""
 
-    __slots__ = ('name', 'ip', 'netmask', 'mac', 'description', 'index')
+    __slots__ = ('name', 'ip', 'netmask', 'mac', 'description', 'index',
+                 'gateway', 'status', 'speed', 'dhcp_enabled')
 
-    def __init__(self, name="", ip="", netmask="", mac="", description="", index=0):
+    def __init__(self, name="", ip="", netmask="", mac="", description="",
+                 index=0, gateway="", status="Up", speed="", dhcp_enabled=False):
         self.name = name
         self.ip = ip
         self.netmask = netmask
         self.mac = mac
         self.description = description
         self.index = index
+        self.gateway = gateway
+        self.status = status
+        self.speed = speed
+        self.dhcp_enabled = dhcp_enabled
 
     def __repr__(self):
         return f"NetworkAdapter({self.name}, {self.ip}, {self.mac})"
@@ -56,6 +62,22 @@ class NetworkAdapter:
             return socket.inet_ntoa(struct.pack('!I', bcast_int))
         except (OSError, struct.error):
             return "255.255.255.255"
+
+    def details_dict(self):
+        """Return all adapter details as an ordered dict for display."""
+        return {
+            "Name": self.name,
+            "Description": self.description,
+            "IP Address": self.ip,
+            "Subnet Mask": self.netmask,
+            "Broadcast": self.broadcast_address(),
+            "Gateway": self.gateway or "N/A",
+            "MAC Address": self.mac or "N/A",
+            "Status": self.status,
+            "Speed": self.speed or "N/A",
+            "DHCP": "Enabled" if self.dhcp_enabled else "Static",
+            "Interface Index": str(self.index),
+        }
 
 
 def discover_adapters():
@@ -94,10 +116,63 @@ def discover_adapters():
 
 
 def _discover_adapters_windows():
-    """Discover adapters on Windows using PowerShell."""
+    """Discover adapters on Windows using PowerShell with full details."""
     adapters = []
+
+    # Gather MAC, gateway, status, and speed via Get-NetAdapter + Get-NetIPConfiguration
+    mac_map = {}    # InterfaceIndex -> MAC
+    gw_map = {}     # InterfaceAlias -> gateway
+    status_map = {}  # InterfaceAlias -> status
+    speed_map = {}   # InterfaceAlias -> speed
+
     try:
-        # Use PowerShell to get adapter info in a reliable format
+        # Get adapter hardware info (MAC, status, speed)
+        cmd_adapter = (
+            'powershell -Command "'
+            'Get-NetAdapter | '
+            'Select-Object Name,InterfaceIndex,MacAddress,Status,LinkSpeed | '
+            'ConvertTo-Csv -NoTypeInformation"'
+        )
+        result = subprocess.run(
+            cmd_adapter, capture_output=True, text=True, timeout=10, shell=True
+        )
+        if result.returncode == 0:
+            lines = result.stdout.strip().split('\n')
+            for line in lines[1:]:
+                parts = [p.strip('"') for p in line.split(',')]
+                if len(parts) >= 5:
+                    a_name = parts[0]
+                    a_idx = int(parts[1]) if parts[1].isdigit() else 0
+                    mac_map[a_idx] = parts[2].replace('-', ':')
+                    status_map[a_name] = parts[3]
+                    speed_map[a_name] = parts[4]
+    except (subprocess.SubprocessError, OSError, ValueError):
+        pass
+
+    try:
+        # Get default gateway per adapter
+        cmd_gw = (
+            'powershell -Command "'
+            'Get-NetIPConfiguration | '
+            'Where-Object { $_.IPv4DefaultGateway } | '
+            'Select-Object InterfaceAlias,'
+            '@{N=\'Gateway\';E={$_.IPv4DefaultGateway.NextHop}} | '
+            'ConvertTo-Csv -NoTypeInformation"'
+        )
+        result = subprocess.run(
+            cmd_gw, capture_output=True, text=True, timeout=10, shell=True
+        )
+        if result.returncode == 0:
+            lines = result.stdout.strip().split('\n')
+            for line in lines[1:]:
+                parts = [p.strip('"') for p in line.split(',')]
+                if len(parts) >= 2:
+                    gw_map[parts[0]] = parts[1]
+    except (subprocess.SubprocessError, OSError, ValueError):
+        pass
+
+    try:
+        # Get IP addresses
         cmd = (
             'powershell -Command "'
             'Get-NetIPAddress -AddressFamily IPv4 | '
@@ -112,19 +187,23 @@ def _discover_adapters_windows():
             lines = result.stdout.strip().split('\n')
             if len(lines) > 1:
                 for line in lines[1:]:
-                    # Parse CSV: "InterfaceAlias","IPAddress","PrefixLength","InterfaceIndex"
                     parts = [p.strip('"') for p in line.split(',')]
                     if len(parts) >= 4:
                         prefix_len = int(parts[2]) if parts[2].isdigit() else 24
                         mask_int = (0xFFFFFFFF << (32 - prefix_len)) & 0xFFFFFFFF
                         netmask = socket.inet_ntoa(struct.pack('!I', mask_int))
+                        iface_idx = int(parts[3]) if parts[3].isdigit() else 0
 
                         adapter = NetworkAdapter(
                             name=parts[0],
                             ip=parts[1],
                             netmask=netmask,
                             description=parts[0],
-                            index=int(parts[3]) if parts[3].isdigit() else 0,
+                            index=iface_idx,
+                            mac=mac_map.get(iface_idx, ""),
+                            gateway=gw_map.get(parts[0], ""),
+                            status=status_map.get(parts[0], "Up"),
+                            speed=speed_map.get(parts[0], ""),
                         )
                         adapters.append(adapter)
     except (subprocess.SubprocessError, OSError, ValueError):
@@ -151,6 +230,8 @@ def _discover_adapters_ipconfig():
         current_ip = ""
         current_mask = ""
         current_mac = ""
+        current_gw = ""
+        current_dhcp = False
 
         for line in result.stdout.split('\n'):
             line = line.strip()
@@ -162,12 +243,15 @@ def _discover_adapters_ipconfig():
                     adapters.append(NetworkAdapter(
                         name=current_name, ip=current_ip,
                         netmask=current_mask, mac=current_mac,
-                        description=current_name
+                        description=current_name, gateway=current_gw,
+                        dhcp_enabled=current_dhcp,
                     ))
                 current_name = name_match.group(2)
                 current_ip = ""
                 current_mask = ""
                 current_mac = ""
+                current_gw = ""
+                current_dhcp = False
 
             if 'IPv4 Address' in line or 'IP Address' in line:
                 match = re.search(r'(\d+\.\d+\.\d+\.\d+)', line)
@@ -186,11 +270,20 @@ def _discover_adapters_ipconfig():
                 if match:
                     current_mac = match.group(1)
 
+            if 'Default Gateway' in line:
+                match = re.search(r'(\d+\.\d+\.\d+\.\d+)', line)
+                if match:
+                    current_gw = match.group(1)
+
+            if 'DHCP Enabled' in line and 'Yes' in line:
+                current_dhcp = True
+
         if current_name and current_ip:
             adapters.append(NetworkAdapter(
                 name=current_name, ip=current_ip,
                 netmask=current_mask or "255.255.255.0",
-                mac=current_mac, description=current_name
+                mac=current_mac, description=current_name,
+                gateway=current_gw, dhcp_enabled=current_dhcp,
             ))
 
     except (subprocess.SubprocessError, OSError):
@@ -351,3 +444,196 @@ class UDPTransport:
 
     def __exit__(self, *args):
         self.close()
+
+    def get_status(self):
+        """Return dict with socket status information."""
+        if not self.sock:
+            return {"state": "Closed"}
+        try:
+            local = self.sock.getsockname()
+            return {
+                "state": "Open",
+                "local_addr": f"{local[0]}:{local[1]}",
+                "broadcast": "Yes" if self.broadcast else "No",
+                "timeout": f"{self.timeout}s",
+                "send_buf": str(self.sock.getsockopt(
+                    socket.SOL_SOCKET, socket.SO_SNDBUF)),
+                "recv_buf": str(self.sock.getsockopt(
+                    socket.SOL_SOCKET, socket.SO_RCVBUF)),
+            }
+        except OSError:
+            return {"state": "Error"}
+
+
+def configure_adapter_ip(adapter_name, ip, netmask, gateway=""):
+    """Configure IP address on a Windows network adapter.
+
+    Requires administrator privileges on Windows.
+    On Linux, uses ip/ifconfig (requires root).
+
+    Args:
+        adapter_name: Interface name (e.g. "Ethernet", "eth0").
+        ip: New IPv4 address.
+        netmask: Subnet mask (e.g. "255.255.255.0").
+        gateway: Optional default gateway.
+
+    Returns:
+        Tuple of (success: bool, message: str).
+    """
+    if sys.platform == 'win32':
+        return _configure_adapter_windows(adapter_name, ip, netmask, gateway)
+    else:
+        return _configure_adapter_unix(adapter_name, ip, netmask, gateway)
+
+
+def _configure_adapter_windows(adapter_name, ip, netmask, gateway):
+    """Set static IP on Windows using netsh."""
+    try:
+        cmd = [
+            'netsh', 'interface', 'ip', 'set', 'address',
+            adapter_name, 'static', ip, netmask,
+        ]
+        if gateway:
+            cmd.append(gateway)
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=15
+        )
+        if result.returncode == 0:
+            msg = f"Set {adapter_name} to {ip}/{netmask}"
+            if gateway:
+                msg += f" gw {gateway}"
+            logger.info(msg)
+            return True, msg
+        else:
+            err = result.stderr.strip() or result.stdout.strip()
+            logger.error("netsh failed: %s", err)
+            return False, f"netsh error: {err}"
+    except subprocess.SubprocessError as e:
+        return False, f"Failed to run netsh: {e}"
+
+
+def _configure_adapter_unix(adapter_name, ip, netmask, gateway):
+    """Set IP on Linux using ip command."""
+    try:
+        # Calculate prefix length from netmask
+        mask_int = struct.unpack('!I', socket.inet_aton(netmask))[0]
+        prefix = bin(mask_int).count('1')
+
+        result = subprocess.run(
+            ['ip', 'addr', 'flush', 'dev', adapter_name],
+            capture_output=True, text=True, timeout=10
+        )
+        result = subprocess.run(
+            ['ip', 'addr', 'add', f'{ip}/{prefix}', 'dev', adapter_name],
+            capture_output=True, text=True, timeout=10
+        )
+        if result.returncode != 0:
+            err = result.stderr.strip()
+            return False, f"ip addr add failed: {err}"
+
+        if gateway:
+            subprocess.run(
+                ['ip', 'route', 'add', 'default', 'via', gateway,
+                 'dev', adapter_name],
+                capture_output=True, text=True, timeout=10
+            )
+
+        msg = f"Set {adapter_name} to {ip}/{prefix}"
+        if gateway:
+            msg += f" gw {gateway}"
+        logger.info(msg)
+        return True, msg
+
+    except (subprocess.SubprocessError, OSError) as e:
+        return False, f"Failed: {e}"
+
+
+def set_adapter_dhcp(adapter_name):
+    """Set adapter to DHCP mode.
+
+    Args:
+        adapter_name: Interface name.
+
+    Returns:
+        Tuple of (success: bool, message: str).
+    """
+    if sys.platform == 'win32':
+        try:
+            result = subprocess.run(
+                ['netsh', 'interface', 'ip', 'set', 'address',
+                 adapter_name, 'dhcp'],
+                capture_output=True, text=True, timeout=15
+            )
+            if result.returncode == 0:
+                return True, f"Set {adapter_name} to DHCP"
+            err = result.stderr.strip() or result.stdout.strip()
+            return False, f"netsh error: {err}"
+        except subprocess.SubprocessError as e:
+            return False, f"Failed: {e}"
+    else:
+        return False, "DHCP configuration requires dhclient on Linux"
+
+
+def test_socket_bind(bind_ip, bind_port, broadcast=True):
+    """Test if a UDP socket can bind to the given address.
+
+    Args:
+        bind_ip: IP address to bind to.
+        bind_port: Port number to bind to.
+        broadcast: Whether to enable broadcast.
+
+    Returns:
+        Tuple of (success: bool, message: str).
+    """
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        if broadcast:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        sock.bind((bind_ip, bind_port))
+        local = sock.getsockname()
+        sock.close()
+        return True, f"Socket bound to {local[0]}:{local[1]} (broadcast={'on' if broadcast else 'off'})"
+    except OSError as e:
+        return False, f"Bind failed: {e}"
+
+
+def list_serial_ports():
+    """List available serial/COM ports.
+
+    Returns:
+        List of dicts with 'device' and 'description' keys.
+    """
+    ports = []
+    try:
+        from serial.tools.list_ports import comports
+        for p in comports():
+            ports.append({
+                'device': p.device,
+                'description': p.description or p.device,
+                'hwid': p.hwid or "",
+            })
+    except ImportError:
+        # pyserial not installed; try Windows-only fallback
+        if sys.platform == 'win32':
+            try:
+                result = subprocess.run(
+                    ['powershell', '-Command',
+                     'Get-WmiObject Win32_SerialPort | '
+                     'Select-Object DeviceID,Name | '
+                     'ConvertTo-Csv -NoTypeInformation'],
+                    capture_output=True, text=True, timeout=10
+                )
+                if result.returncode == 0:
+                    lines = result.stdout.strip().split('\n')
+                    for line in lines[1:]:
+                        parts = [p.strip('"') for p in line.split(',')]
+                        if len(parts) >= 2:
+                            ports.append({
+                                'device': parts[0],
+                                'description': parts[1],
+                                'hwid': '',
+                            })
+            except (subprocess.SubprocessError, OSError):
+                pass
+    return ports

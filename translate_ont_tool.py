@@ -159,7 +159,7 @@ GBK_RDATA_TRANSLATIONS = {
     0x3cd568: ("CMO归档", "CMO Arc", 8),
     0x3cd570: ("特性", "Feat", 8),
     0x3cd578: ("模块", "Mod.", 8),
-    0x3cd580: ("问题引入版本", "Intro Version", 3764),
+    0x3cd580: ("问题引入版本", "Intro Version", 16),
     # Error/log messages
     0x3ce434: ("【ERROR】初始化试用版信息时，检测到之前已经初始化！",
                "[ERR]Trial init:already initialized!", 52),
@@ -408,7 +408,7 @@ GBK_RDATA_TRANSLATIONS = {
     0x3cfad4: ("【ERROR】license校验和为空！",
                "[ERR]License checksum null!", 32),
     0x3cfaf4: ("【ERROR】添加licensed校验和节点失败",
-               "[ERR]Add licensed checksum node fail", 722),
+               "[ERR]Add lic.checksum node fail", 36),
 }
 
 
@@ -702,16 +702,17 @@ def patch_rdata_gbk_strings(file_data):
 
     for offset, (chinese, english, max_bytes) in GBK_RDATA_TRANSLATIONS.items():
         cn_encoded = chinese.encode('gbk')
-        en_encoded = english.encode('gbk') + b'\x00'
+        en_encoded = english.encode('ascii')
 
         if file_data[offset:offset + len(cn_encoded)] != cn_encoded:
             print(f"  WARNING: Expected GBK '{chinese}' at 0x{offset:x}, skipping")
             continue
 
-        if len(en_encoded) > max_bytes:
+        if len(en_encoded) + 1 > max_bytes:  # +1 for null terminator
             print(f"  WARNING: GBK '{english}' too long for 0x{offset:x}, skipping")
             continue
 
+        # Write English string and zero-fill remaining space
         file_data[offset:offset + max_bytes] = (
             en_encoded + b'\x00' * (max_bytes - len(en_encoded)))
         count += 1

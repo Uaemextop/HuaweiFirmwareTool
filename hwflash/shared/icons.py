@@ -1,5 +1,5 @@
 """
-SVG and icon assets for the OBSC Firmware Tool.
+SVG and icon assets for the HuaweiFlash.
 
 Generates the application logo and provides icon data for UI elements.
 All icons are base64-encoded PNG data generated from PIL drawings.
@@ -28,7 +28,7 @@ ACCENT_PURPLE = "#8B5CF6"
 
 
 def generate_logo(size: int = 128) -> bytes:
-    """Generate the OBSC Firmware Tool logo as PNG bytes.
+    """Generate the HuaweiFlash logo as PNG bytes.
 
     Creates a modern gradient logo with a circuit/firmware motif.
     """

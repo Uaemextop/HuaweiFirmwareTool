@@ -1,9 +1,9 @@
-"""Presets tab mixin for OBSC Firmware Tool."""
+"""Presets tab mixin for HuaweiFlash."""
 
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
 
-from hwflash.gui.constants import _safe_int
+from hwflash.shared.helpers import safe_int as _safe_int
 from hwflash.core.presets import PRESET_TEMPLATE
 from hwflash.core.protocol import OBSC_SEND_PORT, OBSC_RECV_PORT
 

@@ -1,4 +1,4 @@
-"""Firmware Dump tab mixin for OBSC Firmware Tool."""
+"""Firmware Dump tab mixin for HuaweiFlash."""
 
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox

@@ -1,4 +1,4 @@
-"""Adapter management mixin for OBSC Firmware Tool."""
+"""Adapter management mixin for HuaweiFlash."""
 
 import threading
 import tkinter as tk

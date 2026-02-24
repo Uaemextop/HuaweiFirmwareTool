@@ -1,9 +1,9 @@
-"""Terminal tab mixin for OBSC Firmware Tool."""
+"""Terminal tab mixin for HuaweiFlash."""
 
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
 
-from hwflash.gui.constants import _safe_int
+from hwflash.shared.helpers import safe_int as _safe_int
 from hwflash.core.terminal import (
     TelnetClient, SerialClient, FirmwareDumper, ONT_COMMANDS,
 )

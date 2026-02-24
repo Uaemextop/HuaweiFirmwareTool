@@ -1,4 +1,4 @@
-"""Config Crypto tab mixin for OBSC Firmware Tool."""
+"""Config Crypto tab mixin for HuaweiFlash."""
 
 import os
 import tkinter as tk

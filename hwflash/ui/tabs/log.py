@@ -1,4 +1,4 @@
-"""Log tab mixin for OBSC Firmware Tool."""
+"""Log tab mixin for HuaweiFlash."""
 
 import os
 import datetime
@@ -55,7 +55,7 @@ class LogTabMixin:
             title="Export Log",
             defaultextension=".log",
             filetypes=[("Log files", "*.log"), ("Text files", "*.txt")],
-            initialfile=f"OBSC_LOG_{datetime.datetime.now().strftime('%Y-%m-%d_%H')}.log",
+            initialfile=f"hwflash_{datetime.datetime.now().strftime('%Y-%m-%d_%H')}.log",
         )
         if path:
             with open(path, 'w', encoding='utf-8') as f:
@@ -67,7 +67,7 @@ class LogTabMixin:
         try:
             log_dir = self.log_dir_var.get()
             os.makedirs(log_dir, exist_ok=True)
-            filename = f"OBSC_LOG_{datetime.datetime.now().strftime('%Y-%m-%d_%H')}.log"
+            filename = f"hwflash_{datetime.datetime.now().strftime('%Y-%m-%d_%H')}.log"
             path = os.path.join(log_dir, filename)
             with open(path, 'w', encoding='utf-8') as f:
                 f.write('\n'.join(self.log_entries))

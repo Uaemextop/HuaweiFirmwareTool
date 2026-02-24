@@ -1,4 +1,4 @@
-"""Verification tab mixin for OBSC Firmware Tool."""
+"""Verification tab mixin for HuaweiFlash."""
 
 import tkinter as tk
 from tkinter import ttk, filedialog

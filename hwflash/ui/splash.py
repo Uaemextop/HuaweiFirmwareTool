@@ -28,7 +28,7 @@ DEPENDENCIES = [
     ("colorama", "colorama", "Colored terminal output"),
 ]
 
-PIP_TIMEOUT = int(os.environ.get("OBSC_PIP_TIMEOUT", "60"))
+PIP_TIMEOUT = int(os.environ.get("HWFLASH_PIP_TIMEOUT", "60"))
 
 
 class SplashScreen:

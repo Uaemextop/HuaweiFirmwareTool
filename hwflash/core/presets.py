@@ -1,5 +1,5 @@
 """
-Router preset management for the OBSC Firmware Tool.
+Router preset management for the HuaweiFlash.
 
 Allows creating, saving, loading, and deleting configuration presets
 for different router models (e.g., HG8145V5, HG8245H, etc.).

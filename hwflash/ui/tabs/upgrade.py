@@ -1,4 +1,4 @@
-"""Upgrade tab mixin for OBSC Firmware Tool."""
+"""Upgrade tab mixin for HuaweiFlash."""
 
 import os
 import time
@@ -6,10 +6,9 @@ import zlib
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 
-from hwflash.gui.constants import (
-    _safe_int, OBSC_MULTICAST_ADDR, DEVICE_STALE_TIMEOUT,
-    IP_MODE_DEFAULTS,
-)
+from hwflash.shared.helpers import safe_int as _safe_int
+from hwflash.shared.styles import LEGACY_IP_DEFAULTS as IP_MODE_DEFAULTS
+from hwflash.shared.styles import OBSC_MULTICAST_ADDR, DEVICE_STALE_TIMEOUT
 from hwflash.core.firmware import HWNPFirmware
 from hwflash.core.network import UDPTransport
 from hwflash.core.protocol import (

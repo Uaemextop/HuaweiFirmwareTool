@@ -1,4 +1,4 @@
-"""Firmware Info tab mixin for OBSC Firmware Tool."""
+"""Firmware Info tab mixin for HuaweiFlash."""
 
 import os
 import struct

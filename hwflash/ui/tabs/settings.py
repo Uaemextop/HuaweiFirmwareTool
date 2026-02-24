@@ -1,12 +1,12 @@
-"""Settings tab mixin for OBSC Firmware Tool."""
+"""Settings tab mixin for HuaweiFlash."""
 
 import os
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 
-from hwflash.gui.constants import (
-    _safe_int, IP_MODE_DEFAULTS, OBSC_MULTICAST_ADDR,
-)
+from hwflash.shared.helpers import safe_int as _safe_int
+from hwflash.shared.styles import LEGACY_IP_DEFAULTS as IP_MODE_DEFAULTS
+from hwflash.shared.styles import OBSC_MULTICAST_ADDR
 from hwflash.core.network import (
     configure_adapter_ip, set_adapter_dhcp, test_socket_bind,
 )

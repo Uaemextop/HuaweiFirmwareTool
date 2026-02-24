@@ -1,4 +1,4 @@
-"""Theme mixin for OBSC Firmware Tool."""
+"""Theme switching mixin for HuaweiFlash."""
 
 import tkinter as tk
 from tkinter import ttk
@@ -9,7 +9,8 @@ try:
 except ImportError:
     HAS_TTKB = False
 
-from hwflash.gui.constants import THEMES, TTKB_DARK, TTKB_LIGHT
+from hwflash.shared.styles import LEGACY_THEMES as THEMES
+from hwflash.shared.styles import TTKB_DARK, TTKB_LIGHT
 
 
 class ThemeMixin:

@@ -2482,7 +2482,7 @@ class OBSCToolApp:
         """Test socket binding to verify network is ready."""
         adapter = self._get_selected_adapter()
         bind_ip = adapter.ip if adapter else "0.0.0.0"
-        bind_port = int(self.recv_port_var.get())
+        bind_port = _safe_int(self.recv_port_var.get(), OBSC_RECV_PORT)
 
         ok, msg = test_socket_bind(bind_ip, bind_port, broadcast=True)
         self.net_status_var.set(("✅ " if ok else "❌ ") + msg)

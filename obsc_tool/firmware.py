@@ -5,9 +5,10 @@ Parses Huawei HWNP firmware packages, validates CRC32 checksums,
 and extracts firmware items for transfer via the OBSC protocol.
 """
 
+import os
 import struct
 import zlib
-import os
+from typing import List, Tuple, Dict, Any
 
 
 # HWNP magic: "HWNP" = 0x504E5748 (little-endian)
@@ -26,18 +27,18 @@ class HWNPItem:
     __slots__ = ('index', 'crc32', 'data_offset', 'data_size',
                  'item_path', 'section', 'version', 'policy', 'data')
 
-    def __init__(self):
-        self.index = 0
-        self.crc32 = 0
-        self.data_offset = 0
-        self.data_size = 0
-        self.item_path = ""
-        self.section = ""
-        self.version = ""
-        self.policy = 0
-        self.data = b""
+    def __init__(self) -> None:
+        self.index: int = 0
+        self.crc32: int = 0
+        self.data_offset: int = 0
+        self.data_size: int = 0
+        self.item_path: str = ""
+        self.section: str = ""
+        self.version: str = ""
+        self.policy: int = 0
+        self.data: bytes = b""
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (f"HWNPItem(index={self.index}, path='{self.item_path}', "
                 f"section='{self.section}', size={self.data_size}, "
                 f"policy={self.policy})")
@@ -46,21 +47,21 @@ class HWNPItem:
 class HWNPFirmware:
     """Parser and validator for HWNP firmware packages."""
 
-    def __init__(self):
-        self.magic = 0
-        self.raw_size = 0
-        self.raw_crc32 = 0
-        self.header_size = 0
-        self.header_crc32 = 0
-        self.item_count = 0
-        self.prod_list_size = 0
-        self.item_header_size = 0
-        self.product_list = ""
-        self.items = []
-        self.raw_data = b""
-        self.file_path = ""
+    def __init__(self) -> None:
+        self.magic: int = 0
+        self.raw_size: int = 0
+        self.raw_crc32: int = 0
+        self.header_size: int = 0
+        self.header_crc32: int = 0
+        self.item_count: int = 0
+        self.prod_list_size: int = 0
+        self.item_header_size: int = 0
+        self.product_list: str = ""
+        self.items: List[HWNPItem] = []
+        self.raw_data: bytes = b""
+        self.file_path: str = ""
 
-    def load(self, file_path):
+    def load(self, file_path: str) -> None:
         """Load and parse an HWNP firmware file.
 
         Args:
@@ -85,7 +86,7 @@ class HWNPFirmware:
         self._parse_product_list()
         self._parse_items()
 
-    def _parse_header(self):
+    def _parse_header(self) -> None:
         """Parse the HWNP main header (36 bytes)."""
         # struct huawei_header {
         #   uint32_t magic_huawei;     // offset 0
@@ -121,14 +122,14 @@ class HWNPFirmware:
                 f"(expected 0x{HWNP_MAGIC:08X})"
             )
 
-    def _parse_product_list(self):
+    def _parse_product_list(self) -> None:
         """Parse the product compatibility list."""
         offset = HWNP_HEADER_SIZE
         if self.prod_list_size > 0:
             raw = self.raw_data[offset:offset + self.prod_list_size]
             self.product_list = raw.split(b'\x00')[0].decode('ascii', errors='replace')
 
-    def _parse_items(self):
+    def _parse_items(self) -> None:
         """Parse all firmware items."""
         self.items = []
         items_offset = HWNP_HEADER_SIZE + self.prod_list_size
@@ -166,7 +167,7 @@ class HWNPFirmware:
 
             self.items.append(item)
 
-    def _read_string(self, offset, max_len):
+    def _read_string(self, offset: int, max_len: int) -> str:
         """Read a null-terminated string from the firmware data."""
         raw = self.raw_data[offset:offset + max_len]
         null_pos = raw.find(b'\x00')
@@ -174,7 +175,7 @@ class HWNPFirmware:
             raw = raw[:null_pos]
         return raw.decode('ascii', errors='replace')
 
-    def validate_crc32(self):
+    def validate_crc32(self) -> Tuple[bool, bool]:
         """Validate CRC32 checksums of the firmware.
 
         Note: The original C++ code uses crc32_combine for a chained
@@ -205,7 +206,7 @@ class HWNPFirmware:
 
         return header_valid, data_valid
 
-    def get_info(self):
+    def get_info(self) -> Dict[str, Any]:
         """Get a summary dict of the firmware info."""
         return {
             'file': os.path.basename(self.file_path),
@@ -226,6 +227,6 @@ class HWNPFirmware:
             ],
         }
 
-    def get_total_data_size(self):
+    def get_total_data_size(self) -> int:
         """Get total size of all firmware item data."""
         return sum(item.data_size for item in self.items)

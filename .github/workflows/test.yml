@@ -1,0 +1,239 @@
+name: Tests and Code Quality
+
+on:
+  push:
+    branches:
+      - main
+      - 'copilot/**'
+      - 'claude/**'
+  pull_request:
+    branches:
+      - main
+      - 'copilot/**'
+      - 'claude/**'
+  workflow_dispatch:
+
+jobs:
+  lint-python:
+    name: Python Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-dev.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Run flake8
+        run: |
+          flake8 obsc_tool/ --count --show-source --statistics
+        continue-on-error: true
+
+      - name: Run pylint
+        run: |
+          pylint obsc_tool/ --exit-zero
+        continue-on-error: true
+
+      - name: Check formatting with black
+        run: |
+          black --check obsc_tool/
+        continue-on-error: true
+
+      - name: Check import order with isort
+        run: |
+          isort --check-only obsc_tool/
+        continue-on-error: true
+
+  test-python:
+    name: Python Tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/AppData/Local/pip/Cache
+            ~/Library/Caches/pip
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ matrix.python-version }}-
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run tests with pytest
+        run: |
+          pytest tests/ -v --cov=obsc_tool --cov-report=xml --cov-report=term
+
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+  type-check:
+    name: Type Checking
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run mypy
+        run: |
+          mypy obsc_tool/ --ignore-missing-imports --no-strict-optional
+        continue-on-error: true
+
+  build-cpp-linux:
+    name: Build C++ Tools (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++ libssl-dev zlib1g-dev
+
+      - name: Build with CMake
+        run: |
+          cd cpp
+          mkdir build
+          cd build
+          cmake ..
+          make -j$(nproc)
+
+      - name: Test executables
+        run: |
+          cd cpp/build
+          ./hw_fmw --help || true
+          ./hw_sign --help || true
+          ./hw_verify --help || true
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: HuaweiFirmwareTools-linux
+          path: |
+            cpp/build/hw_fmw
+            cpp/build/hw_sign
+            cpp/build/hw_verify
+          retention-days: 30
+
+  build-cpp-macos:
+    name: Build C++ Tools (macOS)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          brew install cmake openssl@3 zlib
+
+      - name: Build with CMake
+        run: |
+          cd cpp
+          mkdir build
+          cd build
+          cmake .. -DOPENSSL_ROOT_DIR=$(brew --prefix openssl@3)
+          make -j$(sysctl -n hw.ncpu)
+
+      - name: Test executables
+        run: |
+          cd cpp/build
+          ./hw_fmw --help || true
+          ./hw_sign --help || true
+          ./hw_verify --help || true
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: HuaweiFirmwareTools-macos
+          path: |
+            cpp/build/hw_fmw
+            cpp/build/hw_sign
+            cpp/build/hw_verify
+          retention-days: 30
+
+  security-check:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install safety bandit
+
+      - name: Check for known vulnerabilities with safety
+        run: |
+          safety check --file requirements.txt --output text
+        continue-on-error: true
+
+      - name: Run bandit security linter
+        run: |
+          bandit -r obsc_tool/ -ll -f json -o bandit-report.json
+        continue-on-error: true
+
+      - name: Upload security reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: bandit-report.json
+          retention-days: 30

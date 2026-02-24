@@ -95,3 +95,46 @@ jobs:
             build/hw_sign
             build/hw_verify
           retention-days: 90
+
+  build-cpp-windows:
+    runs-on: windows-latest
+    env:
+      VCPKG_DEFAULT_TRIPLET: x64-windows-static
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: '2024.09.30'
+
+      - name: Install vcpkg packages
+        run: vcpkg install openssl:x64-windows-static zlib:x64-windows-static
+
+      - name: Build C++ tools with CMake + MSVC
+        run: |
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-static -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+          cmake --build . --config Release
+
+      - name: Upload C++ Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: HuaweiFirmwareTools-windows
+          path: |
+            build/Release/hw_fmw.exe
+            build/Release/hw_sign.exe
+            build/Release/hw_verify.exe
+          retention-days: 90
+
+      - name: Upload to Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/Release/hw_fmw.exe
+            build/Release/hw_sign.exe
+            build/Release/hw_verify.exe
+          generate_release_notes: true

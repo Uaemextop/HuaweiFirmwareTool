@@ -1,3 +1,4 @@
+#include <cstdio>
 #include "util.hpp"
 #include "util_rsa.hpp"
 #include <openssl/pem.h>

@@ -5,6 +5,9 @@ project(hw_fmw LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Suppress OpenSSL 3.0 deprecation warnings for legacy RSA API
+add_compile_definitions(OPENSSL_SUPPRESS_DEPRECATED)
+
 add_executable(hw_fmw hw_fmw.cpp)
 add_executable(hw_sign hw_sign.cpp)
 add_executable(hw_verify hw_verify.cpp)
@@ -22,8 +25,11 @@ if (ZLIB_FOUND)
 endif(ZLIB_FOUND)
 
 # https://en.cppreference.com/w/cpp/filesystem
-# Using this library may require additional compiler/linker options. GNU implementation prior to 9.1 requires linking with -lstdc++fs and LLVM implementation prior to LLVM 9.0 requires linking with -lc++fs. 
-target_link_libraries(util stdc++fs)
+# GNU implementation prior to 9.1 requires linking with -lstdc++fs.
+# MSVC and newer GCC/Clang include it in the standard library.
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9.1")
+  target_link_libraries(util stdc++fs)
+endif()
 
 target_link_libraries(hw_fmw PRIVATE util)
 target_link_libraries(hw_sign PRIVATE util)

@@ -1,9 +1,10 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include <cstdint>
 #include <string>
 #include <fstream>
-#include <unistd.h>
+#include "compat_getopt.h"
 
 #define throw_err(err_expr, err_append)                                                  \
     __throw_err(err_expr, err_append, __FUNCTION__, __LINE__)

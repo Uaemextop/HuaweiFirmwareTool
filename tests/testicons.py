@@ -57,9 +57,17 @@ class TestGenerateIcon:
     def test_icon_names(self):
         for name in ["flash", "folder", "play", "stop", "settings",
                      "terminal", "shield", "info", "refresh",
-                     "connect", "disconnect", "check", "warning"]:
+                     "connect", "disconnect", "check", "warning",
+                     "save", "log", "trash", "copy", "x",
+                     "upload", "download", "key", "lock", "unlock", "search"]:
             data = generate_icon(name, 16)
             assert len(data) > 0, f"Icon {name} failed to generate"
+
+    def test_new_icons_produce_png(self):
+        for name in ["save", "log", "trash", "copy", "x",
+                     "upload", "download", "key", "lock", "unlock", "search"]:
+            data = generate_icon(name, 20)
+            assert data[:4] == b'\x89PNG', f"Icon {name} is not PNG"
 
 
 class TestLogoToBase64:

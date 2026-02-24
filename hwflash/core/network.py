@@ -542,7 +542,7 @@ def _configure_adapter_unix(adapter_name, ip, netmask, gateway):
         mask_int = struct.unpack('!I', socket.inet_aton(netmask))[0]
         prefix = bin(mask_int).count('1')
 
-        result = subprocess.run(
+        subprocess.run(
             ['ip', 'addr', 'flush', 'dev', adapter_name],
             capture_output=True, text=True, timeout=10
         )

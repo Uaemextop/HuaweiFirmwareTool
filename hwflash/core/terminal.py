@@ -12,6 +12,7 @@ an active terminal session.
 import socket
 import threading
 import time
+import glob as _glob
 import logging
 import re
 
@@ -336,9 +337,8 @@ class SerialClient:
                     pass
             else:
                 # Linux/Mac: check /dev/ttyUSB* and /dev/ttyACM*
-                import glob
                 for pattern in ['/dev/ttyUSB*', '/dev/ttyACM*', '/dev/ttyS*']:
-                    for port in sorted(glob.glob(pattern)):
+                    for port in sorted(_glob.glob(pattern)):
                         ports.append((port, port))
         return ports
 

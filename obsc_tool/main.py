@@ -1362,7 +1362,7 @@ class OBSCToolApp:
 
         preset_data = {
             'model': self.new_preset_model_var.get() or "Custom",
-            'description': self.new_preset_desc_var.get() or f"Custom preset for {self.new_preset_model_var.get()}",
+            'description': self.new_preset_desc_var.get() or f"Custom preset for {preset_data['model']}",
             'frame_size': int(self.np_frame_size_var.get()),
             'frame_interval_ms': int(self.np_frame_interval_var.get()),
             'flash_mode': self.np_flash_mode_var.get(),

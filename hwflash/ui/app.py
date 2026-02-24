@@ -409,10 +409,13 @@ def main():
     except (ImportError, AttributeError, OSError):
         pass
 
+    root = tk.Tk()
+
     if HAS_TTKB:
-        root = ttkb.Window(themename=TTKB_DARK)
-    else:
-        root = tk.Tk()
+        try:
+            ttkb.Style(themename=TTKB_DARK, master=root)
+        except Exception as exc:
+            logger.debug("ttkbootstrap style init failed: %s", exc)
 
     HuaweiFlashApp(root)
     root.mainloop()

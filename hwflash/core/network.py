@@ -13,6 +13,8 @@ import sys
 import time
 import logging
 
+from hwflash.shared.helpers import _POPEN_FLAGS
+
 logger = logging.getLogger("hwflash.network")
 
 
@@ -132,7 +134,7 @@ def _discover_adapters_windows():
              'Get-NetAdapter | '
              'Select-Object Name,InterfaceIndex,MacAddress,Status,LinkSpeed | '
              'ConvertTo-Csv -NoTypeInformation'],
-            capture_output=True, text=True, timeout=5
+            capture_output=True, text=True, timeout=5, **_POPEN_FLAGS
         )
         if result.returncode == 0:
             lines = result.stdout.strip().split('\n')
@@ -156,7 +158,7 @@ def _discover_adapters_windows():
              "Select-Object InterfaceAlias,"
              "@{N='Gateway';E={$_.IPv4DefaultGateway.NextHop}} | "
              'ConvertTo-Csv -NoTypeInformation'],
-            capture_output=True, text=True, timeout=5
+            capture_output=True, text=True, timeout=5, **_POPEN_FLAGS
         )
         if result.returncode == 0:
             lines = result.stdout.strip().split('\n')
@@ -175,7 +177,7 @@ def _discover_adapters_windows():
              "Where-Object { $_.IPAddress -ne '127.0.0.1' } | "
              'Select-Object InterfaceAlias,IPAddress,PrefixLength,InterfaceIndex | '
              'ConvertTo-Csv -NoTypeInformation'],
-            capture_output=True, text=True, timeout=5
+            capture_output=True, text=True, timeout=5, **_POPEN_FLAGS
         )
         if result.returncode == 0:
             lines = result.stdout.strip().split('\n')
@@ -215,7 +217,8 @@ def _discover_adapters_ipconfig():
     adapters = []
     try:
         result = subprocess.run(
-            ['ipconfig', '/all'], capture_output=True, text=True, timeout=10
+            ['ipconfig', '/all'], capture_output=True, text=True, timeout=10,
+            **_POPEN_FLAGS
         )
         if result.returncode != 0:
             return adapters
@@ -519,7 +522,7 @@ def _configure_adapter_windows(adapter_name, ip, netmask, gateway):
         if gateway:
             cmd.append(gateway)
         result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=15
+            cmd, capture_output=True, text=True, timeout=15, **_POPEN_FLAGS
         )
         if result.returncode == 0:
             msg = f"Set {adapter_name} to {ip}/{netmask}"
@@ -585,7 +588,7 @@ def set_adapter_dhcp(adapter_name):
             result = subprocess.run(
                 ['netsh', 'interface', 'ip', 'set', 'address',
                  adapter_name, 'dhcp'],
-                capture_output=True, text=True, timeout=15
+                capture_output=True, text=True, timeout=15, **_POPEN_FLAGS
             )
             if result.returncode == 0:
                 return True, f"Set {adapter_name} to DHCP"
@@ -645,7 +648,7 @@ def list_serial_ports():
                      'Get-WmiObject Win32_SerialPort | '
                      'Select-Object DeviceID,Name | '
                      'ConvertTo-Csv -NoTypeInformation'],
-                    capture_output=True, text=True, timeout=10
+                    capture_output=True, text=True, timeout=10, **_POPEN_FLAGS
                 )
                 if result.returncode == 0:
                     lines = result.stdout.strip().split('\n')

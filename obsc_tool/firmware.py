@@ -177,30 +177,40 @@ class HWNPFirmware:
     def validate_crc32(self):
         """Validate CRC32 checksums of the firmware.
 
-        Note: The original C++ code uses crc32_combine for a chained
-        calculation across header, product list, items, and data.
-        This simplified validator zeros CRC fields and recomputes over
-        the full data, which may not match the original algorithm.
+        Implements the same algorithm as the C++ ``CalculateCRC32``:
+
+        * ``hdr_crc32`` covers the raw bytes from offset ``CRC32_HDR``
+          (0x14 = 20, past magic/raw_sz/raw_crc32/hdr_sz/hdr_crc32) to the
+          end of the item-header area (product list + item headers included).
+        * ``raw_crc32`` covers the raw bytes from offset ``CRC32_ALL``
+          (0x0C = 12, past magic/raw_sz/raw_crc32) to the end of the
+          item-header area, followed by each item's data in index order.
+
+        Since ``crc32_combine(crc32(A), crc32(B), len_B) == crc32(A+B)``,
+        the chained combines in the C++ code reduce to a single CRC over the
+        concatenated byte ranges.
 
         Returns:
             Tuple of (header_valid, data_valid) booleans.
         """
-        # Header CRC32: calculated over the header area
         item_size = self.item_header_size if self.item_header_size > 0 else HWNP_ITEM_SIZE
-        header_end = HWNP_HEADER_SIZE + self.prod_list_size + \
-            self.item_count * item_size
-        header_data = bytearray(self.raw_data[:header_end])
-        # Zero out the CRC fields for recalculation
-        # raw_crc32 is at offset 8, hdr_crc32 is at offset 16
-        struct.pack_into('<I', header_data, 0x08, 0)  # raw_crc32
-        struct.pack_into('<I', header_data, 0x10, 0)  # hdr_crc32
-        calc_hdr_crc = zlib.crc32(bytes(header_data[:header_end])) & 0xFFFFFFFF
+        items_offset = HWNP_HEADER_SIZE + self.prod_list_size
+        header_area_end = items_offset + self.item_count * item_size
+
+        # hdr_crc32: header[0x14:] + product-list + item-headers (no item data)
+        # 0x14 == CRC32_HDR: first byte after both CRC fields in the header.
+        calc_hdr_crc = zlib.crc32(self.raw_data[0x14:header_area_end]) & 0xFFFFFFFF
         header_valid = (calc_hdr_crc == self.header_crc32)
 
-        # Raw CRC32: calculated over the entire file
-        raw_copy = bytearray(self.raw_data)
-        struct.pack_into('<I', raw_copy, 0x08, 0)  # zero raw_crc32
-        calc_raw_crc = zlib.crc32(bytes(raw_copy)) & 0xFFFFFFFF
+        # raw_crc32: header[0x0C:] + product-list + item-headers + item data
+        # 0x0C == CRC32_ALL: first byte after raw_crc32 field (hdr_crc32 IS included).
+        segments = [self.raw_data[0x0C:header_area_end]]
+        for item in self.items:
+            if item.data_size > 0:
+                segments.append(
+                    self.raw_data[item.data_offset:item.data_offset + item.data_size]
+                )
+        calc_raw_crc = zlib.crc32(b''.join(segments)) & 0xFFFFFFFF
         data_valid = (calc_raw_crc == self.raw_crc32)
 
         return header_valid, data_valid

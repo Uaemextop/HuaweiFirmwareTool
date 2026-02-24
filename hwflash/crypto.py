@@ -1,9 +1,8 @@
 """
-obsc_tool.crypto – Huawei ONT configuration file encryption/decryption.
+hwflash.crypto – Huawei ONT configuration file encryption/decryption.
 
 This is the canonical module for config-file crypto operations.
-The old name ``obsc_tool.config_crypto`` is kept as a backward-compatible
-re-export wrapper (see ``config_crypto.py``).
+Re-exports from ``hwflash.core.encrypt`` for convenience.
 """
 
 # Re-export everything from the original implementation so that existing

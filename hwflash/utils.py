@@ -1,5 +1,5 @@
 """
-Shared utility functions for OBSC Firmware Tool.
+Shared utility functions for hwflash.
 
 Provides helpers used across multiple modules so they are not duplicated.
 All functions here are pure (no side effects, no global state) and are

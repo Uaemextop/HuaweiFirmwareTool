@@ -6,8 +6,8 @@ Uses ttkbootstrap (with tkinter/ttk fallback) for theming.
 
 Architecture:
   - ``OBSCToolApp`` inherits from tab-mixin classes (one per tab).
-  - Tab modules live in ``obsc_tool.gui`` with single-word file names.
-  - Shared canvas widgets are in ``obsc_tool.gui.widgets``.
+  - Tab modules live in ``hwflash.gui`` with single-word file names.
+  - Shared canvas widgets are in ``hwflash.gui.widgets``.
   - The gradient header is drawn on a ``tk.Canvas`` for a polished look.
 """
 

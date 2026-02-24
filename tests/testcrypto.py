@@ -1,7 +1,7 @@
 """Tests for config_crypto module."""
 
 import pytest
-from obsc_tool.config_crypto import (
+from hwflash.core.crypto import (
     derive_key,
     aes_cbc_encrypt,
     aes_cbc_decrypt,

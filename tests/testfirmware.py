@@ -6,7 +6,7 @@ import os
 import tempfile
 import pytest
 
-from obsc_tool.firmware import (
+from hwflash.core.firmware import (
     HWNPFirmware,
     HWNPItem,
     HWNP_MAGIC,

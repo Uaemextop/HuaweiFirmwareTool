@@ -3,7 +3,7 @@
 import struct
 import pytest
 
-from obsc_tool.protocol import (
+from hwflash.core.protocol import (
     PacketType,
     FlashMode,
     UpgradeType,
@@ -120,7 +120,7 @@ class TestOBSCWorkerValidation:
         # Don't actually allocate 256MB, just test the validation path
         # by temporarily lowering the check
         large_data = b'\x00' * (MAX_FIRMWARE_SIZE + 1)
-        with pytest.raises(ValueError, match="too large"):
+        with pytest.raises(ValueError, match="exceeds maximum"):
             worker.start_upgrade(large_data)
 
     def test_invalid_frame_size_raises(self):

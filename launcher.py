@@ -6,8 +6,8 @@ and installing optional dependencies, then launches the main application.
 """
 
 if __name__ == '__main__':
-    from obsc_tool.ui.splash import ensure_dependencies
+    from hwflash.ui.splash import ensure_dependencies
 
     if ensure_dependencies():
-        from obsc_tool.main import main
+        from hwflash.main import main
         main()

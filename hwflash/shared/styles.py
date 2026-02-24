@@ -8,7 +8,6 @@ gradient colors, shadow effects, and animation support.
 from typing import Dict, Tuple
 
 
-# ── Brand Colors ───────────────────────────────────────────────────
 PRIMARY = "#2563EB"
 PRIMARY_HOVER = "#1D4ED8"
 PRIMARY_LIGHT = "#3B82F6"
@@ -21,7 +20,6 @@ WARNING = "#F59E0B"
 DANGER = "#EF4444"
 DANGER_HOVER = "#DC2626"
 
-# ── Dark Theme ─────────────────────────────────────────────────────
 DARK = {
     "bg": "#0F172A",
     "bg_secondary": "#1E293B",
@@ -52,7 +50,6 @@ DARK = {
     "terminal_fg": "#58A6FF",
 }
 
-# ── Light Theme ────────────────────────────────────────────────────
 LIGHT = {
     "bg": "#F8FAFC",
     "bg_secondary": "#F1F5F9",
@@ -83,13 +80,11 @@ LIGHT = {
     "terminal_fg": "#1E293B",
 }
 
-# ── Theme map ──────────────────────────────────────────────────────
 THEMES: Dict[str, Dict[str, str]] = {
     "dark": DARK,
     "light": LIGHT,
 }
 
-# ── IP Mode defaults ──────────────────────────────────────────────
 IP_MODE_DEFAULTS = {
     "Automatic (192.168.100.x)": {
         "ip": "192.168.100.2",
@@ -100,13 +95,11 @@ IP_MODE_DEFAULTS = {
     "DHCP": {"ip": "", "mask": "", "gw": ""},
 }
 
-# ── Protocol constants ─────────────────────────────────────────────
 OBSC_MULTICAST_ADDR = "224.0.0.9"
 DEVICE_STALE_TIMEOUT = 30
 TTKB_DARK = "darkly"
 TTKB_LIGHT = "cosmo"
 
-# ── Font definitions ───────────────────────────────────────────────
 FONT_FAMILY = "Segoe UI"
 FONT_SIZES = {
     "title": 20,
@@ -117,7 +110,6 @@ FONT_SIZES = {
     "mono": 10,
 }
 
-# ── Animation config ──────────────────────────────────────────────
 ANIMATION = {
     "fade_duration": 300,
     "slide_duration": 200,
@@ -125,7 +117,6 @@ ANIMATION = {
     "pulse_interval": 2000,
 }
 
-# ── Spacing ────────────────────────────────────────────────────────
 PADDING = {
     "xs": 4,
     "sm": 8,

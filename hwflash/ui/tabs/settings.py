@@ -4,13 +4,13 @@ import os
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 
-from obsc_tool.gui.constants import (
+from hwflash.gui.constants import (
     _safe_int, IP_MODE_DEFAULTS, OBSC_MULTICAST_ADDR,
 )
-from obsc_tool.network import (
+from hwflash.core.network import (
     configure_adapter_ip, set_adapter_dhcp, test_socket_bind,
 )
-from obsc_tool.protocol import OBSC_SEND_PORT, OBSC_RECV_PORT
+from hwflash.core.protocol import OBSC_SEND_PORT, OBSC_RECV_PORT
 
 
 class SettingsTabMixin:

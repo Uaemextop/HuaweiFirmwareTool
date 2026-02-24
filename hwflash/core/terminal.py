@@ -15,10 +15,9 @@ import time
 import logging
 import re
 
-logger = logging.getLogger("obsc_tool.terminal")
+logger = logging.getLogger("hwflash.terminal")
 
 
-# ── Telnet Protocol Constants ───────────────────────────────────
 
 TELNET_IAC = 0xFF    # Interpret As Command
 TELNET_DONT = 0xFE
@@ -36,7 +35,6 @@ TELOPT_NAWS = 0x1F    # Negotiate About Window Size
 TELOPT_LINEMODE = 0x22
 
 
-# ── Common ONT Shell Commands ───────────────────────────────────
 
 # These are commands commonly available on Huawei ONT devices
 # after enabling telnet access via the unlock firmware

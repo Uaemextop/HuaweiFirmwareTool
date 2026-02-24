@@ -4,7 +4,7 @@ import os
 import tkinter as tk
 from tkinter import ttk, scrolledtext, filedialog, messagebox
 
-from obsc_tool.core.crypto import (
+from hwflash.core.crypto import (
     encrypt_config, decrypt_config, try_decrypt_all_keys,
     CfgFileParser, KNOWN_CHIP_IDS,
 )

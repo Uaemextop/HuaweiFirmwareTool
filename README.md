@@ -30,51 +30,50 @@ for firmware packing/signing, and PE analysis tools.
 
 ```
 HuaweiFirmwareTool/
-├── obsc_tool/               # Python GUI application
-│   ├── main.py              # Application entry point
-│   ├── protocol.py          # OBSC UDP protocol implementation
-│   ├── firmware.py          # HWNP firmware parser
-│   ├── config_crypto.py     # AES-128-CBC config encryption
-│   ├── network.py           # Network adapter discovery & UDP transport
-│   ├── terminal.py          # Telnet/Serial terminal clients
-│   ├── presets.py           # Router preset management
-│   ├── splash.py            # Splash screen & dependency installer
-│   └── gui/                 # GUI tab mixins
-│       ├── upgrade_tab.py   # Firmware upgrade UI
-│       ├── crypto_tab.py    # Config encryption UI
-│       ├── terminal_tab.py  # Terminal emulation UI
-│       ├── settings_tab.py  # Settings & adapter config
-│       └── ...              # Other tabs
+├── hwflash/                 # Main Python package
+│   ├── core/                # Business logic
+│   │   ├── protocol.py      # OBSC UDP protocol
+│   │   ├── firmware.py      # HWNP firmware parser
+│   │   ├── crypto.py        # AES-128-CBC config encryption
+│   │   ├── network.py       # Adapter discovery & UDP transport
+│   │   ├── terminal.py      # Telnet/Serial terminal clients
+│   │   └── presets.py       # Router preset management
+│   ├── shared/              # Shared utilities
+│   │   ├── helpers.py       # Type conversion, formatting, threading
+│   │   ├── validators.py    # IP, port, range validation
+│   │   ├── styles.py        # Theme colors, fonts, animations
+│   │   └── icons.py         # Logo and icon generation
+│   ├── ui/                  # GUI layer
+│   │   ├── app.py           # Main application with sidebar
+│   │   ├── splash.py        # Animated dependency installer
+│   │   ├── tabs/            # Tab implementations
+│   │   │   ├── upgrade.py, presets.py, verify.py, crypto.py
+│   │   │   ├── terminal.py, dump.py, settings.py, info.py, log.py
+│   │   │   ├── theme.py     # Theme switching
+│   │   │   └── adapters.py  # Network adapter management
+│   │   └── components/      # Reusable widgets
+│   │       ├── cards.py     # Card, badge, gradient, progress
+│   │       └── sidebar.py   # Sidebar navigation
+│   └── main.py              # Entry point
+├── obsc_tool/               # Backward compatibility redirects
 ├── cpp/                     # C++ firmware tools
-│   ├── CMakeLists.txt       # CMake build configuration
-│   ├── hw_fmw.cpp           # Firmware pack/unpack
-│   ├── hw_sign.cpp          # RSA firmware signing
-│   ├── hw_verify.cpp        # RSA signature verification
-│   └── ...                  # Utility modules
 ├── tools/                   # Standalone analysis tools
-│   └── analyze_exe.py       # PE32 executable analyzer
-├── tests/                   # Unit tests
-│   ├── test_config_crypto.py
-│   ├── test_firmware.py
-│   ├── test_network.py
-│   ├── test_presets.py
-│   └── test_protocol.py
-└── run_obsc_tool.py         # GUI launcher with dependency check
+│   └── analyzer.py          # PE32 executable analyzer
+├── tests/                   # Unit tests (173 tests)
+└── launcher.py              # GUI launcher with splash
 ```
 
 ## Quick Start
 
-### Python GUI Application
+### Python GUI
 
 ```bash
-# Install dependencies
-pip install -r obsc_tool/requirements.txt
+pip install -r hwflash/requirements.txt
 
-# Run the application
-python run_obsc_tool.py
+python launcher.py
 
-# Or run directly (without splash screen)
-python -m obsc_tool.main
+# Or run directly
+python -m hwflash.main
 ```
 
 ### Running Tests

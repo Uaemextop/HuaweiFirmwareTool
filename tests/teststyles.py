@@ -1,6 +1,6 @@
 """Tests for shared.styles module."""
 
-from obsc_tool.shared.styles import (
+from hwflash.shared.styles import (
     THEMES,
     DARK,
     LIGHT,

@@ -1,7 +1,7 @@
 """Re-exports for backward compatibility with tab mixins."""
 
-from obsc_tool.shared.helpers import safe_int as _safe_int  # noqa: F401
-from obsc_tool.shared.styles import (  # noqa: F401
+from hwflash.shared.helpers import safe_int as _safe_int  # noqa: F401
+from hwflash.shared.styles import (  # noqa: F401
     OBSC_MULTICAST_ADDR,
     DEVICE_STALE_TIMEOUT,
     TTKB_DARK,

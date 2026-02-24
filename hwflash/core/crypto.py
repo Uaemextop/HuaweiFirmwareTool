@@ -14,7 +14,7 @@ Also provides cfgtool-compatible configuration file parsing and editing.
 import os
 import logging
 
-logger = logging.getLogger("obsc_tool.config_crypto")
+logger = logging.getLogger("hwflash.config_crypto")
 
 # Try to use pycryptodome (battle-tested) for AES operations
 try:
@@ -64,7 +64,6 @@ def derive_key(chip_id):
     return key_bytes
 
 
-# ── AES-128-CBC implementation ──────────────────────────────────
 
 def _pkcs7_pad(data, block_size=16):
     """Apply PKCS#7 padding."""
@@ -138,7 +137,6 @@ def aes_cbc_decrypt(ciphertext, key, iv=None):
     return _aes_cbc_decrypt_fallback(ciphertext, key, iv)
 
 
-# ── Pure-Python AES fallback ────────────────────────────────────
 # Used only when pycryptodome is not installed.
 
 # Pre-computed AES S-box (standard)

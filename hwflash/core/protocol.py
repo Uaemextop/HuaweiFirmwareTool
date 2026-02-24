@@ -19,10 +19,9 @@ import threading
 import logging
 from enum import IntEnum
 
-logger = logging.getLogger("obsc_tool.protocol")
+logger = logging.getLogger("hwflash.protocol")
 
 
-# ── OBSC Protocol Constants ──────────────────────────────────────
 
 # Default OBSC ports
 OBSC_SEND_PORT = 50000
@@ -72,7 +71,6 @@ MAX_FRAME_INTERVAL_MS = 1000
 MAX_FIRMWARE_SIZE = 256 * 1024 * 1024  # 256 MB
 
 
-# ── OBSC Packet Structures ──────────────────────────────────────
 
 class DiscoveryPacket:
     """OBSC discovery broadcast packet."""
@@ -142,7 +140,6 @@ class DataPacket:
         ) + self.data
 
 
-# ── Device Info ──────────────────────────────────────────────────
 
 class ONTDevice:
     """Discovered ONT device information."""
@@ -164,7 +161,6 @@ class ONTDevice:
         return f"ONTDevice({self.ip}, {self.board_sn}, {self.status})"
 
 
-# ── OBSC Worker ──────────────────────────────────────────────────
 
 class OBSCWorker:
     """Main OBSC protocol worker that handles firmware transfer.
@@ -247,21 +243,14 @@ class OBSCWorker:
         if self._running:
             return
 
-        # Validate parameters before starting
-        if not firmware_data:
-            raise ValueError("No firmware data provided")
-        if len(firmware_data) > MAX_FIRMWARE_SIZE:
-            raise ValueError(
-                f"Firmware too large: {len(firmware_data):,} bytes "
-                f"(max {MAX_FIRMWARE_SIZE:,})")
-        if not (MIN_FRAME_SIZE <= self.frame_size <= MAX_FRAME_SIZE):
-            raise ValueError(
-                f"frame_size {self.frame_size} out of range "
-                f"[{MIN_FRAME_SIZE}, {MAX_FRAME_SIZE}]")
-        if not (MIN_FRAME_INTERVAL_MS <= self.frame_interval_ms <= MAX_FRAME_INTERVAL_MS):
-            raise ValueError(
-                f"frame_interval_ms {self.frame_interval_ms} out of range "
-                f"[{MIN_FRAME_INTERVAL_MS}, {MAX_FRAME_INTERVAL_MS}]")
+        from hwflash.shared.validators import validate_not_empty, validate_max_size, validate_range
+        validate_not_empty(firmware_data, "firmware data")
+        validate_max_size(firmware_data, MAX_FIRMWARE_SIZE, "Firmware")
+        validate_range(self.frame_size, MIN_FRAME_SIZE, MAX_FRAME_SIZE, "frame_size")
+        validate_range(
+            self.frame_interval_ms, MIN_FRAME_INTERVAL_MS,
+            MAX_FRAME_INTERVAL_MS, "frame_interval_ms"
+        )
 
         self._running = True
         self._session_id = int(time.time()) & 0xFFFFFFFF

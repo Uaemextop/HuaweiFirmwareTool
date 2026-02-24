@@ -2,16 +2,17 @@
 Shared helper functions used across multiple modules.
 
 Consolidates common operations: safe type conversion, string formatting,
-file operations, and threading utilities.
+file operations, subprocess execution, and threading utilities.
 """
 
 import os
+import subprocess
 import threading
 import logging
-from typing import Any, Optional, Callable
+from typing import Any, Optional, Callable, List, Tuple
 
 
-logger = logging.getLogger("obsc_tool")
+logger = logging.getLogger("hwflash")
 
 
 def safe_int(value: Any, default: int = 0) -> int:
@@ -70,3 +71,24 @@ def truncate(text: str, max_length: int = 50, suffix: str = "...") -> str:
     if len(text) <= max_length:
         return text
     return text[: max_length - len(suffix)] + suffix
+
+
+def run_command(
+    args: List[str],
+    timeout: int = 30,
+    capture: bool = True,
+) -> Tuple[bool, str]:
+    """Run a subprocess command safely (no shell). Returns (success, output)."""
+    try:
+        result = subprocess.run(
+            args,
+            capture_output=capture,
+            text=True,
+            timeout=timeout,
+        )
+        output = (result.stdout or "") + (result.stderr or "")
+        return result.returncode == 0, output.strip()
+    except subprocess.TimeoutExpired:
+        return False, "Command timed out"
+    except (subprocess.SubprocessError, OSError, FileNotFoundError) as exc:
+        return False, str(exc)

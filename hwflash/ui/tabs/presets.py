@@ -3,9 +3,9 @@
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
 
-from obsc_tool.gui.constants import _safe_int
-from obsc_tool.presets import PRESET_TEMPLATE
-from obsc_tool.protocol import OBSC_SEND_PORT, OBSC_RECV_PORT
+from hwflash.gui.constants import _safe_int
+from hwflash.core.presets import PRESET_TEMPLATE
+from hwflash.core.protocol import OBSC_SEND_PORT, OBSC_RECV_PORT
 
 
 class PresetsTabMixin:

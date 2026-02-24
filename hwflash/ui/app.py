@@ -20,32 +20,32 @@ except ImportError:
     from tkinter import ttk
     HAS_TTKB = False
 
-from obsc_tool import __version__
-from obsc_tool.presets import PresetManager
-from obsc_tool.terminal import TelnetClient, SerialClient
-from obsc_tool.shared.styles import (
+from hwflash import __version__
+from hwflash.core.presets import PresetManager
+from hwflash.core.terminal import TelnetClient, SerialClient
+from hwflash.shared.styles import (
     THEMES, get_theme, IP_MODE_DEFAULTS,
     OBSC_MULTICAST_ADDR, DEVICE_STALE_TIMEOUT,
     TTKB_DARK, TTKB_LIGHT, FONT_FAMILY, PRIMARY,
 )
-from obsc_tool.shared.helpers import safe_int
-from obsc_tool.shared.icons import generate_logo
-from obsc_tool.ui.components.cards import GradientBar
-from obsc_tool.ui.components.sidebar import SidebarNav
+from hwflash.shared.helpers import safe_int
+from hwflash.shared.icons import generate_logo
+from hwflash.ui.components.cards import GradientBar
+from hwflash.ui.components.sidebar import SidebarNav
 
-from obsc_tool.ui.tabs.upgrade import UpgradeTabMixin
-from obsc_tool.ui.tabs.presets import PresetsTabMixin
-from obsc_tool.ui.tabs.verify import VerificationTabMixin
-from obsc_tool.ui.tabs.crypto import CryptoTabMixin
-from obsc_tool.ui.tabs.terminal import TerminalTabMixin
-from obsc_tool.ui.tabs.dump import DumpTabMixin
-from obsc_tool.ui.tabs.settings import SettingsTabMixin
-from obsc_tool.ui.tabs.info import InfoTabMixin
-from obsc_tool.ui.tabs.log import LogTabMixin
-from obsc_tool.ui.tabs.theme import ThemeMixin
-from obsc_tool.ui.tabs.adapters import AdaptersMixin
+from hwflash.ui.tabs.upgrade import UpgradeTabMixin
+from hwflash.ui.tabs.presets import PresetsTabMixin
+from hwflash.ui.tabs.verify import VerificationTabMixin
+from hwflash.ui.tabs.crypto import CryptoTabMixin
+from hwflash.ui.tabs.terminal import TerminalTabMixin
+from hwflash.ui.tabs.dump import DumpTabMixin
+from hwflash.ui.tabs.settings import SettingsTabMixin
+from hwflash.ui.tabs.info import InfoTabMixin
+from hwflash.ui.tabs.log import LogTabMixin
+from hwflash.ui.tabs.theme import ThemeMixin
+from hwflash.ui.tabs.adapters import AdaptersMixin
 
-logger = logging.getLogger("obsc_tool")
+logger = logging.getLogger("hwflash")
 
 APP_NAME = "HuaweiFlash"
 
@@ -306,8 +306,44 @@ class HuaweiFlashApp(
         self.notebook.add(self.tab_log, text="Log")
         self._build_log_tab()
 
-        # Select first tab
         self._sidebar.select(0)
+
+        # Status bar at bottom
+        self._build_status_bar(colors)
+
+    def _build_status_bar(self, colors):
+        """Build bottom status bar with connection info."""
+        status_frame = tk.Frame(self.root, bg=colors["bg_secondary"], height=28)
+        status_frame.pack(fill=tk.X, side=tk.BOTTOM)
+        status_frame.pack_propagate(False)
+
+        GradientBar(
+            status_frame, height=1,
+            color_start="#2563EB", color_end="#06B6D4",
+        ).pack(fill=tk.X, side=tk.TOP)
+
+        self._status_label = tk.Label(
+            status_frame, text="Ready",
+            font=(FONT_FAMILY, 8),
+            bg=colors["bg_secondary"], fg=colors["fg_muted"],
+            anchor="w", padx=12,
+        )
+        self._status_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        self._adapter_label = tk.Label(
+            status_frame, text="No adapter selected",
+            font=(FONT_FAMILY, 8),
+            bg=colors["bg_secondary"], fg=colors["fg_muted"],
+            anchor="e", padx=12,
+        )
+        self._adapter_label.pack(side=tk.RIGHT)
+
+    def set_status(self, text: str):
+        """Update the status bar text."""
+        try:
+            self._status_label.configure(text=text)
+        except (tk.TclError, AttributeError):
+            pass
 
     # ── Page titles and subtitles for each nav item ──────────────
     _PAGE_INFO = {

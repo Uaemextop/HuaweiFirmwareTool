@@ -8,7 +8,7 @@ featuring icons, hover effects, and active state indicators.
 import tkinter as tk
 from typing import List, Callable, Optional, Dict
 
-from obsc_tool.shared.styles import PADDING, FONT_FAMILY
+from hwflash.shared.styles import PADDING, FONT_FAMILY
 
 
 class SidebarNav(tk.Frame):

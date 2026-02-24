@@ -17,7 +17,6 @@ except ImportError:
     HAS_PIL = False
 
 
-# ── Color palette ──────────────────────────────────────────────────
 BRAND_BLUE = "#2563EB"
 BRAND_CYAN = "#06B6D4"
 BRAND_DARK = "#0F172A"
@@ -184,7 +183,6 @@ def logo_to_base64(size: int = 64) -> str:
     return ""
 
 
-# ── Internal drawing helpers ───────────────────────────────────────
 
 
 def _hex_to_rgb(hex_color: str) -> Tuple[int, int, int]:

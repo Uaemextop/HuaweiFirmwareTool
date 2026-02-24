@@ -116,7 +116,7 @@ class SplashScreen:
 
         # Version
         try:
-            from obsc_tool import __version__
+            from hwflash import __version__
             ver = __version__
         except Exception:
             ver = "1.0.0"

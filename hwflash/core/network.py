@@ -13,7 +13,7 @@ import sys
 import time
 import logging
 
-logger = logging.getLogger("obsc_tool.network")
+logger = logging.getLogger("hwflash.network")
 
 
 class NetworkAdapter:

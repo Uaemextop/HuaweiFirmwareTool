@@ -4,7 +4,7 @@ import socket
 import struct
 import pytest
 
-from obsc_tool.network import (
+from hwflash.core.network import (
     NetworkAdapter,
     UDPTransport,
     discover_adapters,

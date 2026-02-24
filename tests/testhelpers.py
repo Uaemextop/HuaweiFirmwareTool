@@ -4,7 +4,7 @@ import os
 import tempfile
 import pytest
 
-from obsc_tool.shared.helpers import (
+from hwflash.shared.helpers import (
     safe_int,
     safe_float,
     format_size,

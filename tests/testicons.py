@@ -1,6 +1,6 @@
 """Tests for shared.icons module."""
 
-from obsc_tool.shared.icons import (
+from hwflash.shared.icons import (
     generate_logo,
     generate_icon,
     logo_to_base64,

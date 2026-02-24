@@ -1,2 +1,2 @@
-"""Backward-compatibility wrapper — use obsc_tool.gui.info instead."""
-from obsc_tool.gui.info import InfoTabMixin  # noqa: F401
+"""Backward-compatibility wrapper."""
+from hwflash.gui.info import InfoTabMixin  # noqa: F401

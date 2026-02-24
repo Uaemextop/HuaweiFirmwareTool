@@ -1,10 +1,2 @@
-"""Backward-compatibility wrapper — use obsc_tool.gui.colors instead."""
-from obsc_tool.gui.colors import (  # noqa: F401
-    _safe_int,
-    THEMES,
-    IP_MODE_DEFAULTS,
-    OBSC_MULTICAST_ADDR,
-    DEVICE_STALE_TIMEOUT,
-    TTKB_DARK,
-    TTKB_LIGHT,
-)
+"""Backward-compatibility wrapper — use hwflash.gui.constants instead."""
+from hwflash.gui.constants import *  # noqa: F401, F403

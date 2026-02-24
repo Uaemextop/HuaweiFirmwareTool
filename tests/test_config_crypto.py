@@ -4,7 +4,7 @@ Tests for obsc_tool.config_crypto (AES-based config encryption/decryption).
 
 import pytest
 
-from obsc_tool.config_crypto import (
+from hwflash.core.encrypt import (
     decrypt_config,
     encrypt_config,
     try_decrypt_all_keys,
@@ -61,7 +61,7 @@ class TestTryDecryptAllKeys:
     def test_detects_correct_chip_id(self):
         """try_decrypt_all_keys should return at least one result for data
         encrypted with a known chip ID (from KNOWN_CHIP_IDS)."""
-        from obsc_tool.config_crypto import KNOWN_CHIP_IDS
+        from hwflash.core.encrypt import KNOWN_CHIP_IDS
         if not KNOWN_CHIP_IDS:
             pytest.skip("No built-in chip IDs defined")
 

@@ -6,7 +6,7 @@ import struct
 
 import pytest
 
-from obsc_tool.protocol import (
+from hwflash.proto import (
     DiscoveryPacket,
     ControlPacket,
     DataPacket,

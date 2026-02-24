@@ -1,2 +1,2 @@
-"""Backward-compatibility wrapper — use obsc_tool.gui.verify instead."""
-from obsc_tool.gui.verify import VerificationTabMixin  # noqa: F401
+"""Backward-compatibility wrapper."""
+from hwflash.gui.verify import VerificationTabMixin  # noqa: F401

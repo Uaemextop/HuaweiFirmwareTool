@@ -6,7 +6,7 @@ import io
 
 import pytest
 
-from obsc_tool.assets import get_logo_png, get_logo_photo
+from hwflash.assets import get_logo_png, get_logo_photo
 
 
 class TestLogoGeneration:

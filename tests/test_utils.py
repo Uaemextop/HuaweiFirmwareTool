@@ -4,7 +4,7 @@ Tests for obsc_tool.utils (shared utility functions).
 
 import pytest
 
-from obsc_tool.utils import (
+from hwflash.utils import (
     safe_int,
     safe_float,
     clamp,

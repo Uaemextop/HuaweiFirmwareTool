@@ -8,7 +8,7 @@ import tempfile
 
 import pytest
 
-from obsc_tool.presets import PresetManager, BUILTIN_PRESETS, PRESET_TEMPLATE
+from hwflash.core.presets import PresetManager, BUILTIN_PRESETS, PRESET_TEMPLATE
 
 
 class TestPresetManagerBuiltins:

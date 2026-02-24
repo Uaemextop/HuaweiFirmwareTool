@@ -9,7 +9,7 @@ import zlib
 
 import pytest
 
-from obsc_tool.firmware import (
+from hwflash.core.firmware import (
     HWNP_HEADER_SIZE,
     HWNP_ITEM_SIZE,
     HWNP_MAGIC,

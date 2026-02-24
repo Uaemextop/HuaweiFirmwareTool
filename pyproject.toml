@@ -55,13 +55,13 @@ build = [
 ]
 
 [project.scripts]
-obsc-tool = "obsc_tool.main:main"
+obsc-tool = "hwflash.main:main"
 
 [project.urls]
 Repository = "https://github.com/Uaemextop/HuaweiFirmwareTool"
 
 [tool.setuptools.packages.find]
-include = ["obsc_tool*"]
+include = ["obsc_tool*", "hwflash*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -69,5 +69,5 @@ python_files = ["test_*.py"]
 python_functions = ["test_*"]
 
 [tool.coverage.run]
-source = ["obsc_tool"]
+source = ["obsc_tool", "hwflash"]
 omit = ["obsc_tool/gui/*", "obsc_tool/main.py", "obsc_tool/splash.py"]

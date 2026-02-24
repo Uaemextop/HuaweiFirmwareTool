@@ -8,38 +8,35 @@ class DumpTabMixin:
     """Mixin providing the Firmware Dump tab and related methods."""
 
     def _build_dump_tab(self):
-        """Build the firmware dump tab."""
         tab = self.tab_dump
 
-        # ── Info ─────────────────────────────────────────────────
-        info_frame = ttk.LabelFrame(tab, text="Firmware Dump (via Telnet)", padding=10)
-        info_frame.pack(fill=tk.X, pady=(0, 10))
+        # Info
+        info_frame = ttk.LabelFrame(tab, text="Firmware Dump (via Telnet)", padding=6)
+        info_frame.pack(fill=tk.X, pady=(0, 6))
 
         ttk.Label(info_frame,
-                  text="Firmware dump requires an active Telnet connection to the ONT device.\n"
-                       "The device must have Telnet enabled (flash 1-TELNET.bin first).\n"
-                       "Connect via the Terminal tab, then use the controls below to dump partitions.",
-                  font=('Segoe UI', 9), justify=tk.LEFT,
+                  text="Requires active Telnet to the ONT. Enable Telnet first "
+                       "(flash 1-TELNET.bin), connect via Terminal tab, then dump here.",
+                  font=('Segoe UI', 9), justify=tk.LEFT, wraplength=700,
                   ).pack(fill=tk.X)
 
-        # ── Partition List ───────────────────────────────────────
-        part_frame = ttk.LabelFrame(tab, text="MTD Partitions", padding=10)
-        part_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+        # Partition list
+        part_frame = ttk.LabelFrame(tab, text="MTD Partitions", padding=6)
+        part_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 6))
 
         btn_row = ttk.Frame(part_frame)
-        btn_row.pack(fill=tk.X, pady=(0, 5))
+        btn_row.pack(fill=tk.X, pady=(0, 4))
         ttk.Button(btn_row, text="🔍 Read Partitions",
-                   command=self._dump_read_partitions, width=18).pack(side=tk.LEFT, padx=(0, 5))
+                   command=self._dump_read_partitions, width=16).pack(side=tk.LEFT, padx=(0, 4))
         ttk.Button(btn_row, text="💾 Dump Selected",
-                   command=self._dump_selected, width=15).pack(side=tk.LEFT, padx=(0, 5))
+                   command=self._dump_selected, width=14).pack(side=tk.LEFT, padx=(0, 4))
         ttk.Button(btn_row, text="💾 Dump All",
-                   command=self._dump_all, width=12).pack(side=tk.LEFT)
+                   command=self._dump_all, width=10).pack(side=tk.LEFT)
 
         self.dump_status_var = tk.StringVar(value="Connect via Terminal tab first")
         ttk.Label(btn_row, textvariable=self.dump_status_var,
-                  font=('Segoe UI', 9)).pack(side=tk.LEFT, padx=10)
+                  font=('Segoe UI', 9)).pack(side=tk.LEFT, padx=8)
 
-        # Partition table
         columns = ('id', 'name', 'size', 'erasesize')
         self.dump_tree = ttk.Treeview(
             part_frame, columns=columns, show='headings', height=8)
@@ -53,14 +50,14 @@ class DumpTabMixin:
         self.dump_tree.column('erasesize', width=120)
         self.dump_tree.pack(fill=tk.BOTH, expand=True)
 
-        # ── Dump Output ──────────────────────────────────────────
-        out_frame = ttk.LabelFrame(tab, text="Dump Output", padding=5)
-        out_frame.pack(fill=tk.X, pady=(0, 5))
+        # Dump output
+        out_frame = ttk.LabelFrame(tab, text="Dump Output", padding=4)
+        out_frame.pack(fill=tk.X, pady=(0, 4))
 
         self.dump_output = scrolledtext.ScrolledText(
             out_frame, wrap=tk.WORD,
             font=('Consolas', 9),
-            state='disabled', height=6,
+            state='disabled', height=5,
         )
         self.dump_output.pack(fill=tk.BOTH, expand=True)
 

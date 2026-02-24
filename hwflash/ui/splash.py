@@ -56,20 +56,20 @@ class SplashScreen:
 
         self._draw_background(w, h)
 
-        # Border glow
-        self.canvas.create_rectangle(1, 1, w - 1, h - 1, outline="#2563EB", width=2)
+        # Border
+        self.canvas.create_rectangle(1, 1, w - 1, h - 1, outline="#3B82F6", width=2)
 
         # Logo circle
         cx, cy = w // 2, 100
         r = 35
         self.canvas.create_oval(cx - r - 3, cy - r - 3, cx + r + 3, cy + r + 3,
-                                fill="#1E40AF", outline="#3B82F6", width=2)
+                                fill="#1E2D4A", outline="#3B82F6", width=2)
         self.canvas.create_oval(cx - r, cy - r, cx + r, cy + r,
-                                fill="#1E3A5F", outline="#2563EB", width=1)
+                                fill="#242A3B", outline="#3B82F6", width=1)
         # Flash symbol
         flash_pts = [cx - 8, cy - 18, cx + 4, cy - 3, cx - 3, cy - 3,
                      cx + 8, cy + 18, cx - 4, cy + 3, cx + 3, cy + 3]
-        self.canvas.create_polygon(flash_pts, fill="#60CDFF", outline="")
+        self.canvas.create_polygon(flash_pts, fill="#7DD3FC", outline="")
         # Circuit dots
         for angle in [45, 135, 225, 315]:
             dx = int(r * 0.85 * math.cos(math.radians(angle)))
@@ -79,30 +79,28 @@ class SplashScreen:
 
         # Title
         self.canvas.create_text(w // 2, 160, text="HuaweiFlash",
-                                font=("Segoe UI", 22, "bold"), fill="#F8FAFC")
+                                font=("Segoe UI", 22, "bold"), fill="#E8ECF4")
         self.canvas.create_text(w // 2, 185, text="Open-Source Huawei ONT Firmware Flasher",
-                                font=("Segoe UI", 10), fill="#94A3B8")
+                                font=("Segoe UI", 10), fill="#A0AABE")
 
         # Status text
         self._status_id = self.canvas.create_text(
             w // 2, 235, text="Checking dependencies...",
-            font=("Segoe UI", 10), fill="#E2E8F0"
+            font=("Segoe UI", 10), fill="#E8ECF4"
         )
 
-        # Progress bar background
+        # Progress bar
         bar_x, bar_y = 60, 265
         bar_w, bar_h = w - 120, 8
         self.canvas.create_rectangle(bar_x, bar_y, bar_x + bar_w, bar_y + bar_h,
-                                     fill="#1E293B", outline="#334155")
-        # Progress bar fill
+                                     fill="#242A3B", outline="#3A4358")
         self._bar_fill = self.canvas.create_rectangle(
             bar_x + 1, bar_y + 1, bar_x + 1, bar_y + bar_h - 1,
-            fill="#2563EB", outline=""
+            fill="#3B82F6", outline=""
         )
-        # Progress bar highlight
         self._bar_highlight = self.canvas.create_rectangle(
             bar_x + 1, bar_y + 1, bar_x + 1, bar_y + bar_h // 3,
-            fill="#3B82F6", outline=""
+            fill="#60A5FA", outline=""
         )
         self._bar_x = bar_x
         self._bar_w = bar_w
@@ -111,7 +109,7 @@ class SplashScreen:
 
         # Detail text
         self._detail_id = self.canvas.create_text(
-            w // 2, 290, text="", font=("Segoe UI", 9), fill="#64748B"
+            w // 2, 290, text="", font=("Segoe UI", 9), fill="#6B7A94"
         )
 
         # Version
@@ -135,12 +133,11 @@ class SplashScreen:
         self._alpha = 0.0
 
     def _draw_background(self, w, h):
-        """Draw gradient background."""
         for y in range(h):
             ratio = y / h
-            r = int(15 + ratio * 5)
-            g = int(23 + ratio * 8)
-            b = int(42 + ratio * 12)
+            r = int(26 + ratio * 5)
+            g = int(31 + ratio * 8)
+            b = int(46 + ratio * 12)
             color = f"#{r:02x}{g:02x}{b:02x}"
             self.canvas.create_line(0, y, w, y, fill=color)
 
@@ -275,24 +272,24 @@ class QuickSplash:
 
         for y_pos in range(h):
             ratio = y_pos / h
-            r = int(15 + ratio * 5)
-            g = int(23 + ratio * 8)
-            b = int(42 + ratio * 12)
+            r = int(26 + ratio * 5)
+            g = int(31 + ratio * 8)
+            b = int(46 + ratio * 12)
             canvas.create_line(0, y_pos, w, y_pos, fill=f"#{r:02x}{g:02x}{b:02x}")
 
-        canvas.create_rectangle(1, 1, w - 1, h - 1, outline="#2563EB", width=2)
+        canvas.create_rectangle(1, 1, w - 1, h - 1, outline="#3B82F6", width=2)
 
         cx, cy = w // 2, 80
         r = 28
-        canvas.create_oval(cx - r, cy - r, cx + r, cy + r, fill="#1E3A5F", outline="#2563EB", width=2)
+        canvas.create_oval(cx - r, cy - r, cx + r, cy + r, fill="#242A3B", outline="#3B82F6", width=2)
         pts = [cx - 6, cy - 14, cx + 3, cy - 2, cx - 2, cy - 2,
                cx + 6, cy + 14, cx - 3, cy + 2, cx + 2, cy + 2]
-        canvas.create_polygon(pts, fill="#60CDFF", outline="")
+        canvas.create_polygon(pts, fill="#7DD3FC", outline="")
 
         canvas.create_text(w // 2, 130, text="HuaweiFlash",
-                           font=("Segoe UI", 18, "bold"), fill="#F8FAFC")
+                           font=("Segoe UI", 18, "bold"), fill="#E8ECF4")
         canvas.create_text(w // 2, 155, text="Loading...",
-                           font=("Segoe UI", 10), fill="#94A3B8")
+                           font=("Segoe UI", 10), fill="#A0AABE")
 
         try:
             from hwflash import __version__
@@ -300,7 +297,7 @@ class QuickSplash:
         except Exception:
             ver = "2.0.0"
         canvas.create_text(w // 2, h - 20, text=f"v{ver}",
-                           font=("Segoe UI", 9), fill="#475569")
+                           font=("Segoe UI", 9), fill="#6B7A94")
 
         self._alpha = 0.0
         self.canvas = canvas

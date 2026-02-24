@@ -72,22 +72,22 @@ class PresetsTabMixin:
         ttk.Entry(row, textvariable=self.new_preset_desc_var, width=60).pack(side=tk.LEFT, fill=tk.X, expand=True)
 
         # --- Transfer Settings ---
-        tsf = ttk.LabelFrame(self.preset_create_frame, text="Transfer Settings", padding=5)
-        tsf.pack(fill=tk.X, pady=(5, 2))
+        tsf = ttk.LabelFrame(self.preset_create_frame, text="Transfer Settings", padding=4)
+        tsf.pack(fill=tk.X, pady=(4, 2))
 
         r1 = ttk.Frame(tsf)
         r1.pack(fill=tk.X, pady=1)
-        ttk.Label(r1, text="Frame Size:", width=16).pack(side=tk.LEFT)
+        ttk.Label(r1, text="Frame Size:", width=14).pack(side=tk.LEFT)
         self.np_frame_size_var = tk.StringVar(value="1400")
         ttk.Combobox(r1, textvariable=self.np_frame_size_var,
-                     values=["800", "1000", "1200", "1400", "1472", "4096", "8192"],
-                     width=8).pack(side=tk.LEFT, padx=(0, 12))
-        ttk.Label(r1, text="Frame Interval (ms):", width=18).pack(side=tk.LEFT)
+                     values=["1200", "1400", "1472", "4096", "8192"],
+                     state='readonly', width=8).pack(side=tk.LEFT, padx=(0, 10))
+        ttk.Label(r1, text="Interval (ms):", width=12).pack(side=tk.LEFT)
         self.np_frame_interval_var = tk.StringVar(value="5")
         ttk.Combobox(r1, textvariable=self.np_frame_interval_var,
                      values=["1", "2", "5", "10", "20", "50"],
-                     width=6).pack(side=tk.LEFT, padx=(0, 12))
-        ttk.Label(r1, text="Flash Mode:", width=12).pack(side=tk.LEFT)
+                     state='readonly', width=6).pack(side=tk.LEFT, padx=(0, 10))
+        ttk.Label(r1, text="Flash Mode:", width=10).pack(side=tk.LEFT)
         self.np_flash_mode_var = tk.StringVar(value="Normal")
         ttk.Combobox(r1, textvariable=self.np_flash_mode_var,
                      values=["Normal", "Forced"], state='readonly',
@@ -95,61 +95,69 @@ class PresetsTabMixin:
 
         r2 = ttk.Frame(tsf)
         r2.pack(fill=tk.X, pady=1)
-        ttk.Label(r2, text="Upgrade Type:", width=16).pack(side=tk.LEFT)
+        ttk.Label(r2, text="Upgrade Type:", width=14).pack(side=tk.LEFT)
         self.np_upgrade_type_var = tk.StringVar(value="Standard")
         ttk.Combobox(r2, textvariable=self.np_upgrade_type_var,
                      values=["Standard", "Equipment", "Equipment WC"],
-                     state='readonly', width=14).pack(side=tk.LEFT, padx=(0, 12))
+                     state='readonly', width=14).pack(side=tk.LEFT, padx=(0, 10))
         self.np_delete_cfg_var = tk.BooleanVar(value=False)
         ttk.Checkbutton(r2, text="Delete existing config",
                         variable=self.np_delete_cfg_var).pack(side=tk.LEFT)
 
         # --- Network Settings ---
-        nsf = ttk.LabelFrame(self.preset_create_frame, text="Network Settings", padding=5)
+        nsf = ttk.LabelFrame(self.preset_create_frame, text="Network Settings", padding=4)
         nsf.pack(fill=tk.X, pady=(2, 2))
 
         r3 = ttk.Frame(nsf)
         r3.pack(fill=tk.X, pady=1)
-        ttk.Label(r3, text="Send Port:", width=16).pack(side=tk.LEFT)
+        ttk.Label(r3, text="Send Port:", width=14).pack(side=tk.LEFT)
         self.np_send_port_var = tk.StringVar(value="50000")
-        ttk.Entry(r3, textvariable=self.np_send_port_var, width=8).pack(side=tk.LEFT, padx=(0, 12))
-        ttk.Label(r3, text="Recv Port:", width=12).pack(side=tk.LEFT)
+        ttk.Combobox(r3, textvariable=self.np_send_port_var,
+                     values=["50000", "50002", "50010"],
+                     width=8).pack(side=tk.LEFT, padx=(0, 10))
+        ttk.Label(r3, text="Recv Port:", width=10).pack(side=tk.LEFT)
         self.np_recv_port_var = tk.StringVar(value="50001")
-        ttk.Entry(r3, textvariable=self.np_recv_port_var, width=8).pack(side=tk.LEFT, padx=(0, 12))
-        ttk.Label(r3, text="Broadcast:", width=12).pack(side=tk.LEFT)
+        ttk.Combobox(r3, textvariable=self.np_recv_port_var,
+                     values=["50001", "50003", "50011"],
+                     width=8).pack(side=tk.LEFT, padx=(0, 10))
+        ttk.Label(r3, text="Broadcast:", width=10).pack(side=tk.LEFT)
         self.np_broadcast_var = tk.StringVar(value="auto")
-        ttk.Entry(r3, textvariable=self.np_broadcast_var, width=14).pack(side=tk.LEFT)
+        ttk.Combobox(r3, textvariable=self.np_broadcast_var,
+                     values=["auto", "255.255.255.255", "192.168.100.255"],
+                     width=16).pack(side=tk.LEFT)
 
         r4 = ttk.Frame(nsf)
         r4.pack(fill=tk.X, pady=1)
-        ttk.Label(r4, text="Timeout (s):", width=16).pack(side=tk.LEFT)
+        ttk.Label(r4, text="Timeout (s):", width=14).pack(side=tk.LEFT)
         self.np_timeout_var = tk.StringVar(value="600")
-        ttk.Entry(r4, textvariable=self.np_timeout_var, width=8).pack(side=tk.LEFT, padx=(0, 12))
-        ttk.Label(r4, text="Machine Filter:", width=14).pack(side=tk.LEFT)
+        ttk.Combobox(r4, textvariable=self.np_timeout_var,
+                     values=["300", "600", "900", "1200", "1800"],
+                     width=8).pack(side=tk.LEFT, padx=(0, 10))
+        ttk.Label(r4, text="Machine Filter:", width=12).pack(side=tk.LEFT)
         self.np_machine_filter_var = tk.StringVar(value="")
-        ttk.Entry(r4, textvariable=self.np_machine_filter_var, width=20).pack(side=tk.LEFT)
+        ttk.Entry(r4, textvariable=self.np_machine_filter_var, width=18).pack(side=tk.LEFT)
 
         # --- Advanced Settings ---
-        asf = ttk.LabelFrame(self.preset_create_frame, text="Advanced / Verification", padding=5)
+        asf = ttk.LabelFrame(self.preset_create_frame, text="Advanced / Verification", padding=4)
         asf.pack(fill=tk.X, pady=(2, 2))
 
         r5 = ttk.Frame(asf)
         r5.pack(fill=tk.X, pady=1)
-        ttk.Label(r5, text="Discovery (s):", width=16).pack(side=tk.LEFT)
+        ttk.Label(r5, text="Discovery (s):", width=14).pack(side=tk.LEFT)
         self.np_discovery_var = tk.StringVar(value="10")
         ttk.Combobox(r5, textvariable=self.np_discovery_var,
                      values=["5", "10", "15", "20", "30", "60"],
-                     width=6).pack(side=tk.LEFT, padx=(0, 12))
-        ttk.Label(r5, text="Ctrl Retries:", width=12).pack(side=tk.LEFT)
+                     state='readonly', width=6).pack(side=tk.LEFT, padx=(0, 10))
+        ttk.Label(r5, text="Ctrl Retries:", width=10).pack(side=tk.LEFT)
         self.np_ctrl_retries_var = tk.StringVar(value="3")
         ttk.Combobox(r5, textvariable=self.np_ctrl_retries_var,
                      values=["1", "2", "3", "5", "10"],
-                     width=5).pack(side=tk.LEFT, padx=(0, 12))
-        ttk.Label(r5, text="Data Retries:", width=12).pack(side=tk.LEFT)
+                     state='readonly', width=5).pack(side=tk.LEFT, padx=(0, 10))
+        ttk.Label(r5, text="Data Retries:", width=10).pack(side=tk.LEFT)
         self.np_data_retries_var = tk.StringVar(value="0")
         ttk.Combobox(r5, textvariable=self.np_data_retries_var,
                      values=["0", "1", "2", "3"],
-                     width=5).pack(side=tk.LEFT)
+                     state='readonly', width=5).pack(side=tk.LEFT)
 
         r6 = ttk.Frame(asf)
         r6.pack(fill=tk.X, pady=1)

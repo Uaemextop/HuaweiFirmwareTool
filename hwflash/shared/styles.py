@@ -2,82 +2,85 @@
 Modern UI styles, colors, and theme configuration.
 
 Provides a centralized theming system with dark/light modes,
-gradient colors, shadow effects, and animation support.
+balanced contrast, and consistent component styling.
 """
 
 from typing import Dict, Tuple
 
 
-PRIMARY = "#2563EB"
-PRIMARY_HOVER = "#1D4ED8"
-PRIMARY_LIGHT = "#3B82F6"
+# ── Brand colors ────────────────────────────────────────────────
+PRIMARY = "#3B82F6"
+PRIMARY_HOVER = "#2563EB"
+PRIMARY_LIGHT = "#60A5FA"
 SECONDARY = "#06B6D4"
 SECONDARY_HOVER = "#0891B2"
 ACCENT = "#8B5CF6"
-SUCCESS = "#10B981"
-SUCCESS_HOVER = "#059669"
-WARNING = "#F59E0B"
+SUCCESS = "#22C55E"
+SUCCESS_HOVER = "#16A34A"
+WARNING = "#EAB308"
 DANGER = "#EF4444"
 DANGER_HOVER = "#DC2626"
 
+# ── Dark theme — balanced, not too dark ─────────────────────────
 DARK = {
-    "bg": "#0F172A",
-    "bg_secondary": "#1E293B",
-    "bg_card": "#1E293B",
-    "bg_input": "#334155",
-    "bg_hover": "#334155",
-    "bg_selected": "#1E40AF",
-    "fg": "#F8FAFC",
-    "fg_secondary": "#94A3B8",
-    "fg_muted": "#64748B",
-    "border": "#334155",
-    "border_light": "#475569",
-    "shadow": "#000000",
+    "bg": "#1A1F2E",
+    "bg_secondary": "#242A3B",
+    "bg_card": "#242A3B",
+    "bg_input": "#2E3548",
+    "bg_hover": "#353D52",
+    "bg_selected": "#2E4A7A",
+    "fg": "#E8ECF4",
+    "fg_secondary": "#A0AABE",
+    "fg_muted": "#6B7A94",
+    "border": "#3A4358",
+    "border_light": "#4A5570",
+    "shadow": "#0D1017",
     "accent": PRIMARY,
     "accent_hover": PRIMARY_HOVER,
     "success": SUCCESS,
     "warning": WARNING,
     "danger": DANGER,
-    "gradient_start": "#1E3A5F",
-    "gradient_end": "#0F172A",
-    "sidebar": "#0F172A",
-    "titlebar": "#0F172A",
+    "gradient_start": "#1E2D4A",
+    "gradient_end": "#1A1F2E",
+    "sidebar": "#161B28",
+    "titlebar": "#161B28",
     "tab_active": PRIMARY,
-    "tab_inactive": "#1E293B",
-    "scrollbar": "#475569",
-    "scrollbar_hover": "#64748B",
-    "terminal_bg": "#0D1117",
-    "terminal_fg": "#58A6FF",
+    "tab_inactive": "#242A3B",
+    "scrollbar": "#4A5570",
+    "scrollbar_hover": "#5E6B85",
+    "terminal_bg": "#141820",
+    "terminal_fg": "#7DD3FC",
 }
 
+# ── Light theme — clean, not washed out ─────────────────────────
 LIGHT = {
-    "bg": "#F8FAFC",
-    "bg_secondary": "#F1F5F9",
+    "bg": "#F0F2F7",
+    "bg_secondary": "#E4E8F0",
     "bg_card": "#FFFFFF",
     "bg_input": "#FFFFFF",
-    "bg_hover": "#E2E8F0",
-    "bg_selected": "#DBEAFE",
-    "fg": "#0F172A",
-    "fg_secondary": "#475569",
-    "fg_muted": "#94A3B8",
-    "border": "#E2E8F0",
-    "border_light": "#CBD5E1",
-    "shadow": "#94A3B8",
+    "bg_hover": "#D8DEE9",
+    "bg_selected": "#C9DAFB",
+    "fg": "#1A2035",
+    "fg_secondary": "#3D4B65",
+    "fg_muted": "#7A879E",
+    "border": "#CBD3E1",
+    "border_light": "#B4BFCF",
+    "shadow": "#8893A6",
     "accent": PRIMARY,
     "accent_hover": PRIMARY_HOVER,
     "success": SUCCESS,
     "warning": WARNING,
     "danger": DANGER,
-    "gradient_start": "#EFF6FF",
-    "gradient_end": "#F8FAFC",
+    "gradient_start": "#DDE5F5",
+    "gradient_end": "#F0F2F7",
     "sidebar": "#FFFFFF",
     "titlebar": "#FFFFFF",
     "tab_active": PRIMARY,
-    "tab_inactive": "#E2E8F0",
-    "scrollbar": "#CBD5E1",
-    "scrollbar_hover": "#94A3B8",
-    "terminal_bg": "#FAFAFA",
-    "terminal_fg": "#1E293B",
+    "tab_inactive": "#D8DEE9",
+    "scrollbar": "#B4BFCF",
+    "scrollbar_hover": "#8893A6",
+    "terminal_bg": "#F5F6FA",
+    "terminal_fg": "#1A2035",
 }
 
 THEMES: Dict[str, Dict[str, str]] = {
@@ -135,22 +138,22 @@ def get_gradient(theme: Dict[str, str]) -> Tuple[str, str]:
 
 TAB_THEMES = {
     'light': {
-        'bg': '#F3F3F3', 'fg': '#1A1A1A',
-        'accent': '#0078D4', 'accent_hover': '#106EBE',
-        'surface': '#FFFFFF', 'surface_alt': '#F9F9F9',
-        'border': '#D1D1D1',
-        'success': '#0F7B0F', 'error': '#C42B1C', 'warning': '#9D5D00',
-        'log_bg': '#FFFFFF', 'log_fg': '#1A1A1A',
-        'progress_bg': '#E0E0E0', 'progress_fg': '#0078D4',
+        'bg': '#F0F2F7', 'fg': '#1A2035',
+        'accent': '#3B82F6', 'accent_hover': '#2563EB',
+        'surface': '#FFFFFF', 'surface_alt': '#E4E8F0',
+        'border': '#CBD3E1',
+        'success': '#22C55E', 'error': '#EF4444', 'warning': '#EAB308',
+        'log_bg': '#FFFFFF', 'log_fg': '#1A2035',
+        'progress_bg': '#CBD3E1', 'progress_fg': '#3B82F6',
     },
     'dark': {
-        'bg': '#202020', 'fg': '#FFFFFF',
-        'accent': '#60CDFF', 'accent_hover': '#429CE3',
-        'surface': '#2D2D2D', 'surface_alt': '#383838',
-        'border': '#404040',
-        'success': '#6CCB5F', 'error': '#FF99A4', 'warning': '#FCE100',
-        'log_bg': '#1A1A1A', 'log_fg': '#D4D4D4',
-        'progress_bg': '#404040', 'progress_fg': '#60CDFF',
+        'bg': '#1A1F2E', 'fg': '#E8ECF4',
+        'accent': '#3B82F6', 'accent_hover': '#2563EB',
+        'surface': '#242A3B', 'surface_alt': '#2E3548',
+        'border': '#3A4358',
+        'success': '#22C55E', 'error': '#EF4444', 'warning': '#EAB308',
+        'log_bg': '#1A1F2E', 'log_fg': '#C8D0E0',
+        'progress_bg': '#3A4358', 'progress_fg': '#3B82F6',
     },
 }
 

@@ -11,27 +11,21 @@ class InfoTabMixin:
     """Mixin providing the Firmware Info tab and related methods."""
 
     def _build_info_tab(self):
-        """Build the firmware information tab (HWFW_GUI style).
-
-        Adapted from csersoft/HWFW_GUI: tree view showing firmware
-        structure with header, product list, and item details.
-        Supports item export and product list viewing.
-        """
+        """Build the firmware information tab."""
         tab = self.tab_info
 
-        # ── Toolbar ──────────────────────────────────────────────
         toolbar = ttk.Frame(tab)
-        toolbar.pack(fill=tk.X, pady=(0, 5))
+        toolbar.pack(fill=tk.X, pady=(0, 4))
         ttk.Button(toolbar, text="📋 Refresh Info",
-                   command=self._refresh_fw_info, width=14).pack(side=tk.LEFT, padx=(0, 5))
+                   command=self._refresh_fw_info, width=13).pack(side=tk.LEFT, padx=(0, 4))
         ttk.Button(toolbar, text="💾 Export Item",
-                   command=self._export_fw_item, width=14).pack(side=tk.LEFT, padx=(0, 5))
+                   command=self._export_fw_item, width=13).pack(side=tk.LEFT, padx=(0, 4))
         ttk.Button(toolbar, text="✅ Verify CRC32",
-                   command=self._verify_fw_crc, width=14).pack(side=tk.LEFT, padx=(0, 5))
+                   command=self._verify_fw_crc, width=13).pack(side=tk.LEFT)
 
         self.fw_info_status_var = tk.StringVar(value="Load a firmware file first")
         ttk.Label(toolbar, textvariable=self.fw_info_status_var,
-                  font=('Segoe UI', 9)).pack(side=tk.LEFT, padx=10)
+                  font=('Segoe UI', 9)).pack(side=tk.LEFT, padx=8)
 
         # ── Paned window: tree + details ─────────────────────────
         paned = ttk.PanedWindow(tab, orient=tk.HORIZONTAL)

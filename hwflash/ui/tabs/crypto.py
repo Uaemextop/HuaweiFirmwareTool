@@ -14,77 +14,67 @@ class CryptoTabMixin:
     """Mixin providing the Config Crypto tab and related methods."""
 
     def _build_crypto_tab(self):
-        """Build the config file encryption/decryption tab."""
         tab = self.tab_crypto
 
-        # ── Encrypt / Decrypt ────────────────────────────────────
-        op_frame = ttk.LabelFrame(tab, text="Config File Encryption (aescrypt2)", padding=10)
-        op_frame.pack(fill=tk.X, pady=(0, 10))
+        # Encrypt / Decrypt
+        op_frame = ttk.LabelFrame(tab, text="Config File Encryption (aescrypt2)", padding=6)
+        op_frame.pack(fill=tk.X, pady=(0, 6))
 
-        # Input file
         row = ttk.Frame(op_frame)
         row.pack(fill=tk.X, pady=2)
-        ttk.Label(row, text="Input File:", width=14).pack(side=tk.LEFT)
+        ttk.Label(row, text="Input File:", width=12).pack(side=tk.LEFT)
         self.crypto_input_var = tk.StringVar()
-        ttk.Entry(row, textvariable=self.crypto_input_var, width=45).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Entry(row, textvariable=self.crypto_input_var, width=42).pack(side=tk.LEFT, padx=(0, 4))
         ttk.Button(row, text="Browse", command=self._browse_crypto_input, width=8).pack(side=tk.LEFT)
 
-        # Output file
         row = ttk.Frame(op_frame)
         row.pack(fill=tk.X, pady=2)
-        ttk.Label(row, text="Output File:", width=14).pack(side=tk.LEFT)
+        ttk.Label(row, text="Output File:", width=12).pack(side=tk.LEFT)
         self.crypto_output_var = tk.StringVar()
-        ttk.Entry(row, textvariable=self.crypto_output_var, width=45).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Entry(row, textvariable=self.crypto_output_var, width=42).pack(side=tk.LEFT, padx=(0, 4))
         ttk.Button(row, text="Browse", command=self._browse_crypto_output, width=8).pack(side=tk.LEFT)
 
-        # Chip ID
         row = ttk.Frame(op_frame)
         row.pack(fill=tk.X, pady=2)
-        ttk.Label(row, text="Chip ID:", width=14).pack(side=tk.LEFT)
+        ttk.Label(row, text="Chip ID:", width=12).pack(side=tk.LEFT)
         self.crypto_chip_var = tk.StringVar(value="Auto")
         self.crypto_chip_combo = ttk.Combobox(
             row, textvariable=self.crypto_chip_var,
             values=["Auto"] + KNOWN_CHIP_IDS + ["Custom"],
-            width=15,
+            state='readonly', width=14,
         )
-        self.crypto_chip_combo.pack(side=tk.LEFT, padx=(0, 5))
+        self.crypto_chip_combo.pack(side=tk.LEFT, padx=(0, 4))
         self.crypto_chip_combo.bind('<<ComboboxSelected>>', self._on_crypto_chip_changed)
-        ttk.Label(row, text="Key template: Df7!ui%s9(lmV1L8", font=('Segoe UI', 8)).pack(side=tk.LEFT)
+        ttk.Label(row, text="Key: Df7!ui%s9(lmV1L8", font=('Segoe UI', 8)).pack(side=tk.LEFT)
 
-        # Custom chip ID (shown only when "Custom" selected)
         self.crypto_custom_row = ttk.Frame(op_frame)
-        ttk.Label(self.crypto_custom_row, text="Custom Chip:", width=14).pack(side=tk.LEFT)
+        ttk.Label(self.crypto_custom_row, text="Custom Chip:", width=12).pack(side=tk.LEFT)
         self.crypto_custom_chip_var = tk.StringVar()
-        ttk.Entry(self.crypto_custom_row, textvariable=self.crypto_custom_chip_var, width=20).pack(side=tk.LEFT)
-        ttk.Label(self.crypto_custom_row, text="(only if Chip ID = Custom)", font=('Segoe UI', 8)).pack(side=tk.LEFT, padx=5)
-        # Hide by default
+        ttk.Entry(self.crypto_custom_row, textvariable=self.crypto_custom_chip_var, width=18).pack(side=tk.LEFT)
         self._on_crypto_chip_changed()
 
-        # Buttons
         btn_row = ttk.Frame(op_frame)
-        btn_row.pack(fill=tk.X, pady=(8, 0))
-        ttk.Button(btn_row, text="🔓 Decrypt", command=self._crypto_decrypt, width=15).pack(side=tk.LEFT, padx=(0, 5))
-        ttk.Button(btn_row, text="🔒 Encrypt", command=self._crypto_encrypt, width=15).pack(side=tk.LEFT, padx=(0, 5))
-        ttk.Button(btn_row, text="🔍 Auto-Detect Key", command=self._crypto_auto_detect, width=18).pack(side=tk.LEFT)
+        btn_row.pack(fill=tk.X, pady=(6, 0))
+        ttk.Button(btn_row, text="🔓 Decrypt", command=self._crypto_decrypt, width=12).pack(side=tk.LEFT, padx=(0, 4))
+        ttk.Button(btn_row, text="🔒 Encrypt", command=self._crypto_encrypt, width=12).pack(side=tk.LEFT, padx=(0, 4))
+        ttk.Button(btn_row, text="🔍 Auto-Detect Key", command=self._crypto_auto_detect, width=16).pack(side=tk.LEFT)
 
-        # ── Config Editor (cfgtool) ──────────────────────────────
-        edit_frame = ttk.LabelFrame(tab, text="Config Editor (cfgtool)", padding=10)
-        edit_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 5))
+        # Config editor
+        edit_frame = ttk.LabelFrame(tab, text="Config Editor (cfgtool)", padding=6)
+        edit_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 4))
 
-        # Search
         search_row = ttk.Frame(edit_frame)
-        search_row.pack(fill=tk.X, pady=(0, 5))
+        search_row.pack(fill=tk.X, pady=(0, 4))
         ttk.Label(search_row, text="Search:").pack(side=tk.LEFT)
         self.cfg_search_var = tk.StringVar()
-        ttk.Entry(search_row, textvariable=self.cfg_search_var, width=30).pack(side=tk.LEFT, padx=5)
+        ttk.Entry(search_row, textvariable=self.cfg_search_var, width=28).pack(side=tk.LEFT, padx=4)
         ttk.Button(search_row, text="Search", command=self._cfg_search, width=8).pack(side=tk.LEFT)
-        ttk.Button(search_row, text="Load File", command=self._cfg_load, width=10).pack(side=tk.LEFT, padx=5)
+        ttk.Button(search_row, text="Load File", command=self._cfg_load, width=10).pack(side=tk.LEFT, padx=4)
 
-        # Config text viewer
         self.cfg_text = scrolledtext.ScrolledText(
             edit_frame, wrap=tk.WORD,
             font=('Consolas', 9),
-            height=12,
+            height=10,
         )
         self.cfg_text.pack(fill=tk.BOTH, expand=True)
 
@@ -299,7 +289,7 @@ class CryptoTabMixin:
             self.cfg_text.tag_add('search', pos, end)
             start = end
             count += 1
-        self.cfg_text.tag_configure('search', background='yellow', foreground='black')
+        self.cfg_text.tag_configure('search', background='#3B82F6', foreground='#FFFFFF')
         if count > 0:
             self.cfg_text.see(self.cfg_text.tag_ranges('search')[0])
         self._log(f"Config search '{query}': {count} match(es)")

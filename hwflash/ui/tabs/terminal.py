@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
 
 from hwflash.shared.helpers import safe_int as _safe_int
+from hwflash.shared.styles import get_theme
 from hwflash.core.terminal import (
     TelnetClient, SerialClient, FirmwareDumper, ONT_COMMANDS,
 )
@@ -13,17 +14,15 @@ class TerminalTabMixin:
     """Mixin providing the Terminal tab and related methods."""
 
     def _build_terminal_tab(self):
-        """Build the serial/telnet terminal tab."""
         tab = self.tab_terminal
 
-        # ── Connection ───────────────────────────────────────────
-        conn_frame = ttk.LabelFrame(tab, text="Connection", padding=8)
-        conn_frame.pack(fill=tk.X, pady=(0, 8))
+        # Connection
+        conn_frame = ttk.LabelFrame(tab, text="Connection", padding=6)
+        conn_frame.pack(fill=tk.X, pady=(0, 6))
 
-        # Connection type
         type_row = ttk.Frame(conn_frame)
         type_row.pack(fill=tk.X, pady=2)
-        ttk.Label(type_row, text="Type:", width=12).pack(side=tk.LEFT)
+        ttk.Label(type_row, text="Type:", width=10).pack(side=tk.LEFT)
         self.term_type_var = tk.StringVar(value="Telnet")
         ttk.Combobox(
             type_row, textvariable=self.term_type_var,
@@ -31,24 +30,24 @@ class TerminalTabMixin:
             state='readonly', width=10,
         ).pack(side=tk.LEFT, padx=(0, 10))
 
-        ttk.Label(type_row, text="Host/Port:", width=10).pack(side=tk.LEFT)
+        ttk.Label(type_row, text="Host:", width=6).pack(side=tk.LEFT)
         self.term_host_var = tk.StringVar(value="192.168.100.1")
-        ttk.Entry(type_row, textvariable=self.term_host_var, width=18).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Entry(type_row, textvariable=self.term_host_var, width=16).pack(side=tk.LEFT, padx=(0, 6))
 
         ttk.Label(type_row, text="Port:").pack(side=tk.LEFT)
         self.term_port_var = tk.StringVar(value="23")
-        ttk.Entry(type_row, textvariable=self.term_port_var, width=6).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Combobox(
+            type_row, textvariable=self.term_port_var,
+            values=["23", "22", "2323", "8023"],
+            width=6,
+        ).pack(side=tk.LEFT)
 
-        # Serial settings row
         serial_row = ttk.Frame(conn_frame)
         serial_row.pack(fill=tk.X, pady=2)
-        ttk.Label(serial_row, text="COM Port:", width=12).pack(side=tk.LEFT)
+        ttk.Label(serial_row, text="COM Port:", width=10).pack(side=tk.LEFT)
         self.term_com_var = tk.StringVar()
-        self.term_com_combo = ttk.Combobox(
-            serial_row, textvariable=self.term_com_var,
-            width=15,
-        )
-        self.term_com_combo.pack(side=tk.LEFT, padx=(0, 5))
+        self.term_com_combo = ttk.Combobox(serial_row, textvariable=self.term_com_var, width=14)
+        self.term_com_combo.pack(side=tk.LEFT, padx=(0, 4))
         ttk.Button(serial_row, text="🔃", command=self._refresh_com_ports, width=3).pack(side=tk.LEFT, padx=(0, 10))
 
         ttk.Label(serial_row, text="Baud:").pack(side=tk.LEFT)
@@ -56,37 +55,35 @@ class TerminalTabMixin:
         ttk.Combobox(
             serial_row, textvariable=self.term_baud_var,
             values=["9600", "19200", "38400", "57600", "115200"],
-            width=8,
-        ).pack(side=tk.LEFT, padx=(0, 10))
+            state='readonly', width=8,
+        ).pack(side=tk.LEFT)
 
-        # Connect/disconnect buttons
         btn_row = ttk.Frame(conn_frame)
-        btn_row.pack(fill=tk.X, pady=(5, 0))
+        btn_row.pack(fill=tk.X, pady=(4, 0))
 
-        # NIC selector for terminal (auto-selects Ethernet)
         ttk.Label(btn_row, text="NIC:").pack(side=tk.LEFT)
         self.term_nic_var = tk.StringVar()
         self.term_nic_combo = ttk.Combobox(
             btn_row, textvariable=self.term_nic_var,
-            state='readonly', width=30,
+            state='readonly', width=28,
         )
         self.term_nic_combo.pack(side=tk.LEFT, padx=(2, 8))
 
         self.term_connect_btn = ttk.Button(
-            btn_row, text="🔌 Connect", command=self._term_connect, width=14)
-        self.term_connect_btn.pack(side=tk.LEFT, padx=(0, 5))
+            btn_row, text="🔌 Connect", command=self._term_connect, width=12)
+        self.term_connect_btn.pack(side=tk.LEFT, padx=(0, 4))
         self.term_disconnect_btn = ttk.Button(
             btn_row, text="❌ Disconnect", command=self._term_disconnect,
-            width=14, state='disabled')
-        self.term_disconnect_btn.pack(side=tk.LEFT, padx=(0, 10))
+            width=12, state='disabled')
+        self.term_disconnect_btn.pack(side=tk.LEFT, padx=(0, 8))
 
         self.term_status_var = tk.StringVar(value="Disconnected")
         ttk.Label(btn_row, textvariable=self.term_status_var,
                   font=('Segoe UI', 9)).pack(side=tk.LEFT)
 
-        # ── Quick Commands ───────────────────────────────────────
-        cmd_frame = ttk.LabelFrame(tab, text="Quick Commands (WAP CLI)", padding=5)
-        cmd_frame.pack(fill=tk.X, pady=(0, 8))
+        # Quick commands
+        cmd_frame = ttk.LabelFrame(tab, text="Quick Commands (WAP CLI)", padding=4)
+        cmd_frame.pack(fill=tk.X, pady=(0, 6))
 
         cmd_grid = ttk.Frame(cmd_frame)
         cmd_grid.pack(fill=tk.X)
@@ -107,37 +104,38 @@ class TerminalTabMixin:
         for i, (label, cmd) in enumerate(quick_cmds):
             r, c = divmod(i, 6)
             ttk.Button(
-                cmd_grid, text=label, width=14,
+                cmd_grid, text=label, width=13,
                 command=lambda c=cmd: self._term_send_command(c),
             ).grid(row=r, column=c, padx=1, pady=1)
 
-        # Clear button
         ttk.Button(
             cmd_frame, text="Clear Output",
-            command=self._term_clear, width=14,
-        ).pack(anchor='e', pady=(3, 0))
+            command=self._term_clear, width=12,
+        ).pack(anchor='e', pady=(2, 0))
 
-        # ── Terminal Output ──────────────────────────────────────
+        # Terminal output — uses theme colors
+        colors = get_theme(self.current_theme)
         term_frame = ttk.Frame(tab)
-        term_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 5))
+        term_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 4))
 
         self.term_output = scrolledtext.ScrolledText(
             term_frame, wrap=tk.WORD,
             font=('Consolas', 9),
             state='disabled',
-            bg='#0C0C0C', fg='#CCCCCC',
-            insertbackground='#CCCCCC',
+            bg=colors['terminal_bg'],
+            fg=colors['terminal_fg'],
+            insertbackground=colors['terminal_fg'],
         )
         self.term_output.pack(fill=tk.BOTH, expand=True)
 
-        # ── Input ────────────────────────────────────────────────
+        # Input
         input_row = ttk.Frame(tab)
         input_row.pack(fill=tk.X)
         ttk.Label(input_row, text="Command:").pack(side=tk.LEFT)
         self.term_input_var = tk.StringVar()
         self.term_input_entry = ttk.Entry(
-            input_row, textvariable=self.term_input_var, width=60)
-        self.term_input_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
+            input_row, textvariable=self.term_input_var, width=55)
+        self.term_input_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=4)
         self.term_input_entry.bind('<Return>', lambda e: self._term_send_input())
         ttk.Button(input_row, text="Send", command=self._term_send_input, width=8).pack(side=tk.LEFT)
 

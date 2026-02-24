@@ -217,7 +217,7 @@ class HuaweiFlashApp(
         def build_footer(parent):
             self.theme_btn = tk.Button(
                 parent,
-                text="🌙 Dark Mode",
+                text="☀️ Light Mode",
                 font=(FONT_FAMILY, 9),
                 bg=colors["bg_card"],
                 fg=colors["fg_secondary"],

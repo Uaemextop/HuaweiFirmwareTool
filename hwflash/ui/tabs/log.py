@@ -10,17 +10,14 @@ class LogTabMixin:
     """Mixin providing the Log tab and related methods."""
 
     def _build_log_tab(self):
-        """Build the log viewer tab."""
         tab = self.tab_log
 
-        # Log controls
         controls = ttk.Frame(tab)
-        controls.pack(fill=tk.X, pady=(0, 5))
+        controls.pack(fill=tk.X, pady=(0, 4))
 
-        ttk.Button(controls, text="Clear Log", command=self._clear_log, width=12).pack(side=tk.LEFT)
-        ttk.Button(controls, text="Export Log", command=self._export_log, width=12).pack(side=tk.LEFT, padx=5)
+        ttk.Button(controls, text="Clear Log", command=self._clear_log, width=10).pack(side=tk.LEFT)
+        ttk.Button(controls, text="Export Log", command=self._export_log, width=10).pack(side=tk.LEFT, padx=4)
 
-        # Log text
         self.log_text = scrolledtext.ScrolledText(
             tab, wrap=tk.WORD,
             font=('Consolas', 9),

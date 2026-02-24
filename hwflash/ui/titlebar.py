@@ -65,7 +65,7 @@ class CustomTitlebar(tk.Frame):
 
         self._close_btn = tk.Button(
             btns, text="✕", bg=bg, fg=fg_muted,
-            activebackground="#DC2626", activeforeground="#FFFFFF",
+            activebackground="#EF4444", activeforeground="#FFFFFF",
             command=self._on_close, **btn_cfg,
         )
         self._close_btn.pack(side=tk.RIGHT, fill=tk.Y)

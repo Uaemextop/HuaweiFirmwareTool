@@ -53,11 +53,11 @@ class StatusBadge(tk.Label):
     """Small colored status indicator badge."""
 
     STATUS_COLORS = {
-        "success": "#10B981",
-        "warning": "#F59E0B",
+        "success": "#22C55E",
+        "warning": "#EAB308",
         "danger": "#EF4444",
         "info": "#3B82F6",
-        "neutral": "#64748B",
+        "neutral": "#6B7A94",
     }
 
     def __init__(self, parent, status: str = "neutral", text: str = "", **kwargs):

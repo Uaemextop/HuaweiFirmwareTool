@@ -10,18 +10,16 @@ except ImportError:
     HAS_TTKB = False
 
 from hwflash.shared.styles import TAB_THEMES as THEMES
-from hwflash.shared.styles import TTKB_DARK, TTKB_LIGHT
+from hwflash.shared.styles import TTKB_DARK, TTKB_LIGHT, get_theme
 
 
 class ThemeMixin:
     """Mixin providing theme management methods."""
 
     def _apply_theme(self):
-        """Apply the current theme to all widgets."""
         colors = THEMES[self.current_theme]
 
         if HAS_TTKB:
-            # ttkbootstrap handles theming — just switch the theme name
             theme = TTKB_DARK if self.current_theme == 'dark' else TTKB_LIGHT
             try:
                 ttkb.Style().theme_use(theme)
@@ -91,23 +89,28 @@ class ThemeMixin:
                              bordercolor=colors['border'])
 
     def _toggle_theme(self):
-        """Toggle between light and dark themes."""
         self.current_theme = 'light' if self.current_theme == 'dark' else 'dark'
-        self.theme_btn.configure(
-            text="🌙 Dark" if self.current_theme == 'dark' else "☀️ Light"
-        )
+        next_label = "☀️ Light Mode" if self.current_theme == 'dark' else "🌙 Dark Mode"
+        self.theme_btn.configure(text=next_label)
         self._apply_theme()
 
         if not HAS_TTKB:
             self.root.configure(bg=THEMES[self.current_theme]['bg'])
 
-        # Update text widgets
+        # Update all text widgets with theme colors
         colors = THEMES[self.current_theme]
+        theme = get_theme(self.current_theme)
         for text_widget in [self.log_text, self.preset_details_text,
-                            self.cfg_text, self.dump_output, self.fw_detail_text,
-                            self.term_output]:
+                            self.cfg_text, self.dump_output, self.fw_detail_text]:
             text_widget.configure(
                 bg=colors['log_bg'],
                 fg=colors['log_fg'],
                 insertbackground=colors['fg'],
             )
+
+        # Terminal uses its own distinct colors
+        self.term_output.configure(
+            bg=theme['terminal_bg'],
+            fg=theme['terminal_fg'],
+            insertbackground=theme['terminal_fg'],
+        )

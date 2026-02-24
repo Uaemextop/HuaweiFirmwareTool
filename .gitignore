@@ -24,3 +24,7 @@ obsc_tool/presets/
 
 # Test cache
 .pytest_cache/
+
+# CodeQL build artifacts
+_codeql_detected_source_root
+*/_codeql_build_dir/

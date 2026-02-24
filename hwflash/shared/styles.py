@@ -143,8 +143,7 @@ def get_gradient(theme: Dict[str, str]) -> Tuple[str, str]:
     """Get gradient start/end colors for the theme."""
     return theme["gradient_start"], theme["gradient_end"]
 
-
-LEGACY_THEMES = {
+TAB_THEMES = {
     'light': {
         'bg': '#F3F3F3', 'fg': '#1A1A1A',
         'accent': '#0078D4', 'accent_hover': '#106EBE',
@@ -165,7 +164,7 @@ LEGACY_THEMES = {
     },
 }
 
-LEGACY_IP_DEFAULTS = {
+DEFAULT_IP_CONFIG = {
     'ip': '192.168.100.100',
     'netmask': '255.255.255.0',
     'gateway': '192.168.100.1',

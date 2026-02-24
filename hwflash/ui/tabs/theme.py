@@ -9,7 +9,7 @@ try:
 except ImportError:
     HAS_TTKB = False
 
-from hwflash.shared.styles import LEGACY_THEMES as THEMES
+from hwflash.shared.styles import TAB_THEMES as THEMES
 from hwflash.shared.styles import TTKB_DARK, TTKB_LIGHT
 
 

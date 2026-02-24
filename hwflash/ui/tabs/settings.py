@@ -5,7 +5,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 
 from hwflash.shared.helpers import safe_int as _safe_int
-from hwflash.shared.styles import LEGACY_IP_DEFAULTS as IP_MODE_DEFAULTS
+from hwflash.shared.styles import DEFAULT_IP_CONFIG as IP_MODE_DEFAULTS
 from hwflash.shared.styles import OBSC_MULTICAST_ADDR
 from hwflash.core.network import (
     configure_adapter_ip, set_adapter_dhcp, test_socket_bind,

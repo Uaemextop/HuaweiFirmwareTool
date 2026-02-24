@@ -10,7 +10,6 @@ import struct
 import subprocess
 import re
 import sys
-import time
 import logging
 
 from hwflash.shared.helpers import _POPEN_FLAGS

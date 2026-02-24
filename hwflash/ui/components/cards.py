@@ -1,11 +1,8 @@
 """
-Reusable card widget with shadow, rounded corners, and hover effects.
-
-Used throughout the app for grouping related controls.
+Reusable card widgets: gradient bars, status badges, animated progress.
 """
 
 import tkinter as tk
-from typing import Optional
 
 
 class CardFrame(tk.Frame):

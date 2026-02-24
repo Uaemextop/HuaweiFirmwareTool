@@ -3,7 +3,7 @@
 import tkinter as tk
 import io
 
-from hwflash.shared.styles import FONT_FAMILY
+from hwflash.shared.styles import FONT_FAMILY, ThemeEngine
 from hwflash.shared.icons import generate_logo
 
 try:
@@ -16,22 +16,25 @@ except ImportError:
 class CustomTitlebar(tk.Frame):
     """Frameless custom titlebar with drag, minimize, maximize, close."""
 
-    def __init__(self, parent, root, title="HuaweiFlash", theme=None, **kwargs):
+    def __init__(self, parent, root, title="HuaweiFlash",
+                 theme=None, engine: ThemeEngine | None = None, **kwargs):
         colors = theme or {}
         bg = colors.get("titlebar", "#0F172A")
         fg = colors.get("fg", "#F8FAFC")
         fg_muted = colors.get("fg_muted", "#64748B")
 
-        super().__init__(parent, bg=bg, height=36, **kwargs)
+        super().__init__(parent, bg=bg, height=40, **kwargs)
         self.pack_propagate(False)
         self._root = root
         self._drag_x = 0
         self._drag_y = 0
         self._maximized = False
         self._prev_geo = None
+        self._bg = bg  # track for hover leave
 
         left = tk.Frame(self, bg=bg)
-        left.pack(side=tk.LEFT, fill=tk.Y, padx=(8, 0))
+        left.pack(side=tk.LEFT, fill=tk.Y, padx=(10, 0))
+        self._left = left
 
         self._logo_ref = None
         if HAS_PIL:
@@ -60,8 +63,9 @@ class CustomTitlebar(tk.Frame):
 
         btns = tk.Frame(self, bg=bg)
         btns.pack(side=tk.RIGHT, fill=tk.Y)
+        self._btns = btns
 
-        btn_cfg = {"font": (FONT_FAMILY, 12), "bd": 0, "width": 4, "cursor": "hand2"}
+        btn_cfg = {"font": (FONT_FAMILY, 11), "bd": 0, "width": 4, "cursor": "hand2"}
 
         self._close_btn = tk.Button(
             btns, text="✕", bg=bg, fg=fg_muted,
@@ -89,11 +93,15 @@ class CustomTitlebar(tk.Frame):
         for btn in (self._close_btn, self._max_btn, self._min_btn):
             btn.bind("<Enter>", lambda e, b=btn: b.configure(
                 bg=b.cget("activebackground")))
-            btn.bind("<Leave>", lambda e, b=btn: b.configure(bg=bg))
+            btn.bind("<Leave>", lambda e, b=btn: b.configure(bg=self._bg))
 
         self.bind("<Button-1>", self._start_drag)
         self.bind("<B1-Motion>", self._on_drag)
         self.bind("<Double-Button-1>", self._toggle_max)
+
+        # Register with ThemeEngine
+        if engine:
+            engine.register(self, updater=self.update_theme)
 
     def _start_drag(self, event):
         self._drag_x = event.x_root - self._root.winfo_x()
@@ -113,7 +121,6 @@ class CustomTitlebar(tk.Frame):
             self._max_btn.configure(text="□")
         else:
             self._prev_geo = self._root.geometry()
-            # Use winfo_screenwidth/height minus small offset for taskbar
             sw = self._root.winfo_screenwidth()
             sh = self._root.winfo_screenheight() - 40
             self._root.geometry(f"{sw}x{sh}+0+0")
@@ -127,10 +134,26 @@ class CustomTitlebar(tk.Frame):
         self._root.event_generate("<<AppClose>>")
 
     def update_theme(self, theme):
+        """Update all titlebar colours for the new theme."""
         bg = theme.get("titlebar", "#0F172A")
         fg = theme.get("fg", "#F8FAFC")
         fg_muted = theme.get("fg_muted", "#64748B")
+        hover_bg = theme.get("bg_hover", "#334155")
+        self._bg = bg
+
         self.configure(bg=bg)
+        self._left.configure(bg=bg)
+        self._btns.configure(bg=bg)
         self._title.configure(bg=bg, fg=fg)
-        for btn in (self._close_btn, self._max_btn, self._min_btn):
-            btn.configure(bg=bg, fg=fg_muted)
+
+        for btn in (self._min_btn, self._max_btn):
+            btn.configure(bg=bg, fg=fg_muted,
+                          activebackground=hover_bg, activeforeground=fg)
+        self._close_btn.configure(bg=bg, fg=fg_muted,
+                                  activebackground="#EF4444",
+                                  activeforeground="#FFFFFF")
+
+        # Update logo label if present
+        for child in self._left.winfo_children():
+            if isinstance(child, tk.Label) and child is not self._title:
+                child.configure(bg=bg)

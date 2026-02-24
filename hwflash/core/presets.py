@@ -10,8 +10,19 @@ import json
 import os
 import copy
 
-# Default presets directory
+# Packaged presets directory (read-only in many installs)
 DEFAULT_PRESETS_DIR = os.path.join(os.path.dirname(__file__), "presets")
+
+
+def _default_user_presets_dir():
+    """Return a user-writable presets directory."""
+    appdata = os.environ.get('APPDATA')
+    if appdata:
+        return os.path.join(appdata, 'HuaweiFirmwareTool', 'presets')
+    return os.path.join(os.path.expanduser('~'), '.huawei-firmware-tool', 'presets')
+
+
+DEFAULT_USER_PRESETS_DIR = _default_user_presets_dir()
 
 # Built-in presets for common Huawei ONT models
 BUILTIN_PRESETS = {
@@ -178,34 +189,38 @@ class PresetManager:
     """Manages router configuration presets."""
 
     def __init__(self, presets_dir=None):
-        self.presets_dir = presets_dir or DEFAULT_PRESETS_DIR
+        # Presets created by the user are stored in a user-writable directory.
+        # Packaged presets are still loaded from DEFAULT_PRESETS_DIR.
+        self.presets_dir = presets_dir or DEFAULT_USER_PRESETS_DIR
+        self._builtin_presets_dir = DEFAULT_PRESETS_DIR
         self._presets = {}
         self._load_builtins()
-        self._load_user_presets()
+        self._load_json_presets_from_dir(self._builtin_presets_dir)
+        self._load_json_presets_from_dir(self.presets_dir)
 
     def _load_builtins(self):
         """Load built-in presets."""
         for name, preset in BUILTIN_PRESETS.items():
             self._presets[name] = copy.deepcopy(preset)
 
-    def _load_user_presets(self):
-        """Load user-created presets from disk."""
-        if not os.path.isdir(self.presets_dir):
+    def _load_json_presets_from_dir(self, directory):
+        """Load presets from JSON files in *directory* (best-effort)."""
+        if not directory or not os.path.isdir(directory):
             return
 
-        for filename in os.listdir(self.presets_dir):
-            if filename.endswith('.json'):
-                filepath = os.path.join(self.presets_dir, filename)
-                try:
-                    with open(filepath, 'r', encoding='utf-8') as f:
-                        data = json.load(f)
-                    name = data.get('_name', filename[:-5])
-                    # Merge with template to fill in any missing keys
-                    preset = copy.deepcopy(PRESET_TEMPLATE)
-                    preset.update({k: v for k, v in data.items() if k != '_name'})
-                    self._presets[name] = preset
-                except (json.JSONDecodeError, OSError, KeyError):
-                    pass
+        for filename in os.listdir(directory):
+            if not filename.lower().endswith('.json'):
+                continue
+            filepath = os.path.join(directory, filename)
+            try:
+                with open(filepath, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                name = data.get('_name', filename[:-5])
+                preset = copy.deepcopy(PRESET_TEMPLATE)
+                preset.update({k: v for k, v in data.items() if k != '_name'})
+                self._presets[name] = preset
+            except (json.JSONDecodeError, OSError, KeyError):
+                pass
 
     def list_presets(self):
         """Return sorted list of preset names."""

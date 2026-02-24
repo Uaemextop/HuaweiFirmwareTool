@@ -153,6 +153,20 @@ class TestHWNPFirmwareParser:
         assert fw.items[1].item_path == "flash:kernel"
         assert fw.items[2].item_path == "file:/var/b.bin"
 
+    def test_load_with_prefixed_wrapper_header(self):
+        data = _build_hwnp_firmware(items=[("file:/var/a.xml", "CFG", "V1", b"<cfg>ok</cfg>")])
+        wrapped = (b'WRAPMETA' * 8) + data
+        with tempfile.NamedTemporaryFile(suffix='.bin', delete=False) as f:
+            f.write(wrapped)
+            f.flush()
+            fw = HWNPFirmware()
+            fw.load(f.name)
+        os.unlink(f.name)
+
+        assert fw.header_offset > 0
+        assert fw.item_count == 1
+        assert fw.items[0].data == b"<cfg>ok</cfg>"
+
     def test_validate_crc32(self):
         data = _build_hwnp_firmware()
         with tempfile.NamedTemporaryFile(suffix='.bin', delete=False) as f:
@@ -194,6 +208,33 @@ class TestHWNPFirmwareParser:
         os.unlink(f.name)
 
         assert fw.get_total_data_size() == 10  # 4 + 6
+
+    def test_item_text_preview_xml(self):
+        xml_payload = b'<?xml version="1.0"?><root><a>1</a></root>'
+        data = _build_hwnp_firmware(items=[("file:/var/config.xml", "CFG", "V1", xml_payload)])
+        with tempfile.NamedTemporaryFile(suffix='.bin', delete=False) as f:
+            f.write(data)
+            f.flush()
+            fw = HWNPFirmware()
+            fw.load(f.name)
+        os.unlink(f.name)
+
+        preview = fw.get_item_text_preview(fw.items[0])
+        assert preview['is_text'] is True
+        assert '<root><a>1</a></root>' in preview['text']
+
+    def test_item_text_preview_binary(self):
+        binary_payload = bytes([0, 159, 250, 88, 0, 2, 3, 4]) * 128
+        data = _build_hwnp_firmware(items=[("flash:kernel", "KERN", "V1", binary_payload)])
+        with tempfile.NamedTemporaryFile(suffix='.bin', delete=False) as f:
+            f.write(data)
+            f.flush()
+            fw = HWNPFirmware()
+            fw.load(f.name)
+        os.unlink(f.name)
+
+        preview = fw.get_item_text_preview(fw.items[0])
+        assert preview['is_text'] is False
 
 
 class TestHWNPItem:

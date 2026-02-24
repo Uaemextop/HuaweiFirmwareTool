@@ -230,7 +230,7 @@ class OBSCWorker:
         )
         self._thread.start()
 
-    def start_upgrade(self, firmware_data, version_pkg=""):
+    def start_upgrade(self, firmware_data, version_pkg="", *, firmware_size=None, firmware_crc32=None):
         """Start firmware upgrade in a background thread.
 
         Args:
@@ -256,7 +256,7 @@ class OBSCWorker:
         self._session_id = int(time.time()) & 0xFFFFFFFF
         self._thread = threading.Thread(
             target=self._upgrade_loop,
-            args=(firmware_data, version_pkg),
+            args=(firmware_data, version_pkg, firmware_size, firmware_crc32),
             daemon=True,
             name="obsc-upgrade"
         )
@@ -359,11 +359,11 @@ class OBSCWorker:
         self._emit(self.on_device_found, device)
         self._emit(self.on_log, f"Device found: {ip} (SN: {device.board_sn})")
 
-    def _upgrade_loop(self, firmware_data, version_pkg):
+    def _upgrade_loop(self, firmware_data, version_pkg, firmware_size_override, firmware_crc32_override):
         """Firmware upgrade thread main loop."""
         try:
-            fw_size = len(firmware_data)
-            fw_crc32 = zlib.crc32(firmware_data) & 0xFFFFFFFF
+            fw_size = int(firmware_size_override) if firmware_size_override is not None else len(firmware_data)
+            fw_crc32 = int(firmware_crc32_override) if firmware_crc32_override is not None else (zlib.crc32(firmware_data) & 0xFFFFFFFF)
             total_frames = (fw_size + self.frame_size - 1) // self.frame_size
 
             self._emit(self.on_status, "Starting firmware upgrade...")
@@ -373,6 +373,27 @@ class OBSCWorker:
                        f"Interval: {self.frame_interval_ms}ms")
 
             broadcast_ip = self.adapter.broadcast_address()
+            bind_ip = getattr(self.transport, 'bind_ip', None) or getattr(self.adapter, 'ip', '')
+            target_ip = None
+
+            def _destinations():
+                dests = [broadcast_ip]
+                if self.multicast_addr and self.multicast_addr not in dests:
+                    dests.append(self.multicast_addr)
+                if target_ip and target_ip not in dests:
+                    dests.append(target_ip)
+                return dests
+
+            def _send_to_all(payload: bytes, label: str):
+                last_err = None
+                for dip in _destinations():
+                    try:
+                        self.transport.send(payload, dip, OBSC_SEND_PORT)
+                    except OSError as e:
+                        last_err = e
+                        self._emit(self.on_log, f"{label} send error to {dip}:{OBSC_SEND_PORT}: {e}")
+                if last_err is not None and len(_destinations()) == 1:
+                    raise last_err
 
             # Phase 1: Send control packet
             ctrl = ControlPacket(
@@ -386,15 +407,19 @@ class OBSCWorker:
                 version_pkg=version_pkg,
             )
             self._emit(self.on_log, "Sending control packet...")
+            self._emit(
+                self.on_log,
+                f"Service Started! ID[0x{self._session_id:08X}] "
+                f"SIP[{bind_ip}] DIP[{broadcast_ip}] "
+                f"FRSIZE[{self.frame_size}] FRINTERV[{self.frame_interval_ms}MS], "
+                f"PKSIZE[{fw_size}] PKCRC[0x{fw_crc32:08X}]."
+            )
 
             for _ in range(self.ctrl_retries):  # Retry control packet
                 if not self._running:
                     return
                 try:
-                    self.transport.send(ctrl.serialize(), broadcast_ip, OBSC_SEND_PORT)
-                    if self.multicast_addr:
-                        self.transport.send(
-                            ctrl.serialize(), self.multicast_addr, OBSC_SEND_PORT)
+                    _send_to_all(ctrl.serialize(), "Control")
                 except OSError as e:
                     self._emit(self.on_log, f"Control send error: {e}")
                     continue
@@ -403,6 +428,7 @@ class OBSCWorker:
                 data, addr = self.transport.receive(timeout=2.0)
                 if data and len(data) >= 2 and data[0] == PacketType.CTRL_ACK:
                     self._emit(self.on_log, f"Control ACK received from {addr[0]}")
+                    target_ip = addr[0]
                     break
             else:
                 # Continue even without ACK (some devices don't send one)
@@ -411,6 +437,11 @@ class OBSCWorker:
             # Phase 2: Send data frames
             self._emit(self.on_status, "Transferring firmware...")
             start_time = time.time()
+
+            if self.multicast_addr:
+                self._emit(self.on_log, f"Data frames: broadcast {broadcast_ip} + multicast {self.multicast_addr}")
+            else:
+                self._emit(self.on_log, f"Data frames: broadcast {broadcast_ip}")
 
             for seq in range(total_frames):
                 if not self._running:
@@ -430,7 +461,7 @@ class OBSCWorker:
 
                 for attempt in range(self.data_retries + 1):
                     try:
-                        self.transport.send(pkt.serialize(), broadcast_ip, OBSC_SEND_PORT)
+                        _send_to_all(pkt.serialize(), "Data")
                         break
                     except OSError as e:
                         if attempt < self.data_retries:

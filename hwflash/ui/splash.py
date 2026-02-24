@@ -305,7 +305,7 @@ class QuickSplash:
             from hwflash import __version__
             ver = __version__
         except Exception:
-            ver = "2.0.0"
+            ver = "1.0.0"
         canvas.create_text(w // 2, h - 20, text=f"v{ver}",
                            font=("Segoe UI", 9), fill="#6B7A94")
 

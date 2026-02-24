@@ -1,17 +1,30 @@
-"""Firmware Dump tab mixin for HuaweiFlash."""
+"""Firmware Dump tab — read MTD partitions via terminal."""
+
+from __future__ import annotations
 
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from hwflash.ui.state import AppState, AppController
+    from hwflash.shared.styles import ThemeEngine
 
 
-class DumpTabMixin:
-    """Mixin providing the Firmware Dump tab and related methods."""
+class DumpTab(ttk.Frame):
+    """Firmware dump tab."""
 
-    def _build_dump_tab(self):
-        tab = self.tab_dump
+    def __init__(self, parent, state: "AppState", ctrl: "AppController",
+                 engine: "ThemeEngine", **kwargs):
+        super().__init__(parent, padding=6, **kwargs)
+        self.s = state
+        self.ctrl = ctrl
+        self.engine = engine
+        self._build()
 
+    def _build(self):
         # Info
-        info_frame = ttk.LabelFrame(tab, text="Firmware Dump (via Telnet)", padding=6)
+        info_frame = ttk.LabelFrame(self, text="Firmware Dump (via Telnet)", padding=6)
         info_frame.pack(fill=tk.X, pady=(0, 6))
 
         ttk.Label(info_frame,
@@ -21,20 +34,19 @@ class DumpTabMixin:
                   ).pack(fill=tk.X)
 
         # Partition list
-        part_frame = ttk.LabelFrame(tab, text="MTD Partitions", padding=6)
+        part_frame = ttk.LabelFrame(self, text="MTD Partitions", padding=6)
         part_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 6))
 
         btn_row = ttk.Frame(part_frame)
         btn_row.pack(fill=tk.X, pady=(0, 4))
-        ttk.Button(btn_row, text="🔍 Read Partitions",
+        ttk.Button(btn_row, text="\U0001f50d Read Partitions",
                    command=self._dump_read_partitions, width=16).pack(side=tk.LEFT, padx=(0, 4))
-        ttk.Button(btn_row, text="💾 Dump Selected",
+        ttk.Button(btn_row, text="\U0001f4be Dump Selected",
                    command=self._dump_selected, width=14).pack(side=tk.LEFT, padx=(0, 4))
-        ttk.Button(btn_row, text="💾 Dump All",
+        ttk.Button(btn_row, text="\U0001f4be Dump All",
                    command=self._dump_all, width=10).pack(side=tk.LEFT)
 
-        self.dump_status_var = tk.StringVar(value="Connect via Terminal tab first")
-        ttk.Label(btn_row, textvariable=self.dump_status_var,
+        ttk.Label(btn_row, textvariable=self.s.dump_status_var,
                   font=('Segoe UI', 9)).pack(side=tk.LEFT, padx=8)
 
         columns = ('id', 'name', 'size', 'erasesize')
@@ -51,7 +63,7 @@ class DumpTabMixin:
         self.dump_tree.pack(fill=tk.BOTH, expand=True)
 
         # Dump output
-        out_frame = ttk.LabelFrame(tab, text="Dump Output", padding=4)
+        out_frame = ttk.LabelFrame(self, text="Dump Output", padding=4)
         out_frame.pack(fill=tk.X, pady=(0, 4))
 
         self.dump_output = scrolledtext.ScrolledText(
@@ -61,37 +73,36 @@ class DumpTabMixin:
         )
         self.dump_output.pack(fill=tk.BOTH, expand=True)
 
-    # ── Firmware Dump Handlers ───────────────────────────────────
+        self.engine.register(self.dump_output,
+                             {"bg": "log_bg", "fg": "log_fg",
+                              "insertbackground": "fg"})
+
+    # ── Handlers ─────────────────────────────────────────────────
 
     def _dump_read_partitions(self):
-        """Read MTD partition table from connected device."""
-        if not self.firmware_dumper:
+        if not self.s.firmware_dumper:
             messagebox.showwarning("Not Connected",
                                    "Connect to the device via the Terminal tab first.")
             return
-        self.dump_status_var.set("Reading partitions...")
+        self.s.dump_status_var.set("Reading partitions...")
         self._dump_log("Sending: cat /proc/mtd\n")
-        self.firmware_dumper.get_mtd_partitions(callback=self._dump_partitions_loaded)
+        self.s.firmware_dumper.get_mtd_partitions(callback=self._dump_partitions_loaded)
 
     def _dump_partitions_loaded(self, partitions):
-        """Callback when partitions have been read."""
         def _update():
-            # Clear existing items
             for item in self.dump_tree.get_children():
                 self.dump_tree.delete(item)
-            # Add partitions
             for p in partitions:
                 size_str = f"{p['size']:,} bytes ({p['size'] / 1024 / 1024:.1f} MB)"
                 erase_str = f"{p['erasesize']:,} bytes"
                 self.dump_tree.insert('', tk.END, values=(
                     f"mtd{p['id']}", p['name'], size_str, erase_str))
-            self.dump_status_var.set(f"Found {len(partitions)} partition(s)")
+            self.s.dump_status_var.set(f"Found {len(partitions)} partition(s)")
             self._dump_log(f"Found {len(partitions)} MTD partitions\n")
-        self.root.after(0, _update)
+        self.s.root.after(0, _update)
 
     def _dump_selected(self):
-        """Dump the selected partition."""
-        if not self.firmware_dumper:
+        if not self.s.firmware_dumper:
             messagebox.showwarning("Not Connected",
                                    "Connect to the device via the Terminal tab first.")
             return
@@ -104,29 +115,26 @@ class DumpTabMixin:
             mtd_id = int(values[0].replace('mtd', ''))
             name = values[1]
             self._dump_log(f"Dumping mtd{mtd_id} ({name}) to /tmp/mtd{mtd_id}.bin...\n")
-            self.firmware_dumper.dump_partition(mtd_id)
-            self._log(f"Firmware dump: mtd{mtd_id} ({name})")
+            self.s.firmware_dumper.dump_partition(mtd_id)
+            self.ctrl.log(f"Firmware dump: mtd{mtd_id} ({name})")
 
     def _dump_all(self):
-        """Dump all partitions."""
-        if not self.firmware_dumper:
+        if not self.s.firmware_dumper:
             messagebox.showwarning("Not Connected",
                                    "Connect to the device via the Terminal tab first.")
             return
-        if not self.firmware_dumper.partitions:
-            messagebox.showwarning("No Partitions",
-                                   "Read partitions first.")
+        if not self.s.firmware_dumper.partitions:
+            messagebox.showwarning("No Partitions", "Read partitions first.")
             return
         if not messagebox.askyesno("Dump All",
-                                    f"Dump all {len(self.firmware_dumper.partitions)} "
+                                    f"Dump all {len(self.s.firmware_dumper.partitions)} "
                                     f"partitions to /tmp on the device?"):
             return
-        self._dump_log(f"Dumping all {len(self.firmware_dumper.partitions)} partitions...\n")
-        self.firmware_dumper.dump_all_partitions()
-        self._log("Firmware dump: all partitions")
+        self._dump_log(f"Dumping all {len(self.s.firmware_dumper.partitions)} partitions...\n")
+        self.s.firmware_dumper.dump_all_partitions()
+        self.ctrl.log("Firmware dump: all partitions")
 
     def _dump_log(self, text):
-        """Append text to dump output."""
         self.dump_output.configure(state='normal')
         self.dump_output.insert(tk.END, text)
         self.dump_output.see(tk.END)

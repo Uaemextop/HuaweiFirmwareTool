@@ -1,0 +1,4 @@
+1211.exe filter=lfs diff=lfs merge=lfs -text
+ONT-tool.exe filter=lfs diff=lfs merge=lfs -text
+HG8145V5_V2_HG8145V5.bin filter=lfs diff=lfs merge=lfs -text
+EG8145V5-V500R022C00SPC340B019.bin filter=lfs diff=lfs merge=lfs -text

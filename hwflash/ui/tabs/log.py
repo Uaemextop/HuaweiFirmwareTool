@@ -1,53 +1,80 @@
-"""Log tab mixin for HuaweiFlash."""
+"""Log tab — application log viewer."""
 
-import os
+from __future__ import annotations
+
 import datetime
 import tkinter as tk
 from tkinter import ttk, scrolledtext, filedialog
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from hwflash.ui.state import AppState, AppController
+    from hwflash.shared.styles import ThemeEngine
 
 
-class LogTabMixin:
-    """Mixin providing the Log tab and related methods."""
+class LogTab(ttk.Frame):
+    """Log viewer tab."""
 
-    def _build_log_tab(self):
-        tab = self.tab_log
+    def __init__(self, parent, state: AppState, ctrl: AppController,
+                 engine: ThemeEngine, **kwargs):
+        super().__init__(parent, padding=6, **kwargs)
+        self.s = state
+        self.ctrl = ctrl
+        self.engine = engine
+        self._build()
+        # Register a proper callable callback — NOT the widget itself
+        ctrl.bind_log_widget(self._append_log_entry)
+        # Flush any log entries that were queued before the widget existed
+        self._flush_existing_entries()
 
-        controls = ttk.Frame(tab)
+    def _build(self):
+        controls = ttk.Frame(self)
         controls.pack(fill=tk.X, pady=(0, 4))
 
         ttk.Button(controls, text="Clear Log", command=self._clear_log, width=10).pack(side=tk.LEFT)
         ttk.Button(controls, text="Export Log", command=self._export_log, width=10).pack(side=tk.LEFT, padx=4)
 
         self.log_text = scrolledtext.ScrolledText(
-            tab, wrap=tk.WORD,
+            self, wrap=tk.WORD,
             font=('Consolas', 9),
             state='disabled',
         )
         self.log_text.pack(fill=tk.BOTH, expand=True)
 
-    # ── Logging ──────────────────────────────────────────────────
+        self.engine.register(self.log_text,
+                             {"bg": "log_bg", "fg": "log_fg",
+                              "insertbackground": "fg"})
 
-    def _log(self, message):
-        """Add a timestamped message to the log."""
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        entry = f"[{timestamp}] {message}"
-        self.log_entries.append(entry)
+    def _flush_existing_entries(self):
+        """Write any log entries that were queued before this widget existed."""
+        if self.s.log_entries:
+            try:
+                self.log_text.configure(state='normal')
+                self.log_text.insert(tk.END, '\n'.join(self.s.log_entries))
+                self.log_text.see(tk.END)
+                self.log_text.configure(state='disabled')
+            except (tk.TclError, Exception):
+                pass
 
-        self.log_text.configure(state='normal')
-        self.log_text.insert(tk.END, entry + "\n")
-        self.log_text.see(tk.END)
-        self.log_text.configure(state='disabled')
+    def _append_log_entry(self, entry: str):
+        """Append a log entry to the ScrolledText widget (thread-safe via root.after)."""
+        try:
+            self.log_text.configure(state='normal')
+            if self.log_text.index('end-1c') != '1.0':
+                self.log_text.insert(tk.END, '\n')
+            self.log_text.insert(tk.END, entry)
+            self.log_text.see(tk.END)
+            self.log_text.configure(state='disabled')
+        except (tk.TclError, Exception):
+            pass
 
     def _clear_log(self):
-        """Clear the log panel."""
-        self.log_entries.clear()
+        self.s.log_entries.clear()
         self.log_text.configure(state='normal')
         self.log_text.delete('1.0', tk.END)
         self.log_text.configure(state='disabled')
 
     def _export_log(self):
-        """Export log to file."""
-        # Log filename matches original Huawei tool format (OSBC_LOG_*)
         path = filedialog.asksaveasfilename(
             title="Export Log",
             defaultextension=".log",
@@ -56,24 +83,11 @@ class LogTabMixin:
         )
         if path:
             with open(path, 'w', encoding='utf-8') as f:
-                f.write('\n'.join(self.log_entries))
-            self._log(f"Log exported to {path}")
+                f.write('\n'.join(self.s.log_entries))
+            self.ctrl.log(f"Log exported to {path}")
 
-    def _auto_save_log(self):
-        """Auto-save log after upgrade."""
-        try:
-            log_dir = self.log_dir_var.get()
-            os.makedirs(log_dir, exist_ok=True)
-            filename = f"hwflash_{datetime.datetime.now().strftime('%Y-%m-%d_%H')}.log"
-            path = os.path.join(log_dir, filename)
-            with open(path, 'w', encoding='utf-8') as f:
-                f.write('\n'.join(self.log_entries))
-            self._log(f"Log auto-saved to {path}")
-        except OSError as e:
-            self._log(f"Failed to auto-save log: {e}")
-
-    def _browse_log_dir(self):
-        """Browse for log directory."""
+    def browse_log_dir(self):
+        """Browse for log directory — called from Settings tab."""
         path = filedialog.askdirectory(title="Select Log Directory")
         if path:
-            self.log_dir_var.set(path)
+            self.s.log_dir_var.set(path)

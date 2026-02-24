@@ -95,13 +95,14 @@ class TelnetClient:
     def connected(self):
         return self._connected
 
-    def connect(self, host, port=23, timeout=10.0):
+    def connect(self, host, port=23, timeout=10.0, source_ip=None):
         """Connect to the ONT device via Telnet.
 
         Args:
             host: IP address of the ONT device.
             port: Telnet port (default 23).
             timeout: Connection timeout in seconds.
+            source_ip: Optional local source IP to bind before connect.
         """
         self.host = host
         self.port = port
@@ -110,6 +111,8 @@ class TelnetClient:
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.settimeout(timeout)
+            if source_ip:
+                self.sock.bind((source_ip, 0))
             self.sock.connect((host, port))
             self._connected = True
             self._running = True

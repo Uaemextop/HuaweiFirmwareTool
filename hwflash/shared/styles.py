@@ -1,11 +1,14 @@
 """
-Modern UI styles, colors, and theme configuration.
+Modern UI styles, colors, and theme engine.
 
-Provides a centralized theming system with dark/light modes,
-balanced contrast, and consistent component styling.
+Provides a reactive theming system: widgets register themselves with
+the ``ThemeEngine`` and are updated automatically on theme toggle.
 """
 
-from typing import Dict, Tuple
+from __future__ import annotations
+
+import weakref
+from typing import Callable, Dict, List, Optional, Tuple
 
 
 # ── Brand colors ────────────────────────────────────────────────
@@ -22,18 +25,18 @@ DANGER = "#EF4444"
 DANGER_HOVER = "#DC2626"
 
 # ── Dark theme — balanced, not too dark ─────────────────────────
-DARK = {
-    "bg": "#1A1F2E",
-    "bg_secondary": "#242A3B",
-    "bg_card": "#242A3B",
-    "bg_input": "#2E3548",
-    "bg_hover": "#353D52",
-    "bg_selected": "#2E4A7A",
+DARK: Dict[str, str] = {
+    "bg": "#171C28",
+    "bg_secondary": "#202737",
+    "bg_card": "#232B3D",
+    "bg_input": "#2B3448",
+    "bg_hover": "#34405A",
+    "bg_selected": "#2D4F86",
     "fg": "#E8ECF4",
-    "fg_secondary": "#A0AABE",
-    "fg_muted": "#6B7A94",
-    "border": "#3A4358",
-    "border_light": "#4A5570",
+    "fg_secondary": "#B0B9CB",
+    "fg_muted": "#7D8AA4",
+    "border": "#3D4860",
+    "border_light": "#55617D",
     "shadow": "#0D1017",
     "accent": PRIMARY,
     "accent_hover": PRIMARY_HOVER,
@@ -43,15 +46,15 @@ DARK = {
     "error": DANGER,
     "gradient_start": "#1E2D4A",
     "gradient_end": "#1A1F2E",
-    "sidebar": "#161B28",
-    "titlebar": "#161B28",
+    "sidebar": "#131A26",
+    "titlebar": "#131A26",
     "tab_active": PRIMARY,
     "tab_inactive": "#242A3B",
     "scrollbar": "#4A5570",
     "scrollbar_hover": "#5E6B85",
     "terminal_bg": "#141820",
     "terminal_fg": "#7DD3FC",
-    # Aliases used by theme styling
+    # Aliases for convenience
     "surface": "#242A3B",
     "surface_alt": "#2E3548",
     "log_bg": "#1A1F2E",
@@ -61,7 +64,7 @@ DARK = {
 }
 
 # ── Light theme — clean, not washed out ─────────────────────────
-LIGHT = {
+LIGHT: Dict[str, str] = {
     "bg": "#F0F2F7",
     "bg_secondary": "#E4E8F0",
     "bg_card": "#FFFFFF",
@@ -90,7 +93,6 @@ LIGHT = {
     "scrollbar_hover": "#8893A6",
     "terminal_bg": "#F5F6FA",
     "terminal_fg": "#1A2035",
-    # Aliases used by theme styling
     "surface": "#FFFFFF",
     "surface_alt": "#E4E8F0",
     "log_bg": "#FFFFFF",
@@ -104,44 +106,67 @@ THEMES: Dict[str, Dict[str, str]] = {
     "light": LIGHT,
 }
 
-OBSC_MULTICAST_ADDR = "224.0.0.9"
-DEVICE_STALE_TIMEOUT = 30
+# ── ttkbootstrap theme names ───────────────────────────────────
 TTKB_DARK = "darkly"
 TTKB_LIGHT = "cosmo"
 
+# ── Fonts ───────────────────────────────────────────────────────
 FONT_FAMILY = "Segoe UI"
-FONT_SIZES = {
-    "title": 20,
-    "subtitle": 14,
-    "body": 11,
+FONT_SIZES: Dict[str, int] = {
+    "title": 18,
+    "subtitle": 13,
+    "body": 10,
     "small": 9,
     "tiny": 8,
     "mono": 10,
 }
 
-ANIMATION = {
+# ── Layout tokens (kept for sidebar / tests) ───────────────────
+PADDING: Dict[str, int] = {"xs": 4, "sm": 8, "md": 10, "lg": 14, "xl": 20, "xxl": 28}
+RADIUS: Dict[str, int] = {"sm": 4, "md": 8, "lg": 12, "xl": 16}
+ANIMATION: Dict[str, int] = {
     "fade_duration": 300,
     "slide_duration": 200,
     "hover_duration": 150,
     "pulse_interval": 2000,
 }
 
-PADDING = {
-    "xs": 4,
-    "sm": 8,
-    "md": 12,
-    "lg": 16,
-    "xl": 24,
-    "xxl": 32,
-}
+# ── Color utilities ─────────────────────────────────────────────
 
-RADIUS = {
-    "sm": 4,
-    "md": 8,
-    "lg": 12,
-    "xl": 16,
-}
+def _hex_to_rgb(hex_color: str) -> Tuple[int, int, int]:
+    h = hex_color.lstrip("#")
+    return int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
 
+
+def _rgb_to_hex(r: int, g: int, b: int) -> str:
+    return f"#{max(0, min(255, r)):02x}{max(0, min(255, g)):02x}{max(0, min(255, b)):02x}"
+
+
+def lighten(hex_color: str, amount: int = 30) -> str:
+    """Return *hex_color* lightened by *amount* (0-255)."""
+    r, g, b = _hex_to_rgb(hex_color)
+    return _rgb_to_hex(r + amount, g + amount, b + amount)
+
+
+def darken(hex_color: str, amount: int = 30) -> str:
+    """Return *hex_color* darkened by *amount* (0-255)."""
+    r, g, b = _hex_to_rgb(hex_color)
+    return _rgb_to_hex(r - amount, g - amount, b - amount)
+
+
+def blend(c1: str, c2: str, ratio: float = 0.5) -> str:
+    """Blend two hex colors.  *ratio* 0 → *c1*, 1 → *c2*."""
+    r1, g1, b1 = _hex_to_rgb(c1)
+    r2, g2, b2 = _hex_to_rgb(c2)
+    t = max(0.0, min(1.0, ratio))
+    return _rgb_to_hex(
+        int(r1 + (r2 - r1) * t),
+        int(g1 + (g2 - g1) * t),
+        int(b1 + (b2 - b1) * t),
+    )
+
+
+# ── Public helpers (backward compat) ───────────────────────────
 
 def get_theme(name: str = "dark") -> Dict[str, str]:
     """Get theme colors by name."""
@@ -152,12 +177,125 @@ def get_gradient(theme: Dict[str, str]) -> Tuple[str, str]:
     """Get gradient start/end colors for the theme."""
     return theme["gradient_start"], theme["gradient_end"]
 
-TAB_THEMES: Dict[str, Dict[str, str]] = THEMES
 
-DEFAULT_IP_CONFIG = {
-    'ip': '192.168.100.100',
-    'netmask': '255.255.255.0',
-    'gateway': '192.168.100.1',
-    'dns1': '8.8.8.8',
-    'dns2': '8.8.4.4',
-}
+# ── Reactive Theme Engine ──────────────────────────────────────
+
+class _WidgetBinding:
+    """Stores a weak reference to a widget and its property mapping."""
+
+    __slots__ = ("ref", "prop_map", "updater")
+
+    def __init__(
+        self,
+        widget,
+        prop_map: Optional[Dict[str, str]],
+        updater: Optional[Callable],
+    ):
+        self.ref = weakref.ref(widget)
+        self.prop_map = prop_map
+        self.updater = updater
+
+
+class ThemeEngine:
+    """Reactive theme engine.
+
+    Usage::
+
+        engine = ThemeEngine()
+
+        # Register a tk widget — keys are widget configure options,
+        # values are theme-dict keys.
+        engine.register(my_label, {"bg": "bg", "fg": "fg"})
+
+        # Or register a callback that receives the colors dict:
+        engine.register(my_sidebar, updater=my_sidebar.update_theme)
+
+        # Toggle theme — all registered widgets update instantly.
+        engine.toggle()
+    """
+
+    def __init__(self, initial: str = "dark") -> None:
+        self._name: str = initial
+        self._bindings: List[_WidgetBinding] = []
+
+    # ── Properties ───────────────────────────────────────────────
+
+    @property
+    def name(self) -> str:
+        """Current theme name (``'dark'`` or ``'light'``)."""
+        return self._name
+
+    @property
+    def colors(self) -> Dict[str, str]:
+        """Current theme color dict."""
+        return THEMES.get(self._name, DARK)
+
+    @property
+    def is_dark(self) -> bool:
+        return self._name == "dark"
+
+    @property
+    def ttkb_theme(self) -> str:
+        """The ttkbootstrap theme name matching the current mode."""
+        return TTKB_DARK if self._name == "dark" else TTKB_LIGHT
+
+    # ── Registration ─────────────────────────────────────────────
+
+    def register(
+        self,
+        widget,
+        prop_map: Optional[Dict[str, str]] = None,
+        *,
+        updater: Optional[Callable] = None,
+    ) -> None:
+        """Register *widget* for automatic theme updates.
+
+        Parameters
+        ----------
+        widget:
+            A tkinter widget or any object with a ``configure`` method.
+        prop_map:
+            Maps widget configure keys to theme-dict keys.
+            Example: ``{"bg": "sidebar", "fg": "fg"}``
+        updater:
+            A callable ``fn(colors_dict)`` invoked instead of (or in
+            addition to) ``prop_map`` application.  Useful for
+            components that need custom update logic (Sidebar, Titlebar).
+        """
+        self._bindings.append(_WidgetBinding(widget, prop_map, updater))
+
+    # ── Application ──────────────────────────────────────────────
+
+    def apply(self) -> None:
+        """Push current colors to every registered widget.
+
+        Dead widget references are pruned automatically.
+        """
+        colors = self.colors
+        alive: List[_WidgetBinding] = []
+        for b in self._bindings:
+            widget = b.ref()
+            if widget is None:
+                continue
+            alive.append(b)
+            try:
+                if b.prop_map:
+                    cfg = {k: colors[v] for k, v in b.prop_map.items() if v in colors}
+                    if cfg:
+                        widget.configure(**cfg)
+                if b.updater:
+                    b.updater(colors)
+            except Exception:
+                pass  # widget may have been destroyed between ref() and configure()
+        self._bindings = alive
+
+    def set_theme(self, name: str) -> None:
+        """Switch to *name* (``'dark'`` / ``'light'``) and apply."""
+        if name in THEMES:
+            self._name = name
+            self.apply()
+
+    def toggle(self) -> None:
+        """Toggle between dark and light themes and apply."""
+        self._name = "light" if self._name == "dark" else "dark"
+        self.apply()

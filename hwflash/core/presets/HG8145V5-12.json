@@ -1,0 +1,23 @@
+{
+  "description": "Huawei HG8145V5-12 — Optimized for unlock/downgrade flashing",
+  "model": "HG8145V5-12",
+  "frame_size": 1400,
+  "frame_interval_ms": 5,
+  "flash_mode": "Forced",
+  "delete_cfg": false,
+  "upgrade_type": "Standard",
+  "send_port": 50000,
+  "recv_port": 50001,
+  "timeout": 600,
+  "machine_filter": "",
+  "broadcast_address": "auto",
+  "verify_crc32": false,
+  "verify_signature": false,
+  "skip_product_check": true,
+  "discovery_duration": 10,
+  "ctrl_retries": 5,
+  "data_retries": 1,
+  "check_policy": "",
+  "bom_code": "",
+  "_name": "HG8145V5-12"
+}

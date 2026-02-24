@@ -11,8 +11,9 @@ implementation if pycryptodome is not available.
 Also provides cfgtool-compatible configuration file parsing and editing.
 """
 
-import os
 import re
+import gzip
+import io
 import logging
 
 logger = logging.getLogger("hwflash.config_crypto")
@@ -331,16 +332,52 @@ def try_decrypt_all_keys(data):
         List of (chip_id, decrypted_data) for successful attempts.
         Success is determined by checking if the result looks like XML.
     """
+    def _maybe_gunzip(blob: bytes) -> bytes:
+        if len(blob) >= 2 and blob[0] == 0x1F and blob[1] == 0x8B:
+            try:
+                with gzip.GzipFile(fileobj=io.BytesIO(blob)) as gz:
+                    return gz.read()
+            except OSError:
+                return blob
+        return blob
+
+    def _looks_like_xml(blob: bytes) -> bool:
+        if not blob:
+            return False
+        head = blob[:512]
+        # Strip common whitespace/BOM
+        head_stripped = head.lstrip(b'\x00\t\r\n ')
+        for bom in (b'\xef\xbb\xbf', b'\xff\xfe', b'\xfe\xff'):
+            if head_stripped.startswith(bom):
+                head_stripped = head_stripped[len(bom):]
+        if head_stripped.startswith(b'<?xml') or head_stripped.startswith(b'<'):
+            return True
+        # UTF-16LE/BE XML patterns often contain NULs.
+        if b'\x00' in head:
+            try:
+                # Drop NULs for heuristic check only
+                de_nul = head.replace(b'\x00', b'')
+                de_nul = de_nul.lstrip(b'\t\r\n ')
+                for bom in (b'\xef\xbb\xbf', b'\xff\xfe', b'\xfe\xff'):
+                    if de_nul.startswith(bom):
+                        de_nul = de_nul[len(bom):]
+                if de_nul.startswith(b'<?xml') or de_nul.startswith(b'<'):
+                    return True
+            except Exception:
+                pass
+        return False
+
     results = []
     for chip_id in KNOWN_CHIP_IDS:
         try:
             decrypted = decrypt_config(data, chip_id)
-            # Check if result looks like XML
-            if decrypted and len(decrypted) > 5 and (
-                    b'<?xml' in decrypted[:100] or
-                    b'<InternetGatewayDevice' in decrypted[:200] or
-                    b'<Msg' in decrypted[:50]):
-                results.append((chip_id, decrypted))
+
+            candidate = _maybe_gunzip(decrypted)
+            if _looks_like_xml(candidate) or (
+                b'<InternetGatewayDevice' in candidate[:400] or
+                b'<Msg' in candidate[:200]
+            ):
+                results.append((chip_id, candidate))
         except Exception:
             pass
     return results
@@ -369,24 +406,41 @@ class CfgFileParser:
         with open(file_path, 'rb') as f:
             self.raw_content = f.read()
 
+        def _decode_best_effort(blob: bytes) -> str:
+            if not blob:
+                return ""
+            # gzip wrapper (some dumps/tools store compressed plaintext)
+            if len(blob) >= 2 and blob[0] == 0x1F and blob[1] == 0x8B:
+                try:
+                    with gzip.GzipFile(fileobj=io.BytesIO(blob)) as gz:
+                        blob = gz.read()
+                except OSError:
+                    pass
+            for enc in ('utf-8-sig', 'utf-16', 'utf-16-le', 'utf-16-be', 'latin-1'):
+                try:
+                    return blob.decode(enc)
+                except UnicodeDecodeError:
+                    continue
+            return blob.decode('utf-8', errors='replace')
+
         # Detect if encrypted (XML files start with '<' or BOM)
         if (self.raw_content[:1] == b'<' or
                 self.raw_content[:3] == b'\xef\xbb\xbf' or
                 b'<?xml' in self.raw_content[:100]):
             self.is_encrypted = False
-            self.text_content = self.raw_content.decode('utf-8', errors='replace')
+            self.text_content = _decode_best_effort(self.raw_content)
         else:
             self.is_encrypted = True
             if chip_id:
                 self.chip_id = chip_id
                 decrypted = decrypt_config(self.raw_content, chip_id)
-                self.text_content = decrypted.decode('utf-8', errors='replace')
+                self.text_content = _decode_best_effort(decrypted)
             else:
                 # Try all known keys
                 results = try_decrypt_all_keys(self.raw_content)
                 if results:
                     self.chip_id = results[0][0]
-                    self.text_content = results[0][1].decode('utf-8', errors='replace')
+                    self.text_content = _decode_best_effort(results[0][1])
                 else:
                     raise ValueError("Could not decrypt config file with known chip IDs")
 

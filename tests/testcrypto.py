@@ -1,6 +1,8 @@
 """Tests for config_crypto module."""
 
 import pytest
+import gzip
+import io
 from hwflash.core.crypto import (
     derive_key,
     aes_cbc_encrypt,
@@ -144,6 +146,29 @@ class TestConfigEncryption:
         assert len(results) >= 1
         assert results[0][0] == "SD5116H"
         assert results[0][1] == config
+
+    def test_try_decrypt_all_keys_gzip_xml(self):
+        config = b'<?xml version="1.0"?><config><a>1</a></config>'
+        buf = io.BytesIO()
+        with gzip.GzipFile(fileobj=buf, mode='wb') as gz:
+            gz.write(config)
+        compressed = buf.getvalue()
+
+        encrypted = encrypt_config(compressed, "SD5116H")
+        results = try_decrypt_all_keys(encrypted)
+        assert len(results) >= 1
+        assert results[0][0] == "SD5116H"
+        assert results[0][1] == config
+
+    def test_try_decrypt_all_keys_utf16_xml(self):
+        config_text = '<?xml version="1.0"?><config>ok</config>'
+        utf16 = config_text.encode('utf-16')
+        encrypted = encrypt_config(utf16, "SD5116H")
+        results = try_decrypt_all_keys(encrypted)
+        assert len(results) >= 1
+        assert results[0][0] == "SD5116H"
+        # Returned payload may stay UTF-16; ensure it contains XML markers after decoding.
+        assert '<?xml' in results[0][1].decode('utf-16', errors='ignore')
 
 
 class TestCfgFileParser:

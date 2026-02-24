@@ -188,6 +188,7 @@ class OBSCWorker:
         self.timeout = 600  # 10 minutes
         self.ctrl_retries = 3
         self.data_retries = 0
+        self.multicast_addr = None  # e.g. '224.0.0.9'
 
         # State
         self._running = False
@@ -277,7 +278,15 @@ class OBSCWorker:
                 try:
                     self.transport.send(discovery_pkt, broadcast_ip, OBSC_SEND_PORT)
                 except OSError as e:
-                    logger.warning("Send error: %s", e)
+                    logger.warning("Broadcast send error: %s", e)
+
+                # Also send to multicast group if configured
+                if self.multicast_addr:
+                    try:
+                        self.transport.send(
+                            discovery_pkt, self.multicast_addr, OBSC_SEND_PORT)
+                    except OSError as e:
+                        logger.warning("Multicast send error: %s", e)
 
                 # Listen for responses
                 data, addr = self.transport.receive(timeout=1.0)
@@ -362,6 +371,9 @@ class OBSCWorker:
                     return
                 try:
                     self.transport.send(ctrl.serialize(), broadcast_ip, OBSC_SEND_PORT)
+                    if self.multicast_addr:
+                        self.transport.send(
+                            ctrl.serialize(), self.multicast_addr, OBSC_SEND_PORT)
                 except OSError as e:
                     self._emit(self.on_log, f"Control send error: {e}")
                     continue

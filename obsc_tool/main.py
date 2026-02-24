@@ -108,15 +108,22 @@ THEMES = {
 #   - Default FRINTERV options: 10, 20 (default 10 ms)
 #   - Send port 50000, receive port 50001
 #   - The PC Ethernet adapter must be on the same subnet as the ONT.
-# The ONT default LAN IP is 192.168.1.1; PC uses 192.168.1.100/24.
+# The ONT default LAN IP is 192.168.100.1; PC uses 192.168.100.100/24.
 # The DESBLOQUEIO unlock method changes to FRSIZE=1400, FRINTERV=5ms.
 IP_MODE_DEFAULTS = {
-    'ip': '192.168.1.100',
+    'ip': '192.168.100.100',
     'netmask': '255.255.255.0',
-    'gateway': '192.168.1.1',
+    'gateway': '192.168.100.1',
     'dns1': '8.8.8.8',
     'dns2': '8.8.4.4',
 }
+
+# Multicast address used by the OBSC protocol for device discovery
+# Found in the original EXE dialog: "组播服务器IP" (Multicast Server IP)
+OBSC_MULTICAST_ADDR = '224.0.0.9'
+
+# Staleness timeout — devices removed from table after this many seconds
+DEVICE_STALE_TIMEOUT = 30
 
 # ttkbootstrap theme names
 TTKB_DARK = "darkly"
@@ -313,7 +320,7 @@ class OBSCToolApp:
         self.ip_mode_var = tk.StringVar(value="automatic")
         ttk.Radiobutton(
             mode_row,
-            text="🔄 Automatic (192.168.1.100/24 → gw 192.168.1.1)",
+            text="🔄 Automatic (DHCP + Multicast 224.0.0.9)",
             variable=self.ip_mode_var, value="automatic",
             command=self._on_ip_mode_changed,
         ).pack(side=tk.LEFT, padx=(0, 12))
@@ -323,7 +330,7 @@ class OBSCToolApp:
             command=self._on_ip_mode_changed,
         ).pack(side=tk.LEFT, padx=(0, 12))
         ttk.Radiobutton(
-            mode_row, text="🌐 DHCP",
+            mode_row, text="🌐 DHCP Only",
             variable=self.ip_mode_var, value="dhcp",
             command=self._on_ip_mode_changed,
         ).pack(side=tk.LEFT)
@@ -487,6 +494,40 @@ class OBSCToolApp:
         )
         self.stop_btn.pack(side=tk.LEFT)
 
+        # ── Device Table ─────────────────────────────────────────
+        dev_frame = ttk.LabelFrame(
+            tab, text="Detected Devices (auto-updates during discovery & flash)",
+            padding=8)
+        dev_frame.pack(fill=tk.BOTH, expand=True, pady=(8, 0))
+
+        dev_columns = ('ip', 'mac', 'sn', 'model', 'status', 'progress')
+        self.device_tree = ttk.Treeview(
+            dev_frame, columns=dev_columns, show='headings', height=5)
+        self.device_tree.heading('ip', text='IP Address')
+        self.device_tree.heading('mac', text='MAC')
+        self.device_tree.heading('sn', text='Serial Number')
+        self.device_tree.heading('model', text='Model')
+        self.device_tree.heading('status', text='Status')
+        self.device_tree.heading('progress', text='Progress')
+        self.device_tree.column('ip', width=130)
+        self.device_tree.column('mac', width=140)
+        self.device_tree.column('sn', width=140)
+        self.device_tree.column('model', width=100)
+        self.device_tree.column('status', width=120)
+        self.device_tree.column('progress', width=100)
+
+        dev_scroll = ttk.Scrollbar(dev_frame, orient=tk.VERTICAL,
+                                   command=self.device_tree.yview)
+        self.device_tree.configure(yscrollcommand=dev_scroll.set)
+        self.device_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        dev_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # Tracked devices: {ip: {item_id, device, last_seen}}
+        self._tracked_devices = {}
+
+        # Start stale-device checker
+        self._check_stale_devices()
+
     def _build_settings_tab(self):
         """Build the settings tab with advanced configuration."""
         tab = self.tab_settings
@@ -641,7 +682,7 @@ class OBSCToolApp:
         row = ttk.Frame(net_frame)
         row.pack(fill=tk.X, pady=2)
         ttk.Label(row, text="IP Address:", width=20).pack(side=tk.LEFT)
-        self.cfg_ip_var = tk.StringVar(value="192.168.1.100")
+        self.cfg_ip_var = tk.StringVar(value="192.168.100.100")
         ttk.Entry(row, textvariable=self.cfg_ip_var, width=18).pack(side=tk.LEFT)
 
         # Subnet Mask
@@ -931,7 +972,7 @@ class OBSCToolApp:
         ).pack(side=tk.LEFT, padx=(0, 10))
 
         ttk.Label(type_row, text="Host/Port:", width=10).pack(side=tk.LEFT)
-        self.term_host_var = tk.StringVar(value="192.168.1.1")
+        self.term_host_var = tk.StringVar(value="192.168.100.1")
         ttk.Entry(type_row, textvariable=self.term_host_var, width=18).pack(side=tk.LEFT, padx=(0, 5))
 
         ttk.Label(type_row, text="Port:").pack(side=tk.LEFT)
@@ -961,6 +1002,16 @@ class OBSCToolApp:
         # Connect/disconnect buttons
         btn_row = ttk.Frame(conn_frame)
         btn_row.pack(fill=tk.X, pady=(5, 0))
+
+        # NIC selector for terminal (auto-selects Ethernet)
+        ttk.Label(btn_row, text="NIC:").pack(side=tk.LEFT)
+        self.term_nic_var = tk.StringVar()
+        self.term_nic_combo = ttk.Combobox(
+            btn_row, textvariable=self.term_nic_var,
+            state='readonly', width=30,
+        )
+        self.term_nic_combo.pack(side=tk.LEFT, padx=(2, 8))
+
         self.term_connect_btn = ttk.Button(
             btn_row, text="🔌 Connect", command=self._term_connect, width=14)
         self.term_connect_btn.pack(side=tk.LEFT, padx=(0, 5))
@@ -1726,6 +1777,8 @@ class OBSCToolApp:
         self._log(f"Found {len(self.adapters)} network adapter(s)")
         # Also refresh the config adapter combo in Settings tab
         self._refresh_cfg_adapters()
+        # Also refresh terminal NIC selector
+        self._refresh_term_nic()
 
     def _on_adapter_selected(self, event):
         """Update adapter detail display when selection changes."""
@@ -1752,6 +1805,23 @@ class OBSCToolApp:
             self.cfg_adapter_combo['values'] = names
             if names:
                 self.cfg_adapter_combo.current(0)
+
+    def _refresh_term_nic(self):
+        """Refresh the terminal NIC selector, auto-selecting the first Ethernet adapter."""
+        if not hasattr(self, 'term_nic_combo'):
+            return
+        names = [a.display_name() for a in self.adapters]
+        self.term_nic_combo['values'] = names
+        # Auto-select the first Ethernet adapter (already sorted Ethernet-first)
+        if names:
+            self.term_nic_combo.current(0)
+            # If an Ethernet adapter is detected, set the terminal host to its gateway
+            adapter = self.adapters[0]
+            name_lower = (adapter.name + " " + adapter.description).lower()
+            if any(kw in name_lower for kw in ('ethernet', 'eth', 'lan')):
+                if adapter.gateway and adapter.gateway != "N/A":
+                    self.term_host_var.set(adapter.gateway)
+                    self._log(f"Terminal: auto-selected {adapter.name} → gateway {adapter.gateway}")
 
     def _apply_static_ip(self):
         """Apply static IP configuration to the selected adapter."""
@@ -1833,7 +1903,7 @@ class OBSCToolApp:
             self.ip_mode_status_var.set(
                 "Enter Ethernet adapter IP settings and click Apply")
         elif mode == "automatic":
-            # Show fields with defaults (read-only)
+            # Automatic: DHCP + Multicast discovery
             self.ip_manual_frame.pack(fill=tk.X, pady=(5, 0))
             self.ip_mode_ip_var.set(IP_MODE_DEFAULTS['ip'])
             self.ip_mode_mask_var.set(IP_MODE_DEFAULTS['netmask'])
@@ -1842,14 +1912,14 @@ class OBSCToolApp:
             self.ip_mode_mask_entry.configure(state='readonly')
             self.ip_mode_gw_entry.configure(state='readonly')
             self.ip_mode_status_var.set(
-                f"Automatic: IP {IP_MODE_DEFAULTS['ip']}  "
-                f"Mask {IP_MODE_DEFAULTS['netmask']}  "
-                f"Gateway {IP_MODE_DEFAULTS['gateway']} (ONT default)"
+                f"Automatic: DHCP + Multicast {OBSC_MULTICAST_ADDR}  "
+                f"(fallback: {IP_MODE_DEFAULTS['ip']}  "
+                f"GW {IP_MODE_DEFAULTS['gateway']})"
             )
         else:  # dhcp
             self.ip_manual_frame.pack_forget()
             self.ip_mode_status_var.set(
-                "DHCP: Ethernet adapter will obtain IP automatically")
+                "DHCP Only: Ethernet adapter will obtain IP automatically (no multicast)")
 
     def _apply_ip_mode(self):
         """Apply the selected IP mode to the currently selected adapter."""
@@ -1862,16 +1932,22 @@ class OBSCToolApp:
         mode = self.ip_mode_var.get()
         adapter_name = adapter.name
 
-        if mode == "dhcp":
+        if mode in ("dhcp", "automatic"):
+            # Both automatic and dhcp-only start with DHCP
+            label = "Automatic (DHCP + Multicast)" if mode == "automatic" else "DHCP Only"
             if not messagebox.askyesno(
-                "Confirm DHCP",
+                f"Confirm {label}",
                 f"Set '{adapter_name}' to DHCP?\n\n"
-                "⚠️ Requires administrator privileges."
+                + (f"Multicast discovery will use {OBSC_MULTICAST_ADDR}\n\n"
+                   if mode == "automatic" else "")
+                + "⚠️ Requires administrator privileges."
             ):
                 return
             self.ip_mode_status_var.set("Applying DHCP…")
             self.root.update_idletasks()
             ok, msg = set_adapter_dhcp(adapter_name)
+            if ok and mode == "automatic":
+                msg += f" | Multicast: {OBSC_MULTICAST_ADDR}"
         else:
             ip = self.ip_mode_ip_var.get().strip()
             mask = self.ip_mode_mask_var.get().strip()
@@ -1880,9 +1956,8 @@ class OBSCToolApp:
                 messagebox.showwarning("Missing Info",
                                        "IP and subnet mask are required.")
                 return
-            label = "Automatic (ONT default)" if mode == "automatic" else "Manual"
             if not messagebox.askyesno(
-                f"Confirm {label} IP",
+                "Confirm Manual IP",
                 f"Configure '{adapter_name}' with:\n\n"
                 f"  IP: {ip}\n  Mask: {mask}\n  Gateway: {gw or 'none'}\n\n"
                 "⚠️ Requires administrator privileges.\n"
@@ -1988,7 +2063,9 @@ class OBSCToolApp:
             messagebox.showwarning("No Adapter", "Please select a network adapter first.")
             return
 
-        self._log(f"Starting discovery on {adapter.ip}...")
+        use_multicast = (self.ip_mode_var.get() == "automatic")
+        mc_label = f" + multicast {OBSC_MULTICAST_ADDR}" if use_multicast else ""
+        self._log(f"Starting discovery on {adapter.ip}{mc_label}...")
         self.discover_btn.configure(state='disabled')
 
         try:
@@ -2000,6 +2077,7 @@ class OBSCToolApp:
                 bind_port=int(self.recv_port_var.get()),
                 dest_port=int(self.send_port_var.get()),
                 broadcast=True,
+                multicast_group=OBSC_MULTICAST_ADDR if use_multicast else None,
             )
             self.transport.open()
 
@@ -2008,6 +2086,8 @@ class OBSCToolApp:
             self.worker.on_status = self._on_status
             self.worker.on_log = self._on_worker_log
             self.worker.on_error = self._on_error
+            if use_multicast:
+                self.worker.multicast_addr = OBSC_MULTICAST_ADDR
 
             self.worker.start_discovery(duration=int(self.discovery_duration_var.get()))
 
@@ -2023,10 +2103,58 @@ class OBSCToolApp:
                 self.transport.close()
 
     def _on_device_found(self, device):
-        """Callback when a device is discovered."""
-        self.root.after(0, lambda: self._log(
-            f"📡 Device: {device.ip} | SN: {device.board_sn} | MAC: {device.mac}"
-        ))
+        """Callback when a device is discovered — add/update the device table."""
+        self.root.after(0, lambda: self._update_device_table(device))
+
+    def _update_device_table(self, device):
+        """Add or update a device row in the table."""
+        ip = device.ip
+        now = time.time()
+        if ip in self._tracked_devices:
+            # Update existing
+            item_id = self._tracked_devices[ip]['item_id']
+            self._tracked_devices[ip]['last_seen'] = now
+            self._tracked_devices[ip]['device'] = device
+            self.device_tree.item(item_id, values=(
+                ip, device.mac or "—", device.board_sn or "—",
+                device.model or "—", device.status, "—"))
+        else:
+            # Insert new
+            item_id = self.device_tree.insert('', tk.END, values=(
+                ip, device.mac or "—", device.board_sn or "—",
+                device.model or "—", device.status, "—"))
+            self._tracked_devices[ip] = {
+                'item_id': item_id,
+                'device': device,
+                'last_seen': now,
+            }
+        self._log(f"📡 Device: {ip} | SN: {device.board_sn} | MAC: {device.mac}")
+
+    def _update_device_progress(self, ip, status, progress_text):
+        """Update flash progress for a device in the table."""
+        if ip in self._tracked_devices:
+            item_id = self._tracked_devices[ip]['item_id']
+            dev = self._tracked_devices[ip]['device']
+            self.device_tree.item(item_id, values=(
+                ip, dev.mac or "—", dev.board_sn or "—",
+                dev.model or "—", status, progress_text))
+            self._tracked_devices[ip]['last_seen'] = time.time()
+
+    def _check_stale_devices(self):
+        """Remove devices that haven't been seen for DEVICE_STALE_TIMEOUT seconds."""
+        now = time.time()
+        stale = [ip for ip, info in self._tracked_devices.items()
+                 if now - info['last_seen'] > DEVICE_STALE_TIMEOUT]
+        for ip in stale:
+            item_id = self._tracked_devices[ip]['item_id']
+            try:
+                self.device_tree.delete(item_id)
+            except tk.TclError:
+                pass
+            del self._tracked_devices[ip]
+            self._log(f"📡 Device lost: {ip}")
+        # Schedule next check
+        self.root.after(5000, self._check_stale_devices)
 
     # ── Upgrade ──────────────────────────────────────────────────
 

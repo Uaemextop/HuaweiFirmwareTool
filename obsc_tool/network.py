@@ -366,11 +366,12 @@ class UDPTransport:
     """Low-level UDP socket for OBSC protocol communication."""
 
     def __init__(self, bind_ip="0.0.0.0", bind_port=0,
-                 dest_port=50000, broadcast=True):
+                 dest_port=50000, broadcast=True, multicast_group=None):
         self.bind_ip = bind_ip
         self.bind_port = bind_port
         self.dest_port = dest_port
         self.broadcast = broadcast
+        self.multicast_group = multicast_group
         self.sock = None
         self.timeout = 5.0
 
@@ -382,6 +383,28 @@ class UDPTransport:
         if self.broadcast:
             self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
+        # Join multicast group if specified
+        if self.multicast_group:
+            try:
+                mreq = struct.pack(
+                    '4s4s',
+                    socket.inet_aton(self.multicast_group),
+                    socket.inet_aton(self.bind_ip),
+                )
+                self.sock.setsockopt(
+                    socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+                # Set multicast interface to the bind IP
+                self.sock.setsockopt(
+                    socket.IPPROTO_IP, socket.IP_MULTICAST_IF,
+                    socket.inet_aton(self.bind_ip))
+                # TTL=1 keeps multicast on local network
+                self.sock.setsockopt(
+                    socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 1)
+                logger.info("Joined multicast group %s on %s",
+                            self.multicast_group, self.bind_ip)
+            except OSError as e:
+                logger.warning("Multicast join failed: %s", e)
+
         # Set send buffer size for performance
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 65536)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 65536)
@@ -389,7 +412,9 @@ class UDPTransport:
         self.sock.settimeout(self.timeout)
         self.sock.bind((self.bind_ip, self.bind_port))
 
-        logger.info("UDP socket bound to %s:%d", self.bind_ip, self.bind_port)
+        logger.info("UDP socket bound to %s:%d (multicast=%s)",
+                     self.bind_ip, self.bind_port,
+                     self.multicast_group or "none")
 
     def close(self):
         """Close the UDP socket."""
@@ -455,6 +480,7 @@ class UDPTransport:
                 "state": "Open",
                 "local_addr": f"{local[0]}:{local[1]}",
                 "broadcast": "Yes" if self.broadcast else "No",
+                "multicast": self.multicast_group or "None",
                 "timeout": f"{self.timeout}s",
                 "send_buf": str(self.sock.getsockopt(
                     socket.SOL_SOCKET, socket.SO_SNDBUF)),

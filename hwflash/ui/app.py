@@ -34,7 +34,7 @@ from hwflash.ui.tabs.crypto import CryptoTab
 from hwflash.ui.tabs.terminal import TerminalTab
 from hwflash.ui.tabs.dump import DumpTab
 from hwflash.ui.tabs.settings import SettingsTab
-from hwflash.ui.tabs.info import InfoTab
+from hwflash.ui.tabs.firmware_editor import FirmwareEditorTab
 from hwflash.ui.tabs.log import LogTab
 
 logger = logging.getLogger("hwflash")
@@ -65,7 +65,7 @@ class HuaweiFlashApp:
         "terminal": ("Terminal", "Connect to device via Telnet or Serial"),
         "dump": ("Firmware Dump", "Extract firmware partitions from device"),
         "settings": ("Settings", "Configure protocol and network parameters"),
-        "info": ("Firmware Editor", "Explore, edit, repack and sign HWNP firmware"),
+        "info": ("Firmware Editor", "Edit text payloads, metadata, and signatures for HWNP firmware"),
         "log": ("Activity Log", "View application events and operation history"),
     }
 
@@ -312,7 +312,7 @@ class HuaweiFlashApp:
             ("terminal", TerminalTab, "Terminal"),
             ("dump", DumpTab, "Dump"),
             ("settings", SettingsTab, "Settings"),
-            ("info", InfoTab, "FW Editor"),
+            ("info", FirmwareEditorTab, "FW Editor"),
             ("log", LogTab, "Log"),
         ]
 

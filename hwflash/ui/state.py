@@ -43,6 +43,8 @@ class AppState:
         # ── Firmware ─────────────────────────────────────────────
         self.firmware: Optional[HWNPFirmware] = None
         self.firmware_path: str = ""
+        self.firmware_dirty: bool = False
+        self.firmware_signature_dirty: bool = False
         self.fw_path_var = tk.StringVar(value="No file selected")
         self.fw_info_var = tk.StringVar(value="")
 

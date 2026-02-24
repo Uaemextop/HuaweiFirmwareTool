@@ -491,9 +491,6 @@ class HWNPFirmware:
         is_text_ext = path.endswith('.sh') or path.endswith('.txt') or path.endswith('.xml')
         sample = item.data[:max_bytes]
 
-        if b'\x00' in sample and not is_text_ext:
-            return {'is_text': False, 'reason': 'Binary payload (NUL bytes detected)'}
-
         encodings = ('utf-8-sig', 'utf-16', 'utf-16-le', 'utf-16-be', 'latin-1')
         decoded = None
         used_encoding = None
@@ -506,12 +503,28 @@ class HWNPFirmware:
 
             printable = sum(ch.isprintable() or ch in '\r\n\t' for ch in text)
             ratio = (printable / len(text)) if text else 0.0
-            if is_text_ext or ratio >= 0.80 or text.lstrip().startswith('<?xml'):
+            ascii_like = sum((32 <= ord(ch) <= 126) or ch in '\r\n\t' for ch in text)
+            ascii_ratio = (ascii_like / len(text)) if text else 0.0
+            looks_structured = any(token in text for token in ('\n', '\r', '=', ':', '</', '/>', '{', '}', '[', ']'))
+
+            if is_text_ext or text.lstrip().startswith('<?xml'):
+                decoded = text
+                used_encoding = enc
+                break
+
+            if enc.startswith('utf-16'):
+                if ratio >= 0.80 and (ascii_ratio >= 0.25 or looks_structured):
+                    decoded = text
+                    used_encoding = enc
+                    break
+            elif ratio >= 0.80 and ascii_ratio >= 0.35:
                 decoded = text
                 used_encoding = enc
                 break
 
         if decoded is None:
+            if b'\x00' in sample:
+                return {'is_text': False, 'reason': 'Binary payload (NUL bytes detected)'}
             return {'is_text': False, 'reason': 'Unable to decode as text'}
 
         truncated = len(decoded) > max_chars
@@ -651,7 +664,7 @@ class HWNPFirmware:
 
         # Build main header (CRC fields zeroed for now)
         header = bytearray(HWNP_HEADER_SIZE)
-        struct.pack_into('<I', header, 0, HWNP_MAGIC)
+        struct.pack_into('<I', header, 0, self.magic if self.magic else HWNP_MAGIC)
         struct.pack_into('<I', header, 4, raw_size)          # raw_sz
         # offset 8: raw_crc32 → set later
         struct.pack_into('<I', header, 12, header_area_size)  # hdr_sz

@@ -340,6 +340,23 @@ class UpgradeTab(ttk.Frame):
             messagebox.showwarning("No Firmware", "Please select a firmware file first.")
             return
 
+        if getattr(self.s, "firmware_dirty", False):
+            if not messagebox.askyesno(
+                "Firmware Needs Repack",
+                "Firmware has pending edits from FW Editor and must be repacked before flashing.\n\n"
+                "Repack now and continue?"
+            ):
+                return
+            try:
+                self.s.firmware.repack()
+                self.s.firmware_dirty = False
+                self.ctrl.refresh_fw_info()
+                self.ctrl.log("Firmware repacked automatically before upgrade")
+            except Exception as e:
+                messagebox.showerror("Repack Error", str(e))
+                self.ctrl.log(f"Pre-upgrade repack failed: {e}")
+                return
+
         # Pre-flash CRC32
         if self.s.verify_crc32_var.get():
             hdr_ok, data_ok = self.s.firmware.validate_crc32()

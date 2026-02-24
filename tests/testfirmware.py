@@ -236,6 +236,20 @@ class TestHWNPFirmwareParser:
         preview = fw.get_item_text_preview(fw.items[0])
         assert preview['is_text'] is False
 
+    def test_item_text_preview_utf16_in_bin_extension(self):
+        utf16_payload = "PRODUCT_ID=HG8145V5\nSOC_ID=XGSPON\n".encode('utf-16-le')
+        data = _build_hwnp_firmware(items=[("file:/var/meta.bin", "META", "V1", utf16_payload)])
+        with tempfile.NamedTemporaryFile(suffix='.bin', delete=False) as f:
+            f.write(data)
+            f.flush()
+            fw = HWNPFirmware()
+            fw.load(f.name)
+        os.unlink(f.name)
+
+        preview = fw.get_item_text_preview(fw.items[0])
+        assert preview['is_text'] is True
+        assert "PRODUCT_ID" in preview['text']
+
 
 class TestHWNPItem:
     """Test HWNPItem structure."""
@@ -361,6 +375,32 @@ class TestFirmwareRepack:
         assert hdr_ok is True
         assert data_ok is True
         assert fw2.items[0].data == b"replaced_content_longer_than_original!"
+
+    def test_repack_after_product_metadata_edit(self):
+        data = _build_hwnp_firmware()
+        with tempfile.NamedTemporaryFile(suffix='.bin', delete=False) as f:
+            f.write(data)
+            f.flush()
+            fw = HWNPFirmware()
+            fw.load(f.name)
+        os.unlink(f.name)
+
+        fw.product_list = "PRODUCT_ID=HG8145V5\nSOC_ID=ABC123"
+        fw.prod_list_size = len(fw.product_list.encode('ascii')) + 1
+        repacked = fw.repack()
+
+        with tempfile.NamedTemporaryFile(suffix='.bin', delete=False) as f:
+            f.write(repacked)
+            f.flush()
+            fw2 = HWNPFirmware()
+            fw2.load(f.name)
+        os.unlink(f.name)
+
+        hdr_ok, data_ok = fw2.validate_crc32()
+        assert hdr_ok is True
+        assert data_ok is True
+        assert "PRODUCT_ID=HG8145V5" in fw2.product_list
+        assert "SOC_ID=ABC123" in fw2.product_list
 
 
 class TestFirmwareUnpackPack:

@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.spec
+
+# IDE
+.vscode/
+.idea/
+
+# Build
+build/
+*.o
+*.exe
+
+# Logs
+logs/
+*.log
+
+# User presets (generated at runtime)
+obsc_tool/presets/

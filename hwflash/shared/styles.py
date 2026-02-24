@@ -85,16 +85,6 @@ THEMES: Dict[str, Dict[str, str]] = {
     "light": LIGHT,
 }
 
-IP_MODE_DEFAULTS = {
-    "Automatic (192.168.100.x)": {
-        "ip": "192.168.100.2",
-        "mask": "255.255.255.0",
-        "gw": "192.168.100.1",
-    },
-    "Manual": {"ip": "", "mask": "255.255.255.0", "gw": ""},
-    "DHCP": {"ip": "", "mask": "", "gw": ""},
-}
-
 OBSC_MULTICAST_ADDR = "224.0.0.9"
 DEVICE_STALE_TIMEOUT = 30
 TTKB_DARK = "darkly"

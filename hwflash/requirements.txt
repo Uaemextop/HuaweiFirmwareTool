@@ -1,4 +1,4 @@
-# OBSC Firmware Tool - Dependencies
+# HuaweiFlash - Dependencies
 #
 # ── Core UI ──────────────────────────────────────────────────
 ttkbootstrap>=1.10
@@ -7,35 +7,12 @@ customtkinter>=5.2
 #
 # ── UI Themes & Styling ─────────────────────────────────────
 darkdetect>=0.8
-sv-ttk>=2.6
-ttkthemes>=3.2
-#
-# ── UI Widgets & Helpers ─────────────────────────────────────
-CTkMessagebox>=2.7
-CTkToolTip>=0.8
-tktooltip>=0.1
-tkinterdnd2>=0.4
-ttkwidgets>=0.13
-#
-# ── System Tray & Screen ────────────────────────────────────
-pystray>=0.19
-screeninfo>=0.8
-#
-# ── Charts & Visualization ──────────────────────────────────
-matplotlib>=3.8
-qrcode>=7.4
-colour>=0.1
 #
 # ── Terminal & Serial ────────────────────────────────────────
 pyserial>=3.5
 #
-# ── System & Network Info ────────────────────────────────────
+# ── System Info ──────────────────────────────────────────────
 psutil>=5.9
-netifaces>=0.11
-#
-# ── Clipboard & Notifications ────────────────────────────────
-pyperclip>=1.8
-plyer>=2.1
 #
 # ── Cryptography ─────────────────────────────────────────────
 pycryptodome>=3.19.1
@@ -44,6 +21,5 @@ pycryptodome>=3.19.1
 chardet>=5.0
 defusedxml>=0.7
 #
-# ── Logging & Export ─────────────────────────────────────────
+# ── Console Output ───────────────────────────────────────────
 colorama>=0.4
-rich>=13.0

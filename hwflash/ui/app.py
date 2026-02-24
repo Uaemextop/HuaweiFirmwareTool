@@ -24,9 +24,7 @@ from hwflash import __version__
 from hwflash.core.presets import PresetManager
 from hwflash.core.terminal import TelnetClient, SerialClient
 from hwflash.shared.styles import (
-    THEMES, get_theme, IP_MODE_DEFAULTS,
-    OBSC_MULTICAST_ADDR, DEVICE_STALE_TIMEOUT,
-    TTKB_DARK, TTKB_LIGHT, FONT_FAMILY, PRIMARY,
+    get_theme, TTKB_DARK, TTKB_LIGHT, FONT_FAMILY,
 )
 from hwflash.shared.helpers import safe_int
 from hwflash.shared.icons import generate_logo

@@ -250,12 +250,105 @@ def _is_frozen():
     return getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS")
 
 
+class QuickSplash:
+    """Brief branded splash for frozen (EXE) builds."""
+
+    def __init__(self):
+        self.root = tk.Tk()
+        self.root.overrideredirect(True)
+        self.root.attributes("-topmost", True)
+
+        w, h = 420, 260
+        sw = self.root.winfo_screenwidth()
+        sh = self.root.winfo_screenheight()
+        x = (sw - w) // 2
+        y = (sh - h) // 2
+        self.root.geometry(f"{w}x{h}+{x}+{y}")
+
+        try:
+            self.root.attributes("-alpha", 0.0)
+        except tk.TclError:
+            pass
+
+        canvas = tk.Canvas(self.root, width=w, height=h, highlightthickness=0, bd=0)
+        canvas.pack(fill=tk.BOTH, expand=True)
+
+        for y_pos in range(h):
+            ratio = y_pos / h
+            r = int(15 + ratio * 5)
+            g = int(23 + ratio * 8)
+            b = int(42 + ratio * 12)
+            canvas.create_line(0, y_pos, w, y_pos, fill=f"#{r:02x}{g:02x}{b:02x}")
+
+        canvas.create_rectangle(1, 1, w - 1, h - 1, outline="#2563EB", width=2)
+
+        cx, cy = w // 2, 80
+        r = 28
+        canvas.create_oval(cx - r, cy - r, cx + r, cy + r, fill="#1E3A5F", outline="#2563EB", width=2)
+        pts = [cx - 6, cy - 14, cx + 3, cy - 2, cx - 2, cy - 2,
+               cx + 6, cy + 14, cx - 3, cy + 2, cx + 2, cy + 2]
+        canvas.create_polygon(pts, fill="#60CDFF", outline="")
+
+        canvas.create_text(w // 2, 130, text="HuaweiFlash",
+                           font=("Segoe UI", 18, "bold"), fill="#F8FAFC")
+        canvas.create_text(w // 2, 155, text="Loading...",
+                           font=("Segoe UI", 10), fill="#94A3B8")
+
+        try:
+            from hwflash import __version__
+            ver = __version__
+        except Exception:
+            ver = "2.0.0"
+        canvas.create_text(w // 2, h - 20, text=f"v{ver}",
+                           font=("Segoe UI", 9), fill="#475569")
+
+        self._alpha = 0.0
+        self.canvas = canvas
+
+    def show(self, duration_ms=1200):
+        self._fade_in()
+        self.root.after(duration_ms, self._fade_out)
+        self.root.mainloop()
+
+    def _fade_in(self):
+        self._alpha += 0.08
+        if self._alpha >= 1.0:
+            self._alpha = 1.0
+            try:
+                self.root.attributes("-alpha", 1.0)
+            except tk.TclError:
+                pass
+            return
+        try:
+            self.root.attributes("-alpha", self._alpha)
+        except tk.TclError:
+            pass
+        self.root.after(15, self._fade_in)
+
+    def _fade_out(self):
+        self._alpha -= 0.1
+        if self._alpha <= 0:
+            self.root.destroy()
+            return
+        try:
+            self.root.attributes("-alpha", self._alpha)
+        except tk.TclError:
+            self.root.destroy()
+            return
+        self.root.after(15, self._fade_out)
+
+
 def ensure_dependencies():
     """Show splash screen and install dependencies.
 
     Returns True if the app should launch, False on critical failure.
+    For frozen (EXE) builds, shows a brief branded splash.
     """
     if _is_frozen():
+        try:
+            QuickSplash().show(1000)
+        except Exception:
+            pass
         return True
 
     all_present = True

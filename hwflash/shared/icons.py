@@ -175,6 +175,27 @@ def generate_icon(name: str, size: int = 20, color: str = "#FFFFFF") -> bytes:
     return buf.getvalue()
 
 
+def generate_ico(path: str, sizes: tuple = (16, 32, 48, 64, 128, 256)) -> bool:
+    """Generate a multi-size ICO file for the application.
+
+    Returns True on success, False if PIL is unavailable.
+    """
+    if not HAS_PIL:
+        return False
+
+    images = []
+    for size in sizes:
+        png_data = generate_logo(size)
+        if png_data:
+            images.append(Image.open(io.BytesIO(png_data)))
+
+    if not images:
+        return False
+
+    images[0].save(path, format="ICO", sizes=[(s, s) for s in sizes], append_images=images[1:])
+    return True
+
+
 def logo_to_base64(size: int = 64) -> str:
     """Return logo as base64 string for embedding."""
     data = generate_logo(size)

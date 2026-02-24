@@ -7,7 +7,6 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 
 from hwflash.shared.helpers import safe_int as _safe_int
-from hwflash.shared.styles import DEFAULT_IP_CONFIG as IP_MODE_DEFAULTS
 from hwflash.shared.styles import OBSC_MULTICAST_ADDR, DEVICE_STALE_TIMEOUT
 from hwflash.core.firmware import HWNPFirmware
 from hwflash.core.network import UDPTransport
@@ -21,13 +20,11 @@ class UpgradeTabMixin:
     """Mixin providing the Upgrade tab and related methods."""
 
     def _build_upgrade_tab(self):
-        """Build the main upgrade tab."""
         tab = self.tab_upgrade
 
-        # ── Network Adapter ──────────────────────────────────────
-        adapter_frame = ttk.LabelFrame(
-            tab, text="Ethernet Adapter (connect ONT via LAN cable)", padding=8)
-        adapter_frame.pack(fill=tk.X, pady=(0, 8))
+        # Adapter
+        adapter_frame = ttk.LabelFrame(tab, text="Ethernet Adapter", padding=6)
+        adapter_frame.pack(fill=tk.X, pady=(0, 6))
 
         adapter_row = ttk.Frame(adapter_frame)
         adapter_row.pack(fill=tk.X)
@@ -35,242 +32,126 @@ class UpgradeTabMixin:
         self.adapter_var = tk.StringVar()
         self.adapter_combo = ttk.Combobox(
             adapter_row, textvariable=self.adapter_var,
-            state='readonly', width=60,
+            state='readonly', width=55,
         )
-        self.adapter_combo.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+        self.adapter_combo.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 4))
 
-        refresh_btn = ttk.Button(
+        ttk.Button(
             adapter_row, text="🔃 Refresh",
-            command=self._refresh_adapters, width=12,
-        )
-        refresh_btn.pack(side=tk.RIGHT)
+            command=self._refresh_adapters, width=11,
+        ).pack(side=tk.RIGHT)
 
-        # Adapter details panel
         self.adapter_detail_var = tk.StringVar(value="")
-        adapter_detail_label = ttk.Label(
-            adapter_frame, textvariable=self.adapter_detail_var,
-            font=('Consolas', 8), justify=tk.LEFT,
-        )
-        adapter_detail_label.pack(fill=tk.X, pady=(5, 0))
+        ttk.Label(adapter_frame, textvariable=self.adapter_detail_var,
+                  font=('Consolas', 8), justify=tk.LEFT).pack(fill=tk.X, pady=(3, 0))
 
-        # Update details when adapter selection changes
         self.adapter_combo.bind('<<ComboboxSelected>>', self._on_adapter_selected)
 
-        # ── IP Mode ──────────────────────────────────────────────
-        ip_frame = ttk.LabelFrame(
-            tab, text="IP Mode (Ethernet adapter configuration)", padding=8)
-        ip_frame.pack(fill=tk.X, pady=(0, 8))
-
-        mode_row = ttk.Frame(ip_frame)
-        mode_row.pack(fill=tk.X)
-
-        self.ip_mode_var = tk.StringVar(value="automatic")
-        ttk.Radiobutton(
-            mode_row,
-            text="🔄 Automatic (DHCP + Multicast 224.0.0.9)",
-            variable=self.ip_mode_var, value="automatic",
-            command=self._on_ip_mode_changed,
-        ).pack(side=tk.LEFT, padx=(0, 12))
-        ttk.Radiobutton(
-            mode_row, text="✏️ Manual",
-            variable=self.ip_mode_var, value="manual",
-            command=self._on_ip_mode_changed,
-        ).pack(side=tk.LEFT, padx=(0, 12))
-        ttk.Radiobutton(
-            mode_row, text="🌐 DHCP Only",
-            variable=self.ip_mode_var, value="dhcp",
-            command=self._on_ip_mode_changed,
-        ).pack(side=tk.LEFT)
-
-        # Manual IP fields (shown/hidden depending on mode)
-        self.ip_manual_frame = ttk.Frame(ip_frame)
-
-        # Row 1: IP + Mask
-        ip_row1 = ttk.Frame(self.ip_manual_frame)
-        ip_row1.pack(fill=tk.X, pady=2)
-        ttk.Label(ip_row1, text="IP Address:", width=12).pack(side=tk.LEFT)
-        self.ip_mode_ip_var = tk.StringVar(value=IP_MODE_DEFAULTS['ip'])
-        self.ip_mode_ip_entry = ttk.Entry(
-            ip_row1, textvariable=self.ip_mode_ip_var, width=16)
-        self.ip_mode_ip_entry.pack(side=tk.LEFT, padx=(0, 12))
-        ttk.Label(ip_row1, text="Subnet Mask:", width=12).pack(side=tk.LEFT)
-        self.ip_mode_mask_var = tk.StringVar(value=IP_MODE_DEFAULTS['netmask'])
-        self.ip_mode_mask_entry = ttk.Entry(
-            ip_row1, textvariable=self.ip_mode_mask_var, width=16)
-        self.ip_mode_mask_entry.pack(side=tk.LEFT)
-
-        # Row 2: Gateway + DNS
-        ip_row2 = ttk.Frame(self.ip_manual_frame)
-        ip_row2.pack(fill=tk.X, pady=2)
-        ttk.Label(ip_row2, text="Gateway:", width=12).pack(side=tk.LEFT)
-        self.ip_mode_gw_var = tk.StringVar(value=IP_MODE_DEFAULTS['gateway'])
-        self.ip_mode_gw_entry = ttk.Entry(
-            ip_row2, textvariable=self.ip_mode_gw_var, width=16)
-        self.ip_mode_gw_entry.pack(side=tk.LEFT, padx=(0, 12))
-        ttk.Label(ip_row2, text="DNS:", width=12).pack(side=tk.LEFT)
-        self.ip_mode_dns_var = tk.StringVar(value=IP_MODE_DEFAULTS.get('dns1', '8.8.8.8'))
-        self.ip_mode_dns_entry = ttk.Entry(
-            ip_row2, textvariable=self.ip_mode_dns_var, width=16)
-        self.ip_mode_dns_entry.pack(side=tk.LEFT)
-
-        # Apply button row (always visible when a mode is active)
-        self.ip_apply_frame = ttk.Frame(ip_frame)
-        self.ip_apply_frame.pack(fill=tk.X, pady=(5, 0))
-        self.ip_mode_apply_btn = ttk.Button(
-            self.ip_apply_frame, text="⚡ Apply IP Mode",
-            command=self._apply_ip_mode, width=18)
-        self.ip_mode_apply_btn.pack(side=tk.LEFT)
-
-        # Status line
-        self.ip_mode_status_var = tk.StringVar(value="")
-        ttk.Label(ip_frame, textvariable=self.ip_mode_status_var,
-                  font=('Segoe UI', 9)).pack(fill=tk.X, pady=(3, 0))
-
-        # Initial state
-        self._on_ip_mode_changed()
-
-        # ── Firmware File ────────────────────────────────────────
-        fw_frame = ttk.LabelFrame(tab, text="Firmware File", padding=8)
-        fw_frame.pack(fill=tk.X, pady=(0, 8))
+        # Firmware
+        fw_frame = ttk.LabelFrame(tab, text="Firmware File", padding=6)
+        fw_frame.pack(fill=tk.X, pady=(0, 6))
 
         fw_row = ttk.Frame(fw_frame)
         fw_row.pack(fill=tk.X)
 
         self.fw_path_var = tk.StringVar(value="No file selected")
-        fw_entry = ttk.Entry(
-            fw_row, textvariable=self.fw_path_var,
-            state='readonly', width=60,
-        )
-        fw_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 5))
+        ttk.Entry(fw_row, textvariable=self.fw_path_var, state='readonly', width=55).pack(
+            side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 4))
 
-        browse_btn = ttk.Button(
-            fw_row, text="📂 Browse",
-            command=self._browse_firmware, width=12,
-        )
-        browse_btn.pack(side=tk.RIGHT)
+        ttk.Button(fw_row, text="📂 Browse", command=self._browse_firmware, width=11).pack(side=tk.RIGHT)
 
-        # Firmware info line
         self.fw_info_var = tk.StringVar(value="")
-        fw_info_label = ttk.Label(fw_frame, textvariable=self.fw_info_var,
-                                  font=('Segoe UI', 9))
-        fw_info_label.pack(fill=tk.X, pady=(5, 0))
+        ttk.Label(fw_frame, textvariable=self.fw_info_var, font=('Segoe UI', 9)).pack(fill=tk.X, pady=(3, 0))
 
-        # ── Quick Config ─────────────────────────────────────────
-        config_frame = ttk.LabelFrame(tab, text="Transfer Configuration", padding=8)
-        config_frame.pack(fill=tk.X, pady=(0, 8))
+        # Transfer config (compact grid)
+        config_frame = ttk.LabelFrame(tab, text="Transfer Configuration", padding=6)
+        config_frame.pack(fill=tk.X, pady=(0, 6))
 
-        config_grid = ttk.Frame(config_frame)
-        config_grid.pack(fill=tk.X)
+        g = ttk.Frame(config_frame)
+        g.pack(fill=tk.X)
 
-        # Frame Size
-        ttk.Label(config_grid, text="Frame Size:").grid(row=0, column=0, sticky='w', padx=(0, 5))
+        ttk.Label(g, text="Frame Size:").grid(row=0, column=0, sticky='w', padx=(0, 4))
         self.frame_size_var = tk.StringVar(value="1400")
-        frame_size_combo = ttk.Combobox(
-            config_grid, textvariable=self.frame_size_var,
-            values=["1200", "1400", "1472", "4096", "8192"],
-            width=10,
-        )
-        frame_size_combo.grid(row=0, column=1, padx=(0, 15))
-        ttk.Label(config_grid, text="bytes").grid(row=0, column=2, sticky='w', padx=(0, 20))
+        ttk.Combobox(g, textvariable=self.frame_size_var,
+                     values=["1200", "1400", "1472", "4096", "8192"],
+                     state='readonly', width=8).grid(row=0, column=1, padx=(0, 12))
 
-        # Frame Interval
-        ttk.Label(config_grid, text="Frame Interval:").grid(row=0, column=3, sticky='w', padx=(0, 5))
+        ttk.Label(g, text="Interval:").grid(row=0, column=2, sticky='w', padx=(0, 4))
         self.frame_interval_var = tk.StringVar(value="5")
-        interval_combo = ttk.Combobox(
-            config_grid, textvariable=self.frame_interval_var,
-            values=["1", "2", "5", "10", "20", "50"],
-            width=10,
-        )
-        interval_combo.grid(row=0, column=4, padx=(0, 15))
-        ttk.Label(config_grid, text="ms").grid(row=0, column=5, sticky='w')
+        ttk.Combobox(g, textvariable=self.frame_interval_var,
+                     values=["1", "2", "5", "10", "20", "50"],
+                     state='readonly', width=6).grid(row=0, column=3, padx=(0, 4))
+        ttk.Label(g, text="ms").grid(row=0, column=4, sticky='w', padx=(0, 12))
 
-        # Flash Mode
-        ttk.Label(config_grid, text="Flash Mode:").grid(row=1, column=0, sticky='w', padx=(0, 5), pady=(5, 0))
+        ttk.Label(g, text="Flash Mode:").grid(row=0, column=5, sticky='w', padx=(0, 4))
         self.flash_mode_var = tk.StringVar(value="Normal")
-        flash_combo = ttk.Combobox(
-            config_grid, textvariable=self.flash_mode_var,
-            values=["Normal", "Forced"],
-            state='readonly', width=10,
-        )
-        flash_combo.grid(row=1, column=1, padx=(0, 15), pady=(5, 0))
+        ttk.Combobox(g, textvariable=self.flash_mode_var,
+                     values=["Normal", "Forced"],
+                     state='readonly', width=8).grid(row=0, column=6, padx=(0, 12))
 
-        # Delete Config
         self.delete_cfg_var = tk.BooleanVar(value=False)
-        delete_chk = ttk.Checkbutton(
-            config_grid, text="Delete existing configuration",
-            variable=self.delete_cfg_var,
-        )
-        delete_chk.grid(row=1, column=3, columnspan=3, sticky='w', pady=(5, 0))
+        ttk.Checkbutton(g, text="Delete config",
+                        variable=self.delete_cfg_var).grid(row=0, column=7, sticky='w')
 
-        # ── Progress ─────────────────────────────────────────────
-        progress_frame = ttk.LabelFrame(tab, text="Progress", padding=8)
-        progress_frame.pack(fill=tk.X, pady=(0, 8))
+        # Progress
+        progress_frame = ttk.LabelFrame(tab, text="Progress", padding=6)
+        progress_frame.pack(fill=tk.X, pady=(0, 6))
 
         self.progress_var = tk.DoubleVar(value=0)
         self.progress_bar = ttk.Progressbar(
             progress_frame, variable=self.progress_var,
-            maximum=100, mode='determinate', length=400,
+            maximum=100, mode='determinate',
         )
-        self.progress_bar.pack(fill=tk.X, pady=(0, 5))
+        self.progress_bar.pack(fill=tk.X, pady=(0, 3))
 
         self.status_var = tk.StringVar(value="Ready")
-        status_label = ttk.Label(
-            progress_frame, textvariable=self.status_var,
-            font=('Segoe UI', 10),
-        )
-        status_label.pack(fill=tk.X)
+        ttk.Label(progress_frame, textvariable=self.status_var, font=('Segoe UI', 10)).pack(fill=tk.X)
 
         self.progress_detail_var = tk.StringVar(value="")
-        detail_label = ttk.Label(
-            progress_frame, textvariable=self.progress_detail_var,
-            font=('Segoe UI', 9),
-        )
-        detail_label.pack(fill=tk.X)
+        ttk.Label(progress_frame, textvariable=self.progress_detail_var, font=('Segoe UI', 9)).pack(fill=tk.X)
 
-        # ── Action Buttons ───────────────────────────────────────
+        # Action buttons
         btn_frame = ttk.Frame(tab)
-        btn_frame.pack(fill=tk.X, pady=(5, 0))
+        btn_frame.pack(fill=tk.X, pady=(4, 6))
 
         self.discover_btn = ttk.Button(
-            btn_frame, text="🔍 Discover Devices",
-            command=self._discover_devices, width=20,
+            btn_frame, text="🔍 Discover",
+            command=self._discover_devices, width=14,
         )
-        self.discover_btn.pack(side=tk.LEFT, padx=(0, 5))
+        self.discover_btn.pack(side=tk.LEFT, padx=(0, 4))
 
         self.start_btn = ttk.Button(
             btn_frame, text="▶ Start Upgrade",
-            command=self._start_upgrade, width=20,
+            command=self._start_upgrade, width=16,
         )
-        self.start_btn.pack(side=tk.LEFT, padx=(0, 5))
+        self.start_btn.pack(side=tk.LEFT, padx=(0, 4))
 
         self.stop_btn = ttk.Button(
             btn_frame, text="⏹ Stop",
-            command=self._stop_upgrade, width=12,
+            command=self._stop_upgrade, width=10,
             state='disabled',
         )
         self.stop_btn.pack(side=tk.LEFT)
 
-        # ── Device Table ─────────────────────────────────────────
-        dev_frame = ttk.LabelFrame(
-            tab, text="Detected Devices (auto-updates during discovery & flash)",
-            padding=8)
-        dev_frame.pack(fill=tk.BOTH, expand=True, pady=(8, 0))
+        # Device table
+        dev_frame = ttk.LabelFrame(tab, text="Detected Devices", padding=6)
+        dev_frame.pack(fill=tk.BOTH, expand=True)
 
         dev_columns = ('ip', 'mac', 'sn', 'model', 'status', 'progress')
         self.device_tree = ttk.Treeview(
-            dev_frame, columns=dev_columns, show='headings', height=5)
+            dev_frame, columns=dev_columns, show='headings', height=4)
         self.device_tree.heading('ip', text='IP Address')
         self.device_tree.heading('mac', text='MAC')
         self.device_tree.heading('sn', text='Serial Number')
         self.device_tree.heading('model', text='Model')
         self.device_tree.heading('status', text='Status')
         self.device_tree.heading('progress', text='Progress')
-        self.device_tree.column('ip', width=130)
-        self.device_tree.column('mac', width=140)
-        self.device_tree.column('sn', width=140)
-        self.device_tree.column('model', width=100)
-        self.device_tree.column('status', width=120)
-        self.device_tree.column('progress', width=100)
+        self.device_tree.column('ip', width=120)
+        self.device_tree.column('mac', width=130)
+        self.device_tree.column('sn', width=130)
+        self.device_tree.column('model', width=90)
+        self.device_tree.column('status', width=100)
+        self.device_tree.column('progress', width=80)
 
         dev_scroll = ttk.Scrollbar(dev_frame, orient=tk.VERTICAL,
                                    command=self.device_tree.yview)
@@ -278,10 +159,7 @@ class UpgradeTabMixin:
         self.device_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         dev_scroll.pack(side=tk.RIGHT, fill=tk.Y)
 
-        # Tracked devices: {ip: {item_id, device, last_seen}}
         self._tracked_devices = {}
-
-        # Start stale-device checker
         self._check_stale_devices()
 
     # ── Firmware Management ──────────────────────────────────────

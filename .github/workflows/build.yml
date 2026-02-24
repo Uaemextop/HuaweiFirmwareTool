@@ -34,10 +34,15 @@ jobs:
           pip install -r hwflash/requirements.txt
           pip install pyinstaller
 
+      - name: Generate app icon
+        run: |
+          python -c "from hwflash.shared.icons import generate_ico; generate_ico('hwflash.ico')"
+
       - name: Build EXE with PyInstaller
         run: |
           pyinstaller --onefile --windowed ^
             --name "HuaweiFlash" ^
+            --icon "hwflash.ico" ^
             --add-data "hwflash;hwflash" ^
             --hidden-import "hwflash" ^
             --hidden-import "hwflash.main" ^
@@ -63,6 +68,7 @@ jobs:
             --hidden-import "hwflash.ui.tabs.adapters" ^
             --hidden-import "hwflash.ui.components.cards" ^
             --hidden-import "hwflash.ui.components.sidebar" ^
+            --hidden-import "hwflash.ui.titlebar" ^
             --hidden-import "hwflash.shared.helpers" ^
             --hidden-import "hwflash.shared.styles" ^
             --hidden-import "hwflash.shared.icons" ^

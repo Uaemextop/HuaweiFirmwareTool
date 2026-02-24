@@ -1,8 +1,8 @@
 """
 HuaweiFlash — Modern GUI Application
 
-Sidebar navigation, card-based layout, gradient accents,
-animated transitions, and custom window frame.
+Custom borderless window, sidebar navigation, card-based layout,
+gradient accents, animated transitions.
 """
 
 import sys
@@ -30,6 +30,7 @@ from hwflash.shared.helpers import safe_int
 from hwflash.shared.icons import generate_logo
 from hwflash.ui.components.cards import GradientBar
 from hwflash.ui.components.sidebar import SidebarNav
+from hwflash.ui.titlebar import CustomTitlebar
 
 from hwflash.ui.tabs.upgrade import UpgradeTabMixin
 from hwflash.ui.tabs.presets import PresetsTabMixin
@@ -61,15 +62,17 @@ class HuaweiFlashApp(
     ThemeMixin,
     AdaptersMixin,
 ):
-    """Main application class with modern sidebar-based UI."""
+    """Main application class with custom borderless window."""
 
     def __init__(self, root):
         self.root = root
         self.root.title(f"{APP_NAME} v{__version__}")
-        self.root.geometry("1050x750")
-        self.root.minsize(900, 650)
+        self.root.geometry("1100x780")
+        self.root.minsize(950, 680)
 
-        # State
+        self.root.overrideredirect(True)
+        self._center_window(1100, 780)
+
         self.current_theme = "dark"
         self.firmware = None
         self.firmware_path = ""
@@ -82,24 +85,22 @@ class HuaweiFlashApp(
         self.serial_client = SerialClient()
         self.firmware_dumper = None
 
-        # Setup logging
         self._setup_logging()
-
-        # Build UI
         self._build_modern_ui()
-
-        # Load adapters
         self.root.after(100, self._refresh_adapters)
-
-        # Set icon
         self._set_app_icon()
 
-        # Keyboard shortcuts
         self.root.bind("<F5>", lambda e: self._refresh_adapters())
         self.root.bind("<Control-o>", lambda e: self._browse_firmware())
-
-        # Handle close
+        self.root.bind("<<AppClose>>", lambda e: self._on_close())
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
+
+    def _center_window(self, w, h):
+        sw = self.root.winfo_screenwidth()
+        sh = self.root.winfo_screenheight()
+        x = (sw - w) // 2
+        y = (sh - h) // 2
+        self.root.geometry(f"{w}x{h}+{x}+{y}")
 
     def _setup_logging(self):
         handler = logging.StreamHandler()
@@ -128,7 +129,7 @@ class HuaweiFlashApp(
                 pass
 
     def _build_modern_ui(self):
-        """Build the modern sidebar-based UI layout."""
+        """Build the modern borderless UI layout."""
         colors = get_theme(self.current_theme)
 
         self.root.configure(bg=colors["bg"])
@@ -136,9 +137,17 @@ class HuaweiFlashApp(
         self.style = ttk.Style()
         self._apply_theme()
 
-        # Top gradient accent bar
+        # Custom titlebar (borderless window)
+        self._titlebar = CustomTitlebar(
+            self.root, self.root,
+            title=f"{APP_NAME} v{__version__}",
+            theme=colors,
+        )
+        self._titlebar.pack(fill=tk.X)
+
+        # Gradient accent bar below titlebar
         self._accent_bar = GradientBar(
-            self.root, height=3, color_start="#2563EB", color_end="#06B6D4"
+            self.root, height=2, color_start="#2563EB", color_end="#06B6D4"
         )
         self._accent_bar.pack(fill=tk.X)
 
@@ -146,13 +155,12 @@ class HuaweiFlashApp(
         main_container = tk.Frame(self.root, bg=colors["bg"])
         main_container.pack(fill=tk.BOTH, expand=True)
 
-        # ── Sidebar ──────────────────────────────────────────────
+        # Sidebar
         self._sidebar = SidebarNav(
             main_container, theme=colors, on_select=self._on_nav_select
         )
         self._sidebar.pack(side=tk.LEFT, fill=tk.Y)
 
-        # Sidebar separator
         sep = tk.Frame(main_container, bg=colors["border"], width=1)
         sep.pack(side=tk.LEFT, fill=tk.Y)
 
@@ -161,7 +169,6 @@ class HuaweiFlashApp(
             logo_frame = tk.Frame(parent, bg=colors["sidebar"])
             logo_frame.pack(fill=tk.X, pady=(0, 8))
 
-            # Try to show logo image
             try:
                 logo_data = generate_logo(40)
                 if logo_data:
@@ -192,7 +199,6 @@ class HuaweiFlashApp(
 
         self._sidebar.set_header(build_header)
 
-        # Navigation items
         self._sidebar.add_section_label("Main")
         self._sidebar.add_item("Upgrade", "⚡", "upgrade")
         self._sidebar.add_item("Presets", "📦", "presets")
@@ -208,7 +214,6 @@ class HuaweiFlashApp(
         self._sidebar.add_item("Info", "📋", "info")
         self._sidebar.add_item("Log", "📝", "log")
 
-        # Footer with theme toggle
         def build_footer(parent):
             self.theme_btn = tk.Button(
                 parent,
@@ -226,19 +231,19 @@ class HuaweiFlashApp(
 
         self._sidebar.set_footer(build_footer)
 
-        # ── Content area ─────────────────────────────────────────
+        # Content area
         self._content_area = tk.Frame(main_container, bg=colors["bg"])
         self._content_area.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
         # Content header
-        self._content_header = tk.Frame(self._content_area, bg=colors["bg"], height=50)
-        self._content_header.pack(fill=tk.X, padx=20, pady=(16, 8))
+        self._content_header = tk.Frame(self._content_area, bg=colors["bg"], height=44)
+        self._content_header.pack(fill=tk.X, padx=16, pady=(10, 4))
         self._content_header.pack_propagate(False)
 
         self._page_title = tk.Label(
             self._content_header,
             text="⚡ Firmware Upgrade",
-            font=(FONT_FAMILY, 16, "bold"),
+            font=(FONT_FAMILY, 14, "bold"),
             bg=colors["bg"],
             fg=colors["fg"],
             anchor="w",
@@ -255,58 +260,56 @@ class HuaweiFlashApp(
         )
         self._page_subtitle.pack(side=tk.RIGHT)
 
-        # Separator under header
         header_sep = tk.Frame(self._content_area, bg=colors["border"], height=1)
-        header_sep.pack(fill=tk.X, padx=20)
+        header_sep.pack(fill=tk.X, padx=16)
 
-        # Notebook (hidden tabs - controlled by sidebar)
+        # Notebook (hidden tabs — controlled by sidebar)
         self.notebook = ttk.Notebook(self._content_area)
-        self.notebook.pack(fill=tk.BOTH, expand=True, padx=20, pady=(8, 16))
+        self.notebook.pack(fill=tk.BOTH, expand=True, padx=16, pady=(6, 10))
 
-        # Hide notebook tabs (we use sidebar instead)
         style = ttk.Style()
         style.layout("TNotebook.Tab", [])
 
-        # ── Build all tabs ───────────────────────────────────────
-        self.tab_upgrade = ttk.Frame(self.notebook, padding=10)
+        # Build all tabs
+        self.tab_upgrade = ttk.Frame(self.notebook, padding=6)
         self.notebook.add(self.tab_upgrade, text="Upgrade")
         self._build_upgrade_tab()
 
-        self.tab_presets = ttk.Frame(self.notebook, padding=10)
+        self.tab_presets = ttk.Frame(self.notebook, padding=6)
         self.notebook.add(self.tab_presets, text="Presets")
         self._build_presets_tab()
 
-        self.tab_verify = ttk.Frame(self.notebook, padding=10)
+        self.tab_verify = ttk.Frame(self.notebook, padding=6)
         self.notebook.add(self.tab_verify, text="Verify")
         self._build_verification_tab()
 
-        self.tab_crypto = ttk.Frame(self.notebook, padding=10)
+        self.tab_crypto = ttk.Frame(self.notebook, padding=6)
         self.notebook.add(self.tab_crypto, text="Crypto")
         self._build_crypto_tab()
 
-        self.tab_terminal = ttk.Frame(self.notebook, padding=10)
+        self.tab_terminal = ttk.Frame(self.notebook, padding=6)
         self.notebook.add(self.tab_terminal, text="Terminal")
         self._build_terminal_tab()
 
-        self.tab_dump = ttk.Frame(self.notebook, padding=10)
+        self.tab_dump = ttk.Frame(self.notebook, padding=6)
         self.notebook.add(self.tab_dump, text="Dump")
         self._build_dump_tab()
 
-        self.tab_settings = ttk.Frame(self.notebook, padding=10)
+        self.tab_settings = ttk.Frame(self.notebook, padding=6)
         self.notebook.add(self.tab_settings, text="Settings")
         self._build_settings_tab()
 
-        self.tab_info = ttk.Frame(self.notebook, padding=10)
+        self.tab_info = ttk.Frame(self.notebook, padding=6)
         self.notebook.add(self.tab_info, text="Info")
         self._build_info_tab()
 
-        self.tab_log = ttk.Frame(self.notebook, padding=10)
+        self.tab_log = ttk.Frame(self.notebook, padding=6)
         self.notebook.add(self.tab_log, text="Log")
         self._build_log_tab()
 
         self._sidebar.select(0)
 
-        # Status bar at bottom
+        # Status bar
         self._build_status_bar(colors)
 
     def _build_status_bar(self, colors):

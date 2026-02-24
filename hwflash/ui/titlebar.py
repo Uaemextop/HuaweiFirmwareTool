@@ -113,8 +113,9 @@ class CustomTitlebar(tk.Frame):
             self._max_btn.configure(text="□")
         else:
             self._prev_geo = self._root.geometry()
+            # Use winfo_screenwidth/height minus small offset for taskbar
             sw = self._root.winfo_screenwidth()
-            sh = self._root.winfo_screenheight()
+            sh = self._root.winfo_screenheight() - 40
             self._root.geometry(f"{sw}x{sh}+0+0")
             self._maximized = True
             self._max_btn.configure(text="❐")

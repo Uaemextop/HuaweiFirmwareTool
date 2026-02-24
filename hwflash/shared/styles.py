@@ -40,6 +40,7 @@ DARK = {
     "success": SUCCESS,
     "warning": WARNING,
     "danger": DANGER,
+    "error": DANGER,
     "gradient_start": "#1E2D4A",
     "gradient_end": "#1A1F2E",
     "sidebar": "#161B28",
@@ -50,6 +51,13 @@ DARK = {
     "scrollbar_hover": "#5E6B85",
     "terminal_bg": "#141820",
     "terminal_fg": "#7DD3FC",
+    # Aliases used by theme styling
+    "surface": "#242A3B",
+    "surface_alt": "#2E3548",
+    "log_bg": "#1A1F2E",
+    "log_fg": "#C8D0E0",
+    "progress_bg": "#3A4358",
+    "progress_fg": PRIMARY,
 }
 
 # ── Light theme — clean, not washed out ─────────────────────────
@@ -71,6 +79,7 @@ LIGHT = {
     "success": SUCCESS,
     "warning": WARNING,
     "danger": DANGER,
+    "error": DANGER,
     "gradient_start": "#DDE5F5",
     "gradient_end": "#F0F2F7",
     "sidebar": "#FFFFFF",
@@ -81,6 +90,13 @@ LIGHT = {
     "scrollbar_hover": "#8893A6",
     "terminal_bg": "#F5F6FA",
     "terminal_fg": "#1A2035",
+    # Aliases used by theme styling
+    "surface": "#FFFFFF",
+    "surface_alt": "#E4E8F0",
+    "log_bg": "#FFFFFF",
+    "log_fg": "#1A2035",
+    "progress_bg": "#CBD3E1",
+    "progress_fg": PRIMARY,
 }
 
 THEMES: Dict[str, Dict[str, str]] = {
@@ -136,26 +152,7 @@ def get_gradient(theme: Dict[str, str]) -> Tuple[str, str]:
     """Get gradient start/end colors for the theme."""
     return theme["gradient_start"], theme["gradient_end"]
 
-TAB_THEMES = {
-    'light': {
-        'bg': '#F0F2F7', 'fg': '#1A2035',
-        'accent': '#3B82F6', 'accent_hover': '#2563EB',
-        'surface': '#FFFFFF', 'surface_alt': '#E4E8F0',
-        'border': '#CBD3E1',
-        'success': '#22C55E', 'error': '#EF4444', 'warning': '#EAB308',
-        'log_bg': '#FFFFFF', 'log_fg': '#1A2035',
-        'progress_bg': '#CBD3E1', 'progress_fg': '#3B82F6',
-    },
-    'dark': {
-        'bg': '#1A1F2E', 'fg': '#E8ECF4',
-        'accent': '#3B82F6', 'accent_hover': '#2563EB',
-        'surface': '#242A3B', 'surface_alt': '#2E3548',
-        'border': '#3A4358',
-        'success': '#22C55E', 'error': '#EF4444', 'warning': '#EAB308',
-        'log_bg': '#1A1F2E', 'log_fg': '#C8D0E0',
-        'progress_bg': '#3A4358', 'progress_fg': '#3B82F6',
-    },
-}
+TAB_THEMES: Dict[str, Dict[str, str]] = THEMES
 
 DEFAULT_IP_CONFIG = {
     'ip': '192.168.100.100',

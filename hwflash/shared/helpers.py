@@ -7,12 +7,20 @@ file operations, subprocess execution, and threading utilities.
 
 import os
 import subprocess
+import sys
 import threading
 import logging
 from typing import Any, Optional, Callable, List, Tuple
 
 
 logger = logging.getLogger("hwflash")
+
+# Hide console windows spawned by subprocesses on Windows
+_POPEN_FLAGS: dict = (
+    {"creationflags": subprocess.CREATE_NO_WINDOW}
+    if sys.platform == "win32"
+    else {}
+)
 
 
 def safe_int(value: Any, default: int = 0) -> int:
@@ -85,6 +93,7 @@ def run_command(
             capture_output=capture,
             text=True,
             timeout=timeout,
+            **_POPEN_FLAGS,
         )
         output = (result.stdout or "") + (result.stderr or "")
         return result.returncode == 0, output.strip()

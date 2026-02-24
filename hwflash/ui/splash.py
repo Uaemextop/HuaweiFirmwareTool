@@ -14,6 +14,15 @@ import threading
 import os
 import math
 
+# Defined locally (not imported from helpers) because this module runs
+# before the hwflash package is fully available (pre-dependency install).
+# Hide console windows spawned by pip on Windows.
+_POPEN_FLAGS: dict = (
+    {"creationflags": subprocess.CREATE_NO_WINDOW}
+    if sys.platform == "win32"
+    else {}
+)
+
 # Dependencies to check/install (import_name, pip_name, description)
 DEPENDENCIES = [
     ("ttkbootstrap", "ttkbootstrap", "Modern themed widgets"),
@@ -210,6 +219,7 @@ class SplashScreen:
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 timeout=PIP_TIMEOUT,
+                **_POPEN_FLAGS,
             )
             return True
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired,
@@ -379,6 +389,7 @@ def _install_silent():
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
                     timeout=PIP_TIMEOUT,
+                    **_POPEN_FLAGS,
                 )
             except (subprocess.CalledProcessError, subprocess.TimeoutExpired,
                     FileNotFoundError, OSError):

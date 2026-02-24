@@ -24,7 +24,6 @@ screeninfo>=0.8
 # Charts & visualization
 matplotlib>=3.8
 qrcode>=7.4
-cairosvg>=2.7
 colour>=0.1
 #
 # Terminal & serial

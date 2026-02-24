@@ -35,7 +35,6 @@ DEPENDENCIES = [
     # ── Charts & Visualization ───────────────────────────────────
     ("matplotlib", "matplotlib", "Charts and graphs"),
     ("qrcode", "qrcode", "QR code generation"),
-    ("cairosvg", "cairosvg", "SVG rendering support"),
     ("colour", "colour", "Color manipulation library"),
     # ── Terminal & Serial ────────────────────────────────────────
     ("serial", "pyserial", "Serial terminal support"),

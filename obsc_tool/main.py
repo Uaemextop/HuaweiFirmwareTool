@@ -64,6 +64,14 @@ from obsc_tool.terminal import (
 logger = logging.getLogger("obsc_tool")
 
 
+def _safe_int(value, default=0):
+    """Convert a value to int, returning default on failure."""
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return default
+
+
 # ── Theme Colors ─────────────────────────────────────────────────
 
 THEMES = {
@@ -164,6 +172,11 @@ class OBSCToolApp:
 
         # Configure window icon
         self._set_icon()
+
+        # Keyboard shortcuts
+        self.root.bind('<F5>', lambda e: self._refresh_adapters())
+        self.root.bind('<Control-o>', lambda e: self._browse_firmware())
+        self.root.bind('<Control-O>', lambda e: self._browse_firmware())
 
         # Handle close
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
@@ -1038,20 +1051,23 @@ class OBSCToolApp:
         row.pack(fill=tk.X, pady=2)
         ttk.Label(row, text="Chip ID:", width=14).pack(side=tk.LEFT)
         self.crypto_chip_var = tk.StringVar(value="Auto")
-        ttk.Combobox(
+        self.crypto_chip_combo = ttk.Combobox(
             row, textvariable=self.crypto_chip_var,
             values=["Auto"] + KNOWN_CHIP_IDS + ["Custom"],
             width=15,
-        ).pack(side=tk.LEFT, padx=(0, 5))
+        )
+        self.crypto_chip_combo.pack(side=tk.LEFT, padx=(0, 5))
+        self.crypto_chip_combo.bind('<<ComboboxSelected>>', self._on_crypto_chip_changed)
         ttk.Label(row, text="Key template: Df7!ui%s9(lmV1L8", font=('Segoe UI', 8)).pack(side=tk.LEFT)
 
-        # Custom chip ID
-        row = ttk.Frame(op_frame)
-        row.pack(fill=tk.X, pady=2)
-        ttk.Label(row, text="Custom Chip:", width=14).pack(side=tk.LEFT)
+        # Custom chip ID (shown only when "Custom" selected)
+        self.crypto_custom_row = ttk.Frame(op_frame)
+        ttk.Label(self.crypto_custom_row, text="Custom Chip:", width=14).pack(side=tk.LEFT)
         self.crypto_custom_chip_var = tk.StringVar()
-        ttk.Entry(row, textvariable=self.crypto_custom_chip_var, width=20).pack(side=tk.LEFT)
-        ttk.Label(row, text="(only if Chip ID = Custom)", font=('Segoe UI', 8)).pack(side=tk.LEFT, padx=5)
+        ttk.Entry(self.crypto_custom_row, textvariable=self.crypto_custom_chip_var, width=20).pack(side=tk.LEFT)
+        ttk.Label(self.crypto_custom_row, text="(only if Chip ID = Custom)", font=('Segoe UI', 8)).pack(side=tk.LEFT, padx=5)
+        # Hide by default
+        self._on_crypto_chip_changed()
 
         # Buttons
         btn_row = ttk.Frame(op_frame)
@@ -1179,6 +1195,12 @@ class OBSCToolApp:
                 cmd_grid, text=label, width=14,
                 command=lambda c=cmd: self._term_send_command(c),
             ).grid(row=r, column=c, padx=1, pady=1)
+
+        # Clear button
+        ttk.Button(
+            cmd_frame, text="🗑️ Clear Output",
+            command=self._term_clear, width=14,
+        ).pack(anchor='e', pady=(3, 0))
 
         # ── Terminal Output ──────────────────────────────────────
         term_frame = ttk.Frame(tab)
@@ -1625,22 +1647,22 @@ class OBSCToolApp:
         preset_data = {
             'model': model,
             'description': description,
-            'frame_size': int(self.np_frame_size_var.get()),
-            'frame_interval_ms': int(self.np_frame_interval_var.get()),
+            'frame_size': _safe_int(self.np_frame_size_var.get(), 1400),
+            'frame_interval_ms': _safe_int(self.np_frame_interval_var.get(), 5),
             'flash_mode': self.np_flash_mode_var.get(),
             'delete_cfg': self.np_delete_cfg_var.get(),
             'upgrade_type': self.np_upgrade_type_var.get(),
-            'send_port': int(self.np_send_port_var.get()),
-            'recv_port': int(self.np_recv_port_var.get()),
-            'timeout': int(self.np_timeout_var.get()),
+            'send_port': _safe_int(self.np_send_port_var.get(), 50000),
+            'recv_port': _safe_int(self.np_recv_port_var.get(), 50001),
+            'timeout': _safe_int(self.np_timeout_var.get(), 600),
             'machine_filter': self.np_machine_filter_var.get(),
             'broadcast_address': self.np_broadcast_var.get(),
             'verify_crc32': self.np_verify_crc_var.get(),
             'verify_signature': self.np_verify_sig_var.get(),
             'skip_product_check': self.np_skip_product_var.get(),
-            'discovery_duration': int(self.np_discovery_var.get()),
-            'ctrl_retries': int(self.np_ctrl_retries_var.get()),
-            'data_retries': int(self.np_data_retries_var.get()),
+            'discovery_duration': _safe_int(self.np_discovery_var.get(), 10),
+            'ctrl_retries': _safe_int(self.np_ctrl_retries_var.get(), 3),
+            'data_retries': _safe_int(self.np_data_retries_var.get(), 0),
             'check_policy': self.np_check_policy_var.get(),
             'bom_code': self.np_bom_code_var.get(),
         }
@@ -1762,22 +1784,22 @@ class OBSCToolApp:
     def _gather_current_settings(self):
         """Gather all current settings into a dict."""
         return {
-            'frame_size': int(self.frame_size_var.get()),
-            'frame_interval_ms': int(self.frame_interval_var.get()),
+            'frame_size': _safe_int(self.frame_size_var.get(), 1400),
+            'frame_interval_ms': _safe_int(self.frame_interval_var.get(), 5),
             'flash_mode': self.flash_mode_var.get(),
             'delete_cfg': self.delete_cfg_var.get(),
             'upgrade_type': self.upgrade_type_var.get(),
-            'send_port': int(self.send_port_var.get()),
-            'recv_port': int(self.recv_port_var.get()),
-            'timeout': int(self.timeout_var.get()),
+            'send_port': _safe_int(self.send_port_var.get(), 50000),
+            'recv_port': _safe_int(self.recv_port_var.get(), 50001),
+            'timeout': _safe_int(self.timeout_var.get(), 600),
             'machine_filter': self.machine_filter_var.get(),
             'broadcast_address': self.broadcast_var.get(),
             'verify_crc32': self.verify_crc32_var.get(),
             'verify_signature': self.verify_signature_var.get(),
             'skip_product_check': self.skip_product_check_var.get(),
-            'discovery_duration': int(self.discovery_duration_var.get()),
-            'ctrl_retries': int(self.ctrl_retries_var.get()),
-            'data_retries': int(self.data_retries_var.get()),
+            'discovery_duration': _safe_int(self.discovery_duration_var.get(), 10),
+            'ctrl_retries': _safe_int(self.ctrl_retries_var.get(), 3),
+            'data_retries': _safe_int(self.data_retries_var.get(), 0),
             'check_policy': self.check_policy_var.get(),
             'bom_code': self.bom_code_var.get(),
         }
@@ -1795,6 +1817,13 @@ class OBSCToolApp:
         )
         if path:
             self.pubkey_path_var.set(path)
+
+    def _on_crypto_chip_changed(self, event=None):
+        """Show/hide Custom Chip ID row based on combo selection."""
+        if self.crypto_chip_var.get() == "Custom":
+            self.crypto_custom_row.pack(fill=tk.X, pady=2)
+        else:
+            self.crypto_custom_row.pack_forget()
 
     # ── Config Crypto Handlers ───────────────────────────────────
 
@@ -2020,7 +2049,7 @@ class OBSCToolApp:
         try:
             if conn_type == "Telnet":
                 host = self.term_host_var.get().strip()
-                port = int(self.term_port_var.get().strip())
+                port = _safe_int(self.term_port_var.get().strip(), 23)
                 if not host:
                     messagebox.showwarning("No Host", "Enter the ONT IP address.")
                     return
@@ -2038,7 +2067,7 @@ class OBSCToolApp:
                     messagebox.showwarning("No Port", "Select a COM port.")
                     return
                 port_name = com.split(' - ')[0].strip()
-                baud = int(self.term_baud_var.get())
+                baud = _safe_int(self.term_baud_var.get(), 115200)
 
                 self.serial_client = SerialClient()
                 self.serial_client.on_data = self._term_on_data
@@ -2093,6 +2122,12 @@ class OBSCToolApp:
     def _term_on_data(self, text):
         """Handle incoming terminal data."""
         self.root.after(0, lambda: self._term_append(text))
+
+    def _term_clear(self):
+        """Clear terminal output."""
+        self.term_output.configure(state='normal')
+        self.term_output.delete('1.0', tk.END)
+        self.term_output.configure(state='disabled')
 
     def _term_append(self, text):
         """Append text to terminal output."""
@@ -2279,7 +2314,8 @@ class OBSCToolApp:
         # Update text widgets
         colors = THEMES[self.current_theme]
         for text_widget in [self.log_text, self.preset_details_text,
-                            self.cfg_text, self.dump_output, self.fw_detail_text]:
+                            self.cfg_text, self.dump_output, self.fw_detail_text,
+                            self.term_output]:
             text_widget.configure(
                 bg=colors['log_bg'],
                 fg=colors['log_fg'],
@@ -2597,7 +2633,7 @@ class OBSCToolApp:
             self._update_firmware_info()
             self._log(f"Loaded firmware: {os.path.basename(path)} ({size_mb:.2f} MB, {fw.item_count} items)")
 
-        except (ValueError, FileNotFoundError) as e:
+        except Exception as e:
             self.firmware = None
             self.fw_info_var.set(f"❌ Error: {e}")
             self._log(f"Failed to load firmware: {e}")
@@ -2620,6 +2656,12 @@ class OBSCToolApp:
             messagebox.showwarning("No Adapter", "Please select a network adapter first.")
             return
 
+        if not adapter.ip or adapter.ip == "0.0.0.0":
+            messagebox.showwarning("No IP Address",
+                                   "The selected adapter has no IP address.\n"
+                                   "Configure an IP address first (IP Mode section).")
+            return
+
         use_multicast = (self.ip_mode_var.get() == "automatic")
         mc_label = f" + multicast {OBSC_MULTICAST_ADDR}" if use_multicast else ""
         self._log(f"Starting discovery on {adapter.ip}{mc_label}...")
@@ -2631,8 +2673,8 @@ class OBSCToolApp:
 
             self.transport = UDPTransport(
                 bind_ip=adapter.ip,
-                bind_port=int(self.recv_port_var.get()),
-                dest_port=int(self.send_port_var.get()),
+                bind_port=_safe_int(self.recv_port_var.get(), OBSC_RECV_PORT),
+                dest_port=_safe_int(self.send_port_var.get(), OBSC_SEND_PORT),
                 broadcast=True,
                 multicast_group=OBSC_MULTICAST_ADDR if use_multicast else None,
             )
@@ -2646,10 +2688,10 @@ class OBSCToolApp:
             if use_multicast:
                 self.worker.multicast_addr = OBSC_MULTICAST_ADDR
 
-            self.worker.start_discovery(duration=int(self.discovery_duration_var.get()))
+            self.worker.start_discovery(duration=_safe_int(self.discovery_duration_var.get(), 10))
 
             # Re-enable button after discovery
-            duration_ms = int(self.discovery_duration_var.get()) * 1000 + 1000
+            duration_ms = _safe_int(self.discovery_duration_var.get(), 10) * 1000 + 1000
             self.root.after(duration_ms, lambda: self.discover_btn.configure(state='normal'))
 
         except Exception as e:
@@ -2722,6 +2764,12 @@ class OBSCToolApp:
             messagebox.showwarning("No Adapter", "Please select a network adapter first.")
             return
 
+        if not adapter.ip or adapter.ip == "0.0.0.0":
+            messagebox.showwarning("No IP Address",
+                                   "The selected adapter has no IP address.\n"
+                                   "Configure an IP address first (IP Mode section).")
+            return
+
         if not self.firmware:
             messagebox.showwarning("No Firmware", "Please select a firmware file first.")
             return
@@ -2786,21 +2834,21 @@ class OBSCToolApp:
 
             self.transport = UDPTransport(
                 bind_ip=adapter.ip,
-                bind_port=int(self.recv_port_var.get()),
-                dest_port=int(self.send_port_var.get()),
+                bind_port=_safe_int(self.recv_port_var.get(), OBSC_RECV_PORT),
+                dest_port=_safe_int(self.send_port_var.get(), OBSC_SEND_PORT),
                 broadcast=True,
             )
             self.transport.open()
 
             self.worker = OBSCWorker(self.transport, adapter)
-            self.worker.frame_size = int(self.frame_size_var.get())
-            self.worker.frame_interval_ms = int(self.frame_interval_var.get())
+            self.worker.frame_size = _safe_int(self.frame_size_var.get(), 1400)
+            self.worker.frame_interval_ms = _safe_int(self.frame_interval_var.get(), 5)
             self.worker.flash_mode = FlashMode.FORCED if self.flash_mode_var.get() == "Forced" else FlashMode.NORMAL
             self.worker.delete_cfg = self.delete_cfg_var.get()
-            self.worker.timeout = int(self.timeout_var.get())
+            self.worker.timeout = _safe_int(self.timeout_var.get(), 600)
             self.worker.machine_filter = self.machine_filter_var.get()
-            self.worker.ctrl_retries = int(self.ctrl_retries_var.get())
-            self.worker.data_retries = int(self.data_retries_var.get())
+            self.worker.ctrl_retries = _safe_int(self.ctrl_retries_var.get(), 3)
+            self.worker.data_retries = _safe_int(self.data_retries_var.get(), 0)
 
             # Map upgrade type
             ut_map = {"Standard": UpgradeType.STANDARD,

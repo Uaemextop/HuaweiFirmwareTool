@@ -1,8 +1,13 @@
 # OBSC Firmware Tool - Dependencies
 #
-# Core: zero external dependencies (uses tkinter from stdlib).
+# Core UI: ttkbootstrap provides modern themed widgets on top of tkinter.
+# Falls back to plain tkinter/ttk if not installed.
+#
 # Optional: pyserial — required for serial/UART terminal access.
+# Optional: Pillow — required by ttkbootstrap for image support.
 #
 # PyInstaller is only needed for building the standalone .exe.
-pyinstaller>=6.0
+ttkbootstrap>=1.10
+Pillow>=9.0
 pyserial>=3.5
+pyinstaller>=6.0

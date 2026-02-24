@@ -2,7 +2,7 @@
 OBSC Firmware Tool — Main GUI Application
 
 Modern Windows 11 themed GUI for Huawei ONT firmware flashing.
-Uses tkinter with ttk for a native look and feel.
+Uses ttkbootstrap (with tkinter/ttk fallback) for a polished look.
 
 Features:
   - Network adapter selection with auto-detection
@@ -12,17 +12,30 @@ Features:
   - Device discovery list
   - Audit log with export (OBSC_LOG format)
   - Dark / Light theme toggle
+  - IP Mode: Automatic / Manual / DHCP
 """
 
 import sys
 import os
 import tkinter as tk
-from tkinter import ttk, filedialog, messagebox, scrolledtext
+from tkinter import filedialog, messagebox, scrolledtext
 import threading
 import time
 import datetime
 import logging
 import zlib
+
+# ttkbootstrap gives us modern themes, meter widgets, icons, and better
+# styling.  Fall back to plain ttk if it is not installed.
+try:
+    import ttkbootstrap as ttkb
+    from ttkbootstrap.constants import *
+    from ttkbootstrap import Style as TtkbStyle
+    from tkinter import ttk  # still needed for some sub-widgets
+    HAS_TTKB = True
+except ImportError:
+    from tkinter import ttk
+    HAS_TTKB = False
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -86,6 +99,28 @@ THEMES = {
         'progress_fg': '#60CDFF',
     },
 }
+
+# ── IP Mode defaults (extracted from ONT_V100R002C00SPC253.exe) ──
+# Binary analysis of the dialog resource at 0x877500 confirms:
+#   - "本地网卡" (Local Network Card) = Ethernet adapter selector
+#   - "组播服务器IP" (Multicast Server IP) = ONT IP (SysIPAddress32 control)
+#   - Default FRSIZE options: 800, 1000, 1200, 1400 (default 1200)
+#   - Default FRINTERV options: 10, 20 (default 10 ms)
+#   - Send port 50000, receive port 50001
+#   - The PC Ethernet adapter must be on the same subnet as the ONT.
+# The ONT default LAN IP is 192.168.1.1; PC uses 192.168.1.100/24.
+# The DESBLOQUEIO unlock method changes to FRSIZE=1400, FRINTERV=5ms.
+IP_MODE_DEFAULTS = {
+    'ip': '192.168.1.100',
+    'netmask': '255.255.255.0',
+    'gateway': '192.168.1.1',
+    'dns1': '8.8.8.8',
+    'dns2': '8.8.4.4',
+}
+
+# ttkbootstrap theme names
+TTKB_DARK = "darkly"
+TTKB_LIGHT = "cosmo"
 
 
 class OBSCToolApp:
@@ -236,7 +271,8 @@ class OBSCToolApp:
         tab = self.tab_upgrade
 
         # ── Network Adapter ──────────────────────────────────────
-        adapter_frame = ttk.LabelFrame(tab, text="Network Adapter", padding=8)
+        adapter_frame = ttk.LabelFrame(
+            tab, text="Ethernet Adapter (connect ONT via LAN cable)", padding=8)
         adapter_frame.pack(fill=tk.X, pady=(0, 8))
 
         adapter_row = ttk.Frame(adapter_frame)
@@ -265,6 +301,70 @@ class OBSCToolApp:
 
         # Update details when adapter selection changes
         self.adapter_combo.bind('<<ComboboxSelected>>', self._on_adapter_selected)
+
+        # ── IP Mode ──────────────────────────────────────────────
+        ip_frame = ttk.LabelFrame(
+            tab, text="IP Mode (Ethernet adapter configuration)", padding=8)
+        ip_frame.pack(fill=tk.X, pady=(0, 8))
+
+        mode_row = ttk.Frame(ip_frame)
+        mode_row.pack(fill=tk.X)
+
+        self.ip_mode_var = tk.StringVar(value="automatic")
+        ttk.Radiobutton(
+            mode_row,
+            text="🔄 Automatic (192.168.1.100/24 → gw 192.168.1.1)",
+            variable=self.ip_mode_var, value="automatic",
+            command=self._on_ip_mode_changed,
+        ).pack(side=tk.LEFT, padx=(0, 12))
+        ttk.Radiobutton(
+            mode_row, text="✏️ Manual",
+            variable=self.ip_mode_var, value="manual",
+            command=self._on_ip_mode_changed,
+        ).pack(side=tk.LEFT, padx=(0, 12))
+        ttk.Radiobutton(
+            mode_row, text="🌐 DHCP",
+            variable=self.ip_mode_var, value="dhcp",
+            command=self._on_ip_mode_changed,
+        ).pack(side=tk.LEFT)
+
+        # Manual IP fields (shown/hidden depending on mode)
+        self.ip_manual_frame = ttk.Frame(ip_frame)
+        self.ip_manual_frame.pack(fill=tk.X, pady=(5, 0))
+
+        ttk.Label(self.ip_manual_frame, text="IP:", width=5).pack(side=tk.LEFT)
+        self.ip_mode_ip_var = tk.StringVar(value=IP_MODE_DEFAULTS['ip'])
+        self.ip_mode_ip_entry = ttk.Entry(
+            self.ip_manual_frame, textvariable=self.ip_mode_ip_var, width=15)
+        self.ip_mode_ip_entry.pack(side=tk.LEFT, padx=(0, 8))
+
+        ttk.Label(self.ip_manual_frame, text="Mask:", width=5).pack(side=tk.LEFT)
+        self.ip_mode_mask_var = tk.StringVar(value=IP_MODE_DEFAULTS['netmask'])
+        self.ip_mode_mask_entry = ttk.Entry(
+            self.ip_manual_frame, textvariable=self.ip_mode_mask_var, width=15)
+        self.ip_mode_mask_entry.pack(side=tk.LEFT, padx=(0, 8))
+
+        ttk.Label(self.ip_manual_frame, text="Gateway:", width=8).pack(side=tk.LEFT)
+        self.ip_mode_gw_var = tk.StringVar(value=IP_MODE_DEFAULTS['gateway'])
+        self.ip_mode_gw_entry = ttk.Entry(
+            self.ip_manual_frame, textvariable=self.ip_mode_gw_var, width=15)
+        self.ip_mode_gw_entry.pack(side=tk.LEFT, padx=(0, 8))
+
+        # Apply button lives in its own row so it's always visible
+        apply_row = ttk.Frame(ip_frame)
+        apply_row.pack(fill=tk.X, pady=(5, 0))
+        self.ip_mode_apply_btn = ttk.Button(
+            apply_row, text="⚡ Apply IP Mode",
+            command=self._apply_ip_mode, width=18)
+        self.ip_mode_apply_btn.pack(side=tk.LEFT)
+
+        # Status line
+        self.ip_mode_status_var = tk.StringVar(value="")
+        ttk.Label(ip_frame, textvariable=self.ip_mode_status_var,
+                  font=('Segoe UI', 9)).pack(fill=tk.X, pady=(3, 0))
+
+        # Initial state — Automatic hides manual fields
+        self._on_ip_mode_changed()
 
         # ── Firmware File ────────────────────────────────────────
         fw_frame = ttk.LabelFrame(tab, text="Firmware File", padding=8)
@@ -1509,6 +1609,15 @@ class OBSCToolApp:
         """Apply the current theme to all widgets."""
         colors = THEMES[self.current_theme]
 
+        if HAS_TTKB:
+            # ttkbootstrap handles theming — just switch the theme name
+            theme = TTKB_DARK if self.current_theme == 'dark' else TTKB_LIGHT
+            try:
+                ttkb.Style().theme_use(theme)
+            except Exception:
+                pass
+            return
+
         try:
             self.style.theme_use('clam')
         except tk.TclError:
@@ -1577,7 +1686,9 @@ class OBSCToolApp:
             text="🌙 Dark" if self.current_theme == 'dark' else "☀️ Light"
         )
         self._apply_theme()
-        self.root.configure(bg=THEMES[self.current_theme]['bg'])
+
+        if not HAS_TTKB:
+            self.root.configure(bg=THEMES[self.current_theme]['bg'])
 
         # Update text widgets
         colors = THEMES[self.current_theme]
@@ -1592,8 +1703,21 @@ class OBSCToolApp:
     # ── Adapter Management ───────────────────────────────────────
 
     def _refresh_adapters(self):
-        """Refresh the list of network adapters."""
+        """Refresh the list of network adapters.
+
+        Ethernet adapters are sorted first because the OBSC protocol
+        requires a wired LAN connection to the ONT device.
+        """
         self.adapters = discover_adapters()
+        # Sort: Ethernet adapters first (match original tool: "本地网卡")
+        def _eth_sort_key(a):
+            name_lower = (a.name + " " + a.description).lower()
+            if 'ethernet' in name_lower or 'eth' in name_lower or 'lan' in name_lower:
+                return 0
+            if 'wi-fi' in name_lower or 'wireless' in name_lower or 'wlan' in name_lower:
+                return 2
+            return 1
+        self.adapters.sort(key=_eth_sort_key)
         names = [a.display_name() for a in self.adapters]
         self.adapter_combo['values'] = names
         if names:
@@ -1694,6 +1818,85 @@ class OBSCToolApp:
         ok, msg = test_socket_bind(bind_ip, bind_port, broadcast=True)
         self.net_status_var.set(("✅ " if ok else "❌ ") + msg)
         self._log(f"Socket test: {msg}")
+
+    # ── IP Mode Management ──────────────────────────────────────
+
+    def _on_ip_mode_changed(self):
+        """Handle IP Mode radio button change."""
+        mode = self.ip_mode_var.get()
+        if mode == "manual":
+            # Show manual fields, enable editing
+            self.ip_manual_frame.pack(fill=tk.X, pady=(5, 0))
+            self.ip_mode_ip_entry.configure(state='normal')
+            self.ip_mode_mask_entry.configure(state='normal')
+            self.ip_mode_gw_entry.configure(state='normal')
+            self.ip_mode_status_var.set(
+                "Enter Ethernet adapter IP settings and click Apply")
+        elif mode == "automatic":
+            # Show fields with defaults (read-only)
+            self.ip_manual_frame.pack(fill=tk.X, pady=(5, 0))
+            self.ip_mode_ip_var.set(IP_MODE_DEFAULTS['ip'])
+            self.ip_mode_mask_var.set(IP_MODE_DEFAULTS['netmask'])
+            self.ip_mode_gw_var.set(IP_MODE_DEFAULTS['gateway'])
+            self.ip_mode_ip_entry.configure(state='readonly')
+            self.ip_mode_mask_entry.configure(state='readonly')
+            self.ip_mode_gw_entry.configure(state='readonly')
+            self.ip_mode_status_var.set(
+                f"Automatic: IP {IP_MODE_DEFAULTS['ip']}  "
+                f"Mask {IP_MODE_DEFAULTS['netmask']}  "
+                f"Gateway {IP_MODE_DEFAULTS['gateway']} (ONT default)"
+            )
+        else:  # dhcp
+            self.ip_manual_frame.pack_forget()
+            self.ip_mode_status_var.set(
+                "DHCP: Ethernet adapter will obtain IP automatically")
+
+    def _apply_ip_mode(self):
+        """Apply the selected IP mode to the currently selected adapter."""
+        adapter = self._get_selected_adapter()
+        if not adapter:
+            messagebox.showwarning("No Adapter",
+                                   "Select a network adapter first (above).")
+            return
+
+        mode = self.ip_mode_var.get()
+        adapter_name = adapter.name
+
+        if mode == "dhcp":
+            if not messagebox.askyesno(
+                "Confirm DHCP",
+                f"Set '{adapter_name}' to DHCP?\n\n"
+                "⚠️ Requires administrator privileges."
+            ):
+                return
+            self.ip_mode_status_var.set("Applying DHCP…")
+            self.root.update_idletasks()
+            ok, msg = set_adapter_dhcp(adapter_name)
+        else:
+            ip = self.ip_mode_ip_var.get().strip()
+            mask = self.ip_mode_mask_var.get().strip()
+            gw = self.ip_mode_gw_var.get().strip()
+            if not ip or not mask:
+                messagebox.showwarning("Missing Info",
+                                       "IP and subnet mask are required.")
+                return
+            label = "Automatic (ONT default)" if mode == "automatic" else "Manual"
+            if not messagebox.askyesno(
+                f"Confirm {label} IP",
+                f"Configure '{adapter_name}' with:\n\n"
+                f"  IP: {ip}\n  Mask: {mask}\n  Gateway: {gw or 'none'}\n\n"
+                "⚠️ Requires administrator privileges.\n"
+                "The adapter may briefly disconnect."
+            ):
+                return
+            self.ip_mode_status_var.set("Applying…")
+            self.root.update_idletasks()
+            ok, msg = configure_adapter_ip(adapter_name, ip, mask, gw)
+
+        self.ip_mode_status_var.set(("✅ " if ok else "❌ ") + msg)
+        self._log(f"IP Mode ({mode}): {msg}")
+        if ok:
+            self.root.after(2000, self._refresh_adapters)
 
     # ── Firmware Management ──────────────────────────────────────
 
@@ -2070,14 +2273,17 @@ class OBSCToolApp:
 
 def main():
     """Application entry point."""
-    root = tk.Tk()
-
     # High-DPI awareness for Windows 11
     try:
         from ctypes import windll
         windll.shcore.SetProcessDpiAwareness(1)
     except (ImportError, AttributeError, OSError):
         pass
+
+    if HAS_TTKB:
+        root = ttkb.Window(themename=TTKB_DARK)
+    else:
+        root = tk.Tk()
 
     app = OBSCToolApp(root)
     root.mainloop()

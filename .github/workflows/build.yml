@@ -31,7 +31,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pyinstaller pyserial
+          pip install pyinstaller pyserial ttkbootstrap Pillow
 
       - name: Build EXE with PyInstaller
         run: |
@@ -46,9 +46,12 @@ jobs:
             --hidden-import "obsc_tool.presets" ^
             --hidden-import "obsc_tool.config_crypto" ^
             --hidden-import "obsc_tool.terminal" ^
+            --hidden-import "obsc_tool.splash" ^
             --hidden-import "serial" ^
             --hidden-import "serial.tools" ^
             --hidden-import "serial.tools.list_ports" ^
+            --hidden-import "ttkbootstrap" ^
+            --hidden-import "PIL" ^
             run_obsc_tool.py
         shell: cmd
 

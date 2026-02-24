@@ -176,7 +176,6 @@ class OBSCToolApp:
         # Keyboard shortcuts
         self.root.bind('<F5>', lambda e: self._refresh_adapters())
         self.root.bind('<Control-o>', lambda e: self._browse_firmware())
-        self.root.bind('<Control-O>', lambda e: self._browse_firmware())
 
         # Handle close
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
@@ -1198,7 +1197,7 @@ class OBSCToolApp:
 
         # Clear button
         ttk.Button(
-            cmd_frame, text="🗑️ Clear Output",
+            cmd_frame, text="Clear Output",
             command=self._term_clear, width=14,
         ).pack(anchor='e', pady=(3, 0))
 
@@ -2649,6 +2648,15 @@ class OBSCToolApp:
 
     # ── Discovery ────────────────────────────────────────────────
 
+    def _validate_adapter_ip(self, adapter):
+        """Check that the adapter has a valid IP. Shows warning if not. Returns True if valid."""
+        if not adapter.ip or adapter.ip == "0.0.0.0":
+            messagebox.showwarning("No IP Address",
+                                   "The selected adapter has no IP address.\n"
+                                   "Configure an IP address first (IP Mode section).")
+            return False
+        return True
+
     def _discover_devices(self):
         """Start device discovery."""
         adapter = self._get_selected_adapter()
@@ -2656,10 +2664,7 @@ class OBSCToolApp:
             messagebox.showwarning("No Adapter", "Please select a network adapter first.")
             return
 
-        if not adapter.ip or adapter.ip == "0.0.0.0":
-            messagebox.showwarning("No IP Address",
-                                   "The selected adapter has no IP address.\n"
-                                   "Configure an IP address first (IP Mode section).")
+        if not self._validate_adapter_ip(adapter):
             return
 
         use_multicast = (self.ip_mode_var.get() == "automatic")
@@ -2764,10 +2769,7 @@ class OBSCToolApp:
             messagebox.showwarning("No Adapter", "Please select a network adapter first.")
             return
 
-        if not adapter.ip or adapter.ip == "0.0.0.0":
-            messagebox.showwarning("No IP Address",
-                                   "The selected adapter has no IP address.\n"
-                                   "Configure an IP address first (IP Mode section).")
+        if not self._validate_adapter_ip(adapter):
             return
 
         if not self.firmware:

@@ -3,8 +3,8 @@
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
 
-from obsc_tool.gui.constants import _safe_int
-from obsc_tool.terminal import (
+from firmware_tool.gui.constants import _safe_int
+from firmware_tool.terminal import (
     TelnetClient, SerialClient, FirmwareDumper, ONT_COMMANDS,
 )
 

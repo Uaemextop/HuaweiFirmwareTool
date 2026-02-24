@@ -9,7 +9,7 @@ try:
 except ImportError:
     HAS_TTKB = False
 
-from obsc_tool.gui.constants import THEMES, TTKB_DARK, TTKB_LIGHT
+from firmware_tool.gui.constants import THEMES, TTKB_DARK, TTKB_LIGHT
 
 
 class ThemeMixin:

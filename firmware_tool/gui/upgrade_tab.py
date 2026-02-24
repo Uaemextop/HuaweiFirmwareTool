@@ -6,13 +6,13 @@ import zlib
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 
-from obsc_tool.gui.constants import (
+from firmware_tool.gui.constants import (
     _safe_int, OBSC_MULTICAST_ADDR, DEVICE_STALE_TIMEOUT,
     IP_MODE_DEFAULTS,
 )
-from obsc_tool.firmware import HWNPFirmware
-from obsc_tool.network import UDPTransport
-from obsc_tool.protocol import (
+from firmware_tool.firmware import HWNPFirmware
+from firmware_tool.network import UDPTransport
+from firmware_tool.protocol import (
     OBSCWorker, FlashMode, UpgradeType,
     OBSC_SEND_PORT, OBSC_RECV_PORT,
 )

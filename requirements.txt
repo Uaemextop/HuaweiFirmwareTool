@@ -1,0 +1,50 @@
+# Core runtime dependencies
+# Pinned versions for reproducible builds
+#
+# Core UI
+ttkbootstrap==1.10.1
+Pillow==12.1.1
+customtkinter==5.2.2
+
+# UI themes & styling
+darkdetect==0.8.0
+sv-ttk==2.6.0
+ttkthemes==3.2.2
+
+# UI widgets & helpers
+CTkMessagebox==2.7
+CTkToolTip==0.8
+tktooltip==0.1.0
+tkinterdnd2==0.4.2
+ttkwidgets==0.13.0
+
+# System tray & screen
+pystray==0.19.5
+screeninfo==0.8.1
+
+# Charts & visualization
+matplotlib==3.8.3
+qrcode==7.4.2
+colour==0.1.5
+
+# Terminal & serial
+pyserial==3.5
+
+# System & network info
+psutil==5.9.8
+netifaces==0.11.0
+
+# Clipboard & notifications
+pyperclip==1.8.2
+plyer==2.1.0
+
+# Cryptography
+pycryptodome==3.19.1
+
+# File format helpers
+chardet==5.2.0
+defusedxml==0.7.1
+
+# Logging & export
+colorama==0.4.6
+rich==13.7.0

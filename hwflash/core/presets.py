@@ -217,6 +217,11 @@ class PresetManager:
             return copy.deepcopy(self._presets[name])
         return None
 
+    @staticmethod
+    def _safe_preset_name(name):
+        """Convert a preset display name to a safe filename stem."""
+        return "".join(c if c.isalnum() or c in ' _-' else '_' for c in name)
+
     def save_preset(self, name, preset_data):
         """Save a preset (creates/overwrites).
 
@@ -231,8 +236,8 @@ class PresetManager:
 
         # Save to disk
         os.makedirs(self.presets_dir, exist_ok=True)
-        safe_name = "".join(c if c.isalnum() or c in ' _-' else '_' for c in name)
-        filepath = os.path.join(self.presets_dir, f"{safe_name}.json")
+        filepath = os.path.join(self.presets_dir,
+                                f"{self._safe_preset_name(name)}.json")
         save_data = copy.deepcopy(preset)
         save_data['_name'] = name
         with open(filepath, 'w', encoding='utf-8') as f:
@@ -254,8 +259,8 @@ class PresetManager:
         del self._presets[name]
 
         # Remove from disk
-        safe_name = "".join(c if c.isalnum() or c in ' _-' else '_' for c in name)
-        filepath = os.path.join(self.presets_dir, f"{safe_name}.json")
+        filepath = os.path.join(self.presets_dir,
+                                f"{self._safe_preset_name(name)}.json")
         if os.path.isfile(filepath):
             os.remove(filepath)
 

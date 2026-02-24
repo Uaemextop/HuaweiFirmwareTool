@@ -470,7 +470,7 @@ class OBSCWorker:
                     result_msg = RESULT_CODES.get(result_code, f"Unknown (0x{result_code:08X})")
 
                     if result_code == RESULT_SUCCESS:
-                        self._emit(self.on_status, f"Upgrade successful!")
+                        self._emit(self.on_status, "Upgrade successful!")
                         self._emit(self.on_progress, 100, "Complete")
                     else:
                         self._emit(self.on_status, f"Upgrade failed: {result_msg}")

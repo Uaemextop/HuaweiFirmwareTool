@@ -12,6 +12,7 @@ Also provides cfgtool-compatible configuration file parsing and editing.
 """
 
 import os
+import re
 import logging
 
 logger = logging.getLogger("hwflash.config_crypto")
@@ -422,7 +423,6 @@ class CfgFileParser:
         content = self.text_content
 
         # Look for <TagName>value</TagName> or TagName="value"
-        import re
         # Attribute pattern
         attr_match = re.search(rf'{re.escape(search)}="([^"]*)"', content)
         if attr_match:
@@ -443,7 +443,6 @@ class CfgFileParser:
         Returns:
             True if replaced, False if not found.
         """
-        import re
         parts = xpath_like.split('.')
         search = parts[-1]
 
@@ -478,7 +477,6 @@ class CfgFileParser:
         Returns:
             List of (tag, value) tuples.
         """
-        import re
         results = []
 
         # Element values

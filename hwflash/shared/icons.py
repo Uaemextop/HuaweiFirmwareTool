@@ -165,6 +165,28 @@ def generate_icon(name: str, size: int = 20, color: str = "#FFFFFF") -> bytes:
     elif name == "warning":
         draw.polygon([(size // 2, size // 6), (size // 6, size * 5 // 6), (size * 5 // 6, size * 5 // 6)], outline=fill, width=lw)
         draw.text((size // 2 - 2, size // 2), "!", fill=fill)
+    elif name == "save":
+        _draw_save(draw, size, fill, lw)
+    elif name == "log":
+        _draw_log(draw, size, fill, lw)
+    elif name == "trash":
+        _draw_trash(draw, size, fill, lw)
+    elif name == "copy":
+        _draw_copy(draw, size, fill, lw)
+    elif name == "x":
+        _draw_x(draw, size, fill, lw)
+    elif name == "upload":
+        _draw_upload(draw, size, fill, lw)
+    elif name == "download":
+        _draw_download(draw, size, fill, lw)
+    elif name == "key":
+        _draw_key(draw, size, fill, lw)
+    elif name == "lock":
+        _draw_lock(draw, size, fill, lw, locked=True)
+    elif name == "unlock":
+        _draw_lock(draw, size, fill, lw, locked=False)
+    elif name == "search":
+        _draw_search(draw, size, fill, lw)
     else:
         # Default: filled circle
         m = size // 4
@@ -260,3 +282,140 @@ def _draw_refresh(draw: "ImageDraw.Draw", size: int, fill: tuple, lw: int):
     ax = c + int(r * math.cos(math.radians(330)))
     ay = c - int(r * math.sin(math.radians(330)))
     draw.polygon([(ax, ay), (ax - 3, ay - 5), (ax + 3, ay - 2)], fill=fill)
+
+
+def _draw_save(draw: "ImageDraw.Draw", size: int, fill: tuple, lw: int):
+    """Floppy disk save icon."""
+    m = size // 6
+    # Outer rectangle
+    draw.rectangle([m, m, size - m, size - m], outline=fill, width=lw)
+    # Top slot (label area)
+    draw.rectangle([m + lw, m + lw, size - m - lw, m + size // 3], fill=fill)
+    # Bottom data area
+    inner = size // 4
+    draw.rectangle([m + inner, size // 2, size - m - inner, size - m - lw],
+                   outline=fill, width=lw)
+
+
+def _draw_log(draw: "ImageDraw.Draw", size: int, fill: tuple, lw: int):
+    """Lines-of-text log icon."""
+    m = size // 5
+    gap = (size - 2 * m) // 4
+    for i in range(4):
+        y = m + i * gap + gap // 2
+        end_x = size - m if i % 2 == 0 else size - m - size // 5
+        draw.line([(m, y), (end_x, y)], fill=fill, width=lw)
+
+
+def _draw_trash(draw: "ImageDraw.Draw", size: int, fill: tuple, lw: int):
+    """Trash can icon."""
+    m = size // 5
+    top = size // 4
+    # Can body
+    draw.rectangle([m, top, size - m, size - m // 2], outline=fill, width=lw)
+    # Lid
+    draw.line([(m - lw, top), (size - m + lw, top)], fill=fill, width=lw)
+    # Handle
+    hx1, hx2 = size // 2 - size // 8, size // 2 + size // 8
+    draw.line([(hx1, top), (hx1, m)], fill=fill, width=lw)
+    draw.line([(hx2, top), (hx2, m)], fill=fill, width=lw)
+    draw.line([(hx1, m), (hx2, m)], fill=fill, width=lw)
+
+
+def _draw_copy(draw: "ImageDraw.Draw", size: int, fill: tuple, lw: int):
+    """Two overlapping rectangles copy icon."""
+    off = size // 5
+    # Back rectangle
+    draw.rectangle([off, off, size - off // 2, size - off // 2],
+                   outline=fill, width=lw)
+    # Front rectangle (offset)
+    draw.rectangle([off // 2, off // 2, size - off, size - off],
+                   outline=fill, width=lw)
+
+
+def _draw_x(draw: "ImageDraw.Draw", size: int, fill: tuple, lw: int):
+    """X (close) icon."""
+    m = size // 4
+    draw.line([(m, m), (size - m, size - m)], fill=fill, width=lw + 1)
+    draw.line([(size - m, m), (m, size - m)], fill=fill, width=lw + 1)
+
+
+def _draw_upload(draw: "ImageDraw.Draw", size: int, fill: tuple, lw: int):
+    """Upload arrow (pointing up) icon."""
+    cx = size // 2
+    m = size // 5
+    tip = m
+    base = size - m
+    # Arrow shaft
+    draw.line([(cx, tip + size // 5), (cx, base)], fill=fill, width=lw)
+    # Arrow head
+    draw.polygon([(cx, tip), (cx - size // 5, tip + size // 5),
+                  (cx + size // 5, tip + size // 5)], fill=fill)
+    # Base line
+    draw.line([(m, base), (size - m, base)], fill=fill, width=lw)
+
+
+def _draw_download(draw: "ImageDraw.Draw", size: int, fill: tuple, lw: int):
+    """Download arrow (pointing down) icon."""
+    cx = size // 2
+    m = size // 5
+    tip = size - m
+    top = m
+    # Arrow shaft
+    draw.line([(cx, top), (cx, tip - size // 5)], fill=fill, width=lw)
+    # Arrow head
+    draw.polygon([(cx, tip), (cx - size // 5, tip - size // 5),
+                  (cx + size // 5, tip - size // 5)], fill=fill)
+    # Base line
+    draw.line([(m, tip), (size - m, tip)], fill=fill, width=lw)
+
+
+def _draw_key(draw: "ImageDraw.Draw", size: int, fill: tuple, lw: int):
+    """Key icon."""
+    # Key ring (circle on left)
+    kr = size // 4
+    kx, ky = size // 3, size // 2
+    draw.ellipse([kx - kr, ky - kr, kx + kr, ky + kr], outline=fill, width=lw)
+    # Key shaft
+    draw.line([(kx + kr, ky), (size - size // 5, ky)], fill=fill, width=lw)
+    # Teeth
+    tx = kx + kr + size // 5
+    draw.line([(tx, ky), (tx, ky + size // 6)], fill=fill, width=lw)
+    tx2 = tx + size // 8
+    draw.line([(tx2, ky), (tx2, ky + size // 8)], fill=fill, width=lw)
+
+
+def _draw_lock(draw: "ImageDraw.Draw", size: int, fill: tuple, lw: int,
+               locked: bool = True):
+    """Padlock icon (locked or unlocked)."""
+    m = size // 5
+    body_top = size // 2
+    # Lock body
+    draw.rectangle([m, body_top, size - m, size - m], outline=fill, width=lw)
+    # Shackle (arc)
+    arc_left = m + size // 8
+    arc_right = size - m - size // 8
+    arc_top = m
+    arc_bottom = body_top + lw
+    if locked:
+        draw.arc([arc_left, arc_top, arc_right, arc_bottom],
+                 180, 0, fill=fill, width=lw)
+    else:
+        # Open: arc on left side only, shifted up
+        draw.arc([arc_left, arc_top - size // 8, arc_right, arc_bottom - size // 8],
+                 180, 90, fill=fill, width=lw)
+
+
+def _draw_search(draw: "ImageDraw.Draw", size: int, fill: tuple, lw: int):
+    """Magnifying glass search icon."""
+    cr = size // 3
+    cx, cy = size // 2 - size // 10, size // 2 - size // 10
+    # Circle
+    draw.ellipse([cx - cr, cy - cr, cx + cr, cy + cr], outline=fill, width=lw)
+    # Handle
+    handle_start_x = cx + int(cr * math.cos(math.radians(45)))
+    handle_start_y = cy + int(cr * math.sin(math.radians(45)))
+    handle_end_x = handle_start_x + size // 4
+    handle_end_y = handle_start_y + size // 4
+    draw.line([(handle_start_x, handle_start_y), (handle_end_x, handle_end_y)],
+              fill=fill, width=lw + 1)

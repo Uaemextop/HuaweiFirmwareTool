@@ -15,16 +15,42 @@ import os
 
 # Dependencies to check/install  (import_name, pip_name, description)
 DEPENDENCIES = [
+    # ── Core UI ──────────────────────────────────────────────────
     ("ttkbootstrap", "ttkbootstrap", "Modern themed widgets"),
     ("PIL", "Pillow", "Image support"),
+    ("customtkinter", "customtkinter", "Custom themed tkinter widgets"),
+    # ── UI Themes & Styling ──────────────────────────────────────
+    ("darkdetect", "darkdetect", "OS dark mode detection"),
+    ("sv_ttk", "sv-ttk", "Sun Valley ttk theme"),
+    ("ttkthemes", "ttkthemes", "Extra ttk themes"),
+    # ── UI Widgets & Helpers ─────────────────────────────────────
+    ("CTkMessagebox", "CTkMessagebox", "Custom message boxes"),
+    ("CTkToolTip", "CTkToolTip", "Custom tooltips"),
+    ("tktooltip", "tktooltip", "Tkinter tooltip widget"),
+    ("tkinterdnd2", "tkinterdnd2", "Drag and drop support"),
+    ("ttkwidgets", "ttkwidgets", "Extra ttk widget collection"),
+    # ── System Tray & Screen ─────────────────────────────────────
+    ("pystray", "pystray", "System tray icon"),
+    ("screeninfo", "screeninfo", "Monitor resolution info"),
+    # ── Charts & Visualization ───────────────────────────────────
+    ("matplotlib", "matplotlib", "Charts and graphs"),
+    ("qrcode", "qrcode", "QR code generation"),
+    ("cairosvg", "cairosvg", "SVG rendering support"),
+    ("colour", "colour", "Color manipulation library"),
+    # ── Terminal & Serial ────────────────────────────────────────
     ("serial", "pyserial", "Serial terminal support"),
+    # ── System & Network ─────────────────────────────────────────
     ("psutil", "psutil", "System & process info"),
     ("netifaces", "netifaces", "Network interface details"),
+    # ── Clipboard & Notifications ────────────────────────────────
     ("pyperclip", "pyperclip", "Clipboard support"),
     ("plyer", "plyer", "Desktop notifications"),
+    # ── Cryptography ─────────────────────────────────────────────
     ("Crypto", "pycryptodome", "AES encryption"),
+    # ── File Format Helpers ──────────────────────────────────────
     ("chardet", "chardet", "Character encoding detection"),
     ("defusedxml", "defusedxml", "Safe XML parsing"),
+    # ── Logging & Export ─────────────────────────────────────────
     ("colorama", "colorama", "Colored terminal output"),
     ("rich", "rich", "Rich text formatting"),
 ]

@@ -3,6 +3,29 @@
 # Core UI
 ttkbootstrap>=1.10
 Pillow>=10.2
+customtkinter>=5.2
+#
+# UI themes & styling
+darkdetect>=0.8
+sv-ttk>=2.6
+ttkthemes>=3.2
+#
+# UI widgets & helpers
+CTkMessagebox>=2.7
+CTkToolTip>=0.8
+tktooltip>=0.1
+tkinterdnd2>=0.4
+ttkwidgets>=0.13
+#
+# System tray & screen
+pystray>=0.19
+screeninfo>=0.8
+#
+# Charts & visualization
+matplotlib>=3.8
+qrcode>=7.4
+cairosvg>=2.7
+colour>=0.1
 #
 # Terminal & serial
 pyserial>=3.5

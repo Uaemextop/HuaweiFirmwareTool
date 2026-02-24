@@ -1,19 +1,20 @@
-# HuaweiFirmwareTool
+# HuaweiFlash
 
 Open-source toolkit for Huawei ONT (Optical Network Terminal) firmware management.
-Includes a modern GUI application for firmware flashing via the OBSC protocol, C++ utilities for firmware packing/signing, and a PE analysis tool.
+Modern sidebar-based GUI for firmware flashing via OBSC protocol, C++ utilities
+for firmware packing/signing, and PE analysis tools.
 
 ## Features
 
-### OBSC Firmware Tool (Python GUI)
-- **Device Discovery**: Automatically discover ONT devices on the local network via UDP broadcast
-- **Firmware Flashing**: Flash HWNP firmware packages to Huawei ONTs using the OBSC protocol
-- **Configuration Crypto**: Encrypt/decrypt Huawei config files (hw_ctree.xml) with AES-128-CBC
-- **Terminal Access**: Telnet and Serial console access to ONT devices
-- **Firmware Dump**: Extract MTD partitions from devices via shell commands
-- **Preset Management**: Save and load router-specific configurations
-- **CRC32 Verification**: Validate firmware integrity before flashing
-- **Modern UI**: Windows 11 themed interface with dark/light mode
+### HuaweiFlash (Python GUI)
+- **Device Discovery**: Find ONT devices on local network via UDP broadcast
+- **Firmware Flashing**: Flash HWNP firmware via OBSC protocol
+- **Config Crypto**: AES-128-CBC encryption for device config files
+- **Terminal Access**: Telnet and Serial console
+- **Firmware Dump**: Extract MTD partitions from devices
+- **Preset Management**: Save and load router-specific profiles
+- **CRC32 Verification**: Integrity checks before flashing
+- **Modern UI**: Sidebar navigation, gradient accents, dark/light themes
 
 ### C++ Firmware Tools
 - **hw_fmw**: Pack/unpack HWNP firmware packages

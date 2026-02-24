@@ -1,1 +1,1 @@
-"""GUI subpackage for OBSC Firmware Tool."""
+"""Legacy GUI constants (tabs moved to obsc_tool.ui.tabs)."""

@@ -78,7 +78,7 @@ class SplashScreen:
                                     fill="#06B6D4", outline="")
 
         # Title
-        self.canvas.create_text(w // 2, 160, text="OBSC Firmware Tool",
+        self.canvas.create_text(w // 2, 160, text="HuaweiFlash",
                                 font=("Segoe UI", 22, "bold"), fill="#F8FAFC")
         self.canvas.create_text(w // 2, 185, text="Open-Source Huawei ONT Firmware Flasher",
                                 font=("Segoe UI", 10), fill="#94A3B8")

@@ -1,8 +1,8 @@
 """
-OBSC Firmware Tool — Modern GUI Application
+HuaweiFlash — Modern GUI Application
 
-Refactored UI with sidebar navigation, card-based layout,
-gradient accents, animated transitions, and custom window frame.
+Sidebar navigation, card-based layout, gradient accents,
+animated transitions, and custom window frame.
 """
 
 import sys
@@ -33,27 +33,24 @@ from obsc_tool.shared.icons import generate_logo
 from obsc_tool.ui.components.cards import GradientBar
 from obsc_tool.ui.components.sidebar import SidebarNav
 
-# Import tab mixins from original GUI package (backward compatibility)
-from obsc_tool.gui.upgrade_tab import UpgradeTabMixin
-from obsc_tool.gui.presets_tab import PresetsTabMixin
-from obsc_tool.gui.verification_tab import VerificationTabMixin
-from obsc_tool.gui.crypto_tab import CryptoTabMixin
-from obsc_tool.gui.terminal_tab import TerminalTabMixin
-from obsc_tool.gui.dump_tab import DumpTabMixin
-from obsc_tool.gui.settings_tab import SettingsTabMixin
-from obsc_tool.gui.info_tab import InfoTabMixin
-from obsc_tool.gui.log_tab import LogTabMixin
-from obsc_tool.gui.theme import ThemeMixin
-from obsc_tool.gui.adapters import AdaptersMixin
+from obsc_tool.ui.tabs.upgrade import UpgradeTabMixin
+from obsc_tool.ui.tabs.presets import PresetsTabMixin
+from obsc_tool.ui.tabs.verify import VerificationTabMixin
+from obsc_tool.ui.tabs.crypto import CryptoTabMixin
+from obsc_tool.ui.tabs.terminal import TerminalTabMixin
+from obsc_tool.ui.tabs.dump import DumpTabMixin
+from obsc_tool.ui.tabs.settings import SettingsTabMixin
+from obsc_tool.ui.tabs.info import InfoTabMixin
+from obsc_tool.ui.tabs.log import LogTabMixin
+from obsc_tool.ui.tabs.theme import ThemeMixin
+from obsc_tool.ui.tabs.adapters import AdaptersMixin
 
 logger = logging.getLogger("obsc_tool")
 
-
-# Re-export for backward compatibility with old gui.constants imports
-_safe_int = safe_int
+APP_NAME = "HuaweiFlash"
 
 
-class OBSCToolApp(
+class HuaweiFlashApp(
     UpgradeTabMixin,
     PresetsTabMixin,
     VerificationTabMixin,
@@ -70,7 +67,7 @@ class OBSCToolApp(
 
     def __init__(self, root):
         self.root = root
-        self.root.title(f"OBSC Firmware Tool v{__version__}")
+        self.root.title(f"{APP_NAME} v{__version__}")
         self.root.geometry("1050x750")
         self.root.minsize(900, 650)
 
@@ -185,7 +182,7 @@ class OBSCToolApp(
             title_frame = tk.Frame(logo_frame, bg=colors["sidebar"])
             title_frame.pack(side=tk.LEFT, fill=tk.X)
             tk.Label(
-                title_frame, text="OBSC Tool",
+                title_frame, text=APP_NAME,
                 font=(FONT_FAMILY, 13, "bold"),
                 bg=colors["sidebar"], fg=colors["fg"],
             ).pack(anchor="w")
@@ -380,7 +377,7 @@ def main():
     else:
         root = tk.Tk()
 
-    OBSCToolApp(root)
+    HuaweiFlashApp(root)
     root.mainloop()
 
 

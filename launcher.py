@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Entry point for OBSC Firmware Tool.
+"""Entry point for HuaweiFlash.
 
 Shows a modern animated splash screen with progress while checking
 and installing optional dependencies, then launches the main application.

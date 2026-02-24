@@ -8,11 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Security
-- **CRITICAL**: Updated Pillow from 10.2.0 to 10.3.0 to fix buffer overflow vulnerability (CVE-2024-28219)
-  - Affected versions: < 10.3.0
-  - Impact: Buffer overflow in image processing
+- **CRITICAL**: Updated Pillow from 10.3.0 to 12.1.1 to fix out-of-bounds write vulnerability (CVE-2025-25116)
+  - Affected versions: >= 10.3.0, < 12.1.1
+  - Impact: Out-of-bounds write when loading PSD images
   - Severity: High
   - Action: All users should update immediately
+- **CRITICAL**: Previously fixed buffer overflow vulnerability (CVE-2024-28219) in Pillow 10.3.0
+  - Affected versions: < 10.3.0
+  - Impact: Buffer overflow in image processing
 
 ### Added
 - Modern Python packaging with `pyproject.toml`

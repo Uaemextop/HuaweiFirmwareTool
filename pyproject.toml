@@ -31,7 +31,7 @@ classifiers = [
 dependencies = [
     # Core UI
     "ttkbootstrap>=1.10,<2.0",
-    "Pillow>=10.3.0,<11.0",  # Security: Fixed buffer overflow (CVE-2024-28219)
+    "Pillow>=12.1.1,<13.0",  # Security: Fixed out-of-bounds write in PSD loading (CVE-2025-25116)
     "customtkinter>=5.2,<6.0",
 
     # UI themes & styling

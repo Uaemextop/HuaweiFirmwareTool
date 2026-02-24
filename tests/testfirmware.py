@@ -254,3 +254,157 @@ class TestHWNPItem:
         r = repr(item)
         assert "HWNPItem" in r
         assert "test/path" in r
+
+
+class TestFirmwareRepack:
+    """Test firmware repackaging (adapted from C++ packer logic)."""
+
+    def test_repack_roundtrip(self):
+        """Repack a loaded firmware and verify CRC32 matches."""
+        items = [
+            ("file:/var/a.xml", "CFG", "V1", b"<cfg>test</cfg>"),
+            ("flash:kernel", "KERN", "V2", b"kerneldata" * 100),
+        ]
+        data = _build_hwnp_firmware(items=items)
+        with tempfile.NamedTemporaryFile(suffix='.bin', delete=False) as f:
+            f.write(data)
+            f.flush()
+            fw = HWNPFirmware()
+            fw.load(f.name)
+        os.unlink(f.name)
+
+        repacked = fw.repack()
+        assert len(repacked) > 0
+
+        # Reload and validate
+        with tempfile.NamedTemporaryFile(suffix='.bin', delete=False) as f:
+            f.write(repacked)
+            f.flush()
+            fw2 = HWNPFirmware()
+            fw2.load(f.name)
+        os.unlink(f.name)
+
+        assert fw2.item_count == 2
+        hdr_ok, data_ok = fw2.validate_crc32()
+        assert hdr_ok is True
+        assert data_ok is True
+        assert fw2.items[0].data == b"<cfg>test</cfg>"
+        assert fw2.items[1].data == b"kerneldata" * 100
+
+    def test_replace_item_data(self):
+        data = _build_hwnp_firmware()
+        with tempfile.NamedTemporaryFile(suffix='.bin', delete=False) as f:
+            f.write(data)
+            f.flush()
+            fw = HWNPFirmware()
+            fw.load(f.name)
+        os.unlink(f.name)
+
+        fw.replace_item_data(0, b"new_data_here")
+        assert fw.items[0].data == b"new_data_here"
+        assert fw.items[0].data_size == len(b"new_data_here")
+        assert fw.items[0].crc32 == (zlib.crc32(b"new_data_here") & 0xFFFFFFFF)
+
+    def test_add_item(self):
+        data = _build_hwnp_firmware()
+        with tempfile.NamedTemporaryFile(suffix='.bin', delete=False) as f:
+            f.write(data)
+            f.flush()
+            fw = HWNPFirmware()
+            fw.load(f.name)
+        os.unlink(f.name)
+
+        fw.add_item("file:/var/new.txt", "NEW", "V2", b"new_payload")
+        assert fw.item_count == 2
+        assert fw.items[1].item_path == "file:/var/new.txt"
+        assert fw.items[1].data == b"new_payload"
+
+    def test_remove_item(self):
+        items = [
+            ("file:/var/a.xml", "A", "V1", b"aaaa"),
+            ("file:/var/b.xml", "B", "V2", b"bbbb"),
+        ]
+        data = _build_hwnp_firmware(items=items)
+        with tempfile.NamedTemporaryFile(suffix='.bin', delete=False) as f:
+            f.write(data)
+            f.flush()
+            fw = HWNPFirmware()
+            fw.load(f.name)
+        os.unlink(f.name)
+
+        fw.remove_item(0)
+        assert fw.item_count == 1
+        assert fw.items[0].item_path == "file:/var/b.xml"
+        assert fw.items[0].index == 0  # re-indexed
+
+    def test_repack_after_replace(self):
+        """Replace an item, repack, reload, verify."""
+        data = _build_hwnp_firmware()
+        with tempfile.NamedTemporaryFile(suffix='.bin', delete=False) as f:
+            f.write(data)
+            f.flush()
+            fw = HWNPFirmware()
+            fw.load(f.name)
+        os.unlink(f.name)
+
+        fw.replace_item_data(0, b"replaced_content_longer_than_original!")
+        repacked = fw.repack()
+
+        with tempfile.NamedTemporaryFile(suffix='.bin', delete=False) as f:
+            f.write(repacked)
+            f.flush()
+            fw2 = HWNPFirmware()
+            fw2.load(f.name)
+        os.unlink(f.name)
+
+        hdr_ok, data_ok = fw2.validate_crc32()
+        assert hdr_ok is True
+        assert data_ok is True
+        assert fw2.items[0].data == b"replaced_content_longer_than_original!"
+
+
+class TestFirmwareUnpackPack:
+    """Test unpack to dir / pack from dir roundtrip."""
+
+    def test_unpack_pack_roundtrip(self):
+        items = [
+            ("file:/var/config.xml", "CFG", "V1", b"<xml>config</xml>"),
+            ("file:/var/script.sh", "SH", "V2", b"#!/bin/sh\necho ok\n"),
+        ]
+        data = _build_hwnp_firmware(items=items)
+        with tempfile.NamedTemporaryFile(suffix='.bin', delete=False) as f:
+            f.write(data)
+            f.flush()
+            fw = HWNPFirmware()
+            fw.load(f.name)
+        os.unlink(f.name)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            fw.unpack_to_dir(tmpdir)
+
+            # Verify files exist
+            assert os.path.isfile(os.path.join(tmpdir, "item_list.txt"))
+            assert os.path.isfile(os.path.join(tmpdir, "sig_item_list.txt"))
+            assert os.path.isfile(os.path.join(tmpdir, "var", "config.xml"))
+            assert os.path.isfile(os.path.join(tmpdir, "var", "script.sh"))
+
+            # Pack from dir
+            fw2 = HWNPFirmware()
+            repacked = fw2.pack_from_dir(tmpdir)
+
+        assert len(repacked) > 0
+        assert fw2.item_count == 2
+
+        # Reload and verify
+        with tempfile.NamedTemporaryFile(suffix='.bin', delete=False) as f:
+            f.write(repacked)
+            f.flush()
+            fw3 = HWNPFirmware()
+            fw3.load(f.name)
+        os.unlink(f.name)
+
+        hdr_ok, data_ok = fw3.validate_crc32()
+        assert hdr_ok is True
+        assert data_ok is True
+        assert fw3.items[0].data == b"<xml>config</xml>"
+        assert fw3.items[1].data == b"#!/bin/sh\necho ok\n"

@@ -549,3 +549,473 @@ class HWNPFirmware:
     def get_total_data_size(self):
         """Get total size of all firmware item data."""
         return sum(item.data_size for item in self.items)
+
+    # ── Firmware editing / repackaging ───────────────────────────
+
+    def replace_item_data(self, index: int, new_data: bytes):
+        """Replace the raw data of a firmware item by index.
+
+        Updates the item's data, size, and CRC32 but does NOT
+        recompute the global header CRCs — call ``repack()`` for that.
+        """
+        item = next((it for it in self.items if it.index == index), None)
+        if item is None:
+            raise ValueError(f"No item with index {index}")
+        item.data = new_data
+        item.data_size = len(new_data)
+        item.crc32 = zlib.crc32(new_data) & 0xFFFFFFFF
+
+    def remove_item(self, index: int):
+        """Remove an item from the firmware by index."""
+        item = next((it for it in self.items if it.index == index), None)
+        if item is None:
+            raise ValueError(f"No item with index {index}")
+        self.items.remove(item)
+        self.item_count = len(self.items)
+        # Re-index
+        for i, it in enumerate(self.items):
+            it.index = i
+
+    def add_item(self, item_path: str, section: str, version: str,
+                 data: bytes, policy: int = 0):
+        """Add a new item to the firmware.
+
+        Args:
+            item_path: Item path string (e.g. ``file:/var/test.xml``).
+            section: Section name.
+            version: Version string.
+            data: Raw item data bytes.
+            policy: Policy flags (default 0).
+        """
+        item = HWNPItem()
+        item.index = len(self.items)
+        item.item_path = item_path
+        item.section = section
+        item.version = version
+        item.data = data
+        item.data_size = len(data)
+        item.crc32 = zlib.crc32(data) & 0xFFFFFFFF
+        item.policy = policy
+        self.items.append(item)
+        self.item_count = len(self.items)
+
+    def repack(self) -> bytes:
+        """Re-assemble the firmware binary from current items.
+
+        Recomputes all offsets, CRC32 values, and builds a complete
+        HWNP firmware binary identical in structure to the C++ packer.
+
+        Returns:
+            Complete firmware binary as bytes.
+        """
+        self.item_count = len(self.items)
+        prod_bytes = self.product_list.encode('ascii', errors='replace')
+        if len(prod_bytes) < self.prod_list_size:
+            prod_bytes = prod_bytes + b'\x00' * (self.prod_list_size - len(prod_bytes))
+        else:
+            prod_bytes = prod_bytes[:self.prod_list_size]
+
+        item_size = HWNP_ITEM_SIZE
+
+        # Calculate data offsets
+        header_area_size = (HWNP_HEADER_SIZE + len(prod_bytes) +
+                            self.item_count * item_size)
+        current_offset = header_area_size
+        for item in self.items:
+            item.data_offset = current_offset
+            item.data_size = len(item.data)
+            item.crc32 = zlib.crc32(item.data) & 0xFFFFFFFF
+            current_offset += item.data_size
+
+        raw_size = current_offset
+
+        # Build item headers
+        item_headers = bytearray()
+        for item in self.items:
+            ih = bytearray(item_size)
+            struct.pack_into('<IIII', ih, 0,
+                             item.index, item.crc32,
+                             item.data_offset, item.data_size)
+            # path at +16, max 256
+            path_b = item.item_path.encode('ascii', errors='replace')[:255]
+            ih[16:16 + len(path_b)] = path_b
+            # section at +272, max 16
+            sec_b = item.section.encode('ascii', errors='replace')[:15]
+            ih[272:272 + len(sec_b)] = sec_b
+            # version at +288, max 64
+            ver_b = item.version.encode('ascii', errors='replace')[:63]
+            ih[288:288 + len(ver_b)] = ver_b
+            # policy at +352
+            struct.pack_into('<I', ih, 352, item.policy)
+            item_headers.extend(ih)
+
+        # Build main header (CRC fields zeroed for now)
+        header = bytearray(HWNP_HEADER_SIZE)
+        struct.pack_into('<I', header, 0, HWNP_MAGIC)
+        struct.pack_into('<I', header, 4, raw_size)          # raw_sz
+        # offset 8: raw_crc32 → set later
+        struct.pack_into('<I', header, 12, header_area_size)  # hdr_sz
+        # offset 16: hdr_crc32 → set later
+        struct.pack_into('<I', header, 20, self.item_count)
+        struct.pack_into('<BB', header, 24, 0, 0)
+        struct.pack_into('<H', header, 26, len(prod_bytes))
+        struct.pack_into('<I', header, 28, item_size)
+        struct.pack_into('<I', header, 32, 0)  # reserved
+
+        # Assemble full binary
+        all_data = b''.join(item.data for item in self.items)
+        firmware = bytearray(header + prod_bytes + item_headers + all_data)
+
+        # ── CRC32 calculation (matches C++ CalculateCRC32 logic) ──
+        # Header CRC32: from offset 0x14 (20) of header through
+        # header + prod_list + item_headers, with both CRC fields zeroed.
+        hdr_area = bytearray(firmware[:header_area_size])
+        struct.pack_into('<I', hdr_area, 8, 0)   # zero raw_crc32
+        struct.pack_into('<I', hdr_area, 16, 0)   # zero hdr_crc32
+        hdr_crc = zlib.crc32(bytes(hdr_area)) & 0xFFFFFFFF
+        struct.pack_into('<I', firmware, 16, hdr_crc)
+
+        # Raw CRC32: over full file with raw_crc32 zeroed
+        raw_copy = bytearray(firmware)
+        struct.pack_into('<I', raw_copy, 8, 0)
+        raw_crc = zlib.crc32(bytes(raw_copy)) & 0xFFFFFFFF
+        struct.pack_into('<I', firmware, 8, raw_crc)
+
+        # Update internal state
+        self.raw_data = bytes(firmware)
+        self.raw_size = raw_size
+        self.header_size = header_area_size
+        self.raw_crc32 = raw_crc
+        self.header_crc32 = hdr_crc
+        self.item_header_size = item_size
+        self.prod_list_size = len(prod_bytes)
+        self.header_offset = 0
+        self.header_layout = 'legacy'
+        self.endian = '<'
+        self._raw_crc32_alt = None
+        self._header_crc32_alt = None
+
+        return bytes(firmware)
+
+    def unpack_to_dir(self, output_dir: str):
+        """Unpack all firmware items to a directory.
+
+        Creates ``item_list.txt`` (metadata) and ``sig_item_list.txt``
+        (signing manifest) exactly like the C++ ``UnpackToFS``.
+
+        Args:
+            output_dir: Destination directory.
+        """
+        os.makedirs(output_dir, exist_ok=True)
+        meta_path = os.path.join(output_dir, "item_list.txt")
+        sig_path = os.path.join(output_dir, "sig_item_list.txt")
+
+        with open(meta_path, 'w') as meta, open(sig_path, 'w') as sig:
+            meta.write(f"0x{self.magic:08X}\n")
+            meta.write(f"{self.prod_list_size} {self.product_list}\n")
+
+            for item in self.items:
+                # Extract item path after ':'
+                colon_pos = item.item_path.find(':')
+                if colon_pos >= 0 and colon_pos + 1 < len(item.item_path):
+                    fs_path = item.item_path[colon_pos + 1:]
+                else:
+                    fs_path = item.item_path
+
+                full_path = os.path.join(output_dir, fs_path.lstrip('/'))
+                os.makedirs(os.path.dirname(full_path), exist_ok=True)
+
+                with open(full_path, 'wb') as f:
+                    f.write(item.data if item.data else b'')
+
+                ver = item.version if item.version else "NULL"
+                meta.write(f"+ {item.index} {item.item_path} "
+                           f"{item.section} {ver} {item.policy}\n")
+                sig.write(f"+ {item.item_path}\n")
+
+    def pack_from_dir(self, input_dir: str):
+        """Rebuild firmware from a previously unpacked directory.
+
+        Reads ``item_list.txt`` and re-assembles the firmware. This is
+        the Python equivalent of the C++ packer (``hw_fmw -p``).
+
+        Args:
+            input_dir: Directory containing unpacked items and metadata.
+
+        Returns:
+            Complete firmware binary bytes.
+        """
+        meta_path = os.path.join(input_dir, "item_list.txt")
+        if not os.path.isfile(meta_path):
+            raise FileNotFoundError(f"Metadata file not found: {meta_path}")
+
+        with open(meta_path, 'r') as f:
+            lines = f.readlines()
+
+        if len(lines) < 2:
+            raise ValueError("Metadata file too short")
+
+        # Line 1: magic
+        magic_str = lines[0].strip()
+        self.magic = int(magic_str, 16) if magic_str.startswith('0x') else int(magic_str)
+
+        # Line 2: prod_list_size + product_list
+        parts = lines[1].strip().split(' ', 1)
+        self.prod_list_size = int(parts[0])
+        self.product_list = parts[1] if len(parts) > 1 else ""
+
+        self.items = []
+        for line in lines[2:]:
+            line = line.strip()
+            if len(line) <= 2 or not line.startswith('+'):
+                continue
+            line = line[2:]  # strip "+ "
+            tokens = line.split()
+            if len(tokens) < 5:
+                continue
+
+            idx = int(tokens[0])
+            item_path = tokens[1]
+            section = tokens[2]
+            version = tokens[3]
+            policy = int(tokens[4])
+
+            # Resolve filesystem path
+            colon_pos = item_path.find(':')
+            if colon_pos >= 0 and colon_pos + 1 < len(item_path):
+                fs_path = item_path[colon_pos + 1:]
+            else:
+                fs_path = item_path
+            full_path = os.path.join(input_dir, fs_path.lstrip('/'))
+
+            with open(full_path, 'rb') as f:
+                data = f.read()
+
+            item = HWNPItem()
+            item.index = idx
+            item.item_path = item_path
+            item.section = section
+            item.version = version if version != "NULL" else ""
+            item.data = data
+            item.data_size = len(data)
+            item.crc32 = zlib.crc32(data) & 0xFFFFFFFF
+            item.policy = policy
+            self.items.append(item)
+
+        self.item_count = len(self.items)
+        if self.item_count == 0:
+            raise ValueError("No items found in metadata")
+
+        return self.repack()
+
+    # ── Signature verification & signing ─────────────────────────
+
+    def verify_signature(self, sig_path: str, pubkey_path: str) -> dict:
+        """Verify firmware RSA signature (adapted from C++ hw_verify).
+
+        The signature file format:
+          Line 1: item count
+          Lines 2..N+1: ``sha256_hex item_path``
+          Remaining bytes: RSA signature (256 bytes)
+
+        Args:
+            sig_path: Path to the signature file.
+            pubkey_path: Path to the PEM public key file.
+
+        Returns:
+            dict with keys 'sha256_results' (list of dicts) and
+            'signature_valid' (bool).
+        """
+        import hashlib
+
+        with open(sig_path, 'rb') as f:
+            sig_raw = f.read()
+
+        with open(pubkey_path, 'r') as f:
+            pubkey_pem = f.read()
+
+        # Parse signature file: text portion + 256-byte RSA signature
+        SIG_SIZE = 256
+        if len(sig_raw) <= SIG_SIZE:
+            raise ValueError("Signature file too small")
+
+        text_part = sig_raw[:-SIG_SIZE]
+        rsa_sig = sig_raw[-SIG_SIZE:]
+
+        lines = text_part.decode('utf-8', errors='replace').splitlines()
+        if not lines:
+            raise ValueError("Empty signature file")
+
+        item_count = int(lines[0].strip())
+        sha256_results = []
+
+        for i in range(1, item_count + 1):
+            if i >= len(lines):
+                break
+            parts = lines[i].strip().split(' ', 1)
+            if len(parts) < 2:
+                continue
+            expected_sha256 = parts[0]
+            item_path_sig = parts[1]
+
+            # Find matching item
+            actual_sha256 = None
+            for item in self.items:
+                if not item.data:
+                    continue
+                # Match by path suffix
+                colon_pos = item.item_path.find(':')
+                if colon_pos >= 0:
+                    fs_path = item.item_path[colon_pos + 1:]
+                else:
+                    fs_path = item.item_path
+
+                if item_path_sig.endswith(fs_path) or fs_path.endswith(item_path_sig.lstrip('/')):
+                    actual_sha256 = hashlib.sha256(item.data).hexdigest()
+                    break
+
+            match = (actual_sha256 == expected_sha256) if actual_sha256 else False
+            sha256_results.append({
+                'path': item_path_sig,
+                'expected': expected_sha256,
+                'actual': actual_sha256 or 'NOT_FOUND',
+                'match': match,
+            })
+
+        # Verify RSA signature over text portion
+        sig_valid = _rsa_verify(text_part, rsa_sig, pubkey_pem)
+
+        return {
+            'sha256_results': sha256_results,
+            'signature_valid': sig_valid,
+        }
+
+    def sign_firmware(self, privkey_path: str, output_sig_path: str,
+                      sig_items: list | None = None):
+        """Sign firmware items with RSA private key (adapted from C++ hw_sign).
+
+        Generates a signature file containing SHA256 hashes of each item
+        and an RSA signature over the hash manifest.
+
+        Args:
+            privkey_path: Path to PEM private key (no password).
+            output_sig_path: Where to write the signature file.
+            sig_items: Optional list of item indices to sign.
+                       If None, signs all items.
+
+        Returns:
+            Path to the generated signature file.
+        """
+        import hashlib
+
+        with open(privkey_path, 'r') as f:
+            privkey_pem = f.read()
+
+        items_to_sign = self.items
+        if sig_items is not None:
+            items_to_sign = [it for it in self.items if it.index in sig_items]
+
+        if not items_to_sign:
+            raise ValueError("No items to sign")
+
+        # Build signature data: count + sha256 lines
+        sig_lines = [str(len(items_to_sign))]
+        for item in items_to_sign:
+            if not item.data:
+                raise ValueError(f"Item {item.index} ({item.item_path}) has no data")
+
+            colon_pos = item.item_path.find(':')
+            if colon_pos >= 0 and colon_pos + 1 < len(item.item_path):
+                path_on_fmw = item.item_path[colon_pos + 1:]
+            else:
+                path_on_fmw = item.item_path
+
+            sha256_hex = hashlib.sha256(item.data).hexdigest()
+            sig_lines.append(f"{sha256_hex} {path_on_fmw}")
+
+        text_data = '\n'.join(sig_lines) + '\n'
+        text_bytes = text_data.encode('utf-8')
+
+        # RSA sign
+        rsa_signature = _rsa_sign(text_bytes, privkey_pem)
+
+        with open(output_sig_path, 'wb') as f:
+            f.write(text_bytes)
+            f.write(rsa_signature)
+
+        return output_sig_path
+
+
+def _rsa_verify(data: bytes, signature: bytes, pubkey_pem: str) -> bool:
+    """Verify RSA-SHA256 signature using the cryptography library."""
+    try:
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import padding, utils
+        import hashlib
+
+        pubkey = serialization.load_pem_public_key(pubkey_pem.encode('utf-8'))
+        digest = hashlib.sha256(data).digest()
+
+        try:
+            pubkey.verify(
+                signature,
+                digest,
+                padding.PKCS1v15(),
+                utils.Prehashed(hashes.SHA256()),
+            )
+            return True
+        except Exception:
+            return False
+    except ImportError:
+        # Fallback: try with rsa library
+        try:
+            import rsa as _rsa
+            import hashlib
+
+            pubkey = _rsa.PublicKey.load_pkcs1_openssl_pem(pubkey_pem.encode('utf-8'))
+            digest = hashlib.sha256(data).digest()
+            try:
+                _rsa.verify({'sha256': digest}, signature, pubkey)
+                return True
+            except _rsa.VerificationError:
+                return False
+        except ImportError:
+            raise ImportError(
+                "RSA verification requires 'cryptography' or 'rsa' package. "
+                "Install with: pip install cryptography"
+            )
+
+
+def _rsa_sign(data: bytes, privkey_pem: str) -> bytes:
+    """Sign data with RSA-SHA256 using the cryptography library."""
+    try:
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import padding, utils
+        import hashlib
+
+        privkey = serialization.load_pem_private_key(
+            privkey_pem.encode('utf-8'), password=None
+        )
+        digest = hashlib.sha256(data).digest()
+
+        signature = privkey.sign(
+            digest,
+            padding.PKCS1v15(),
+            utils.Prehashed(hashes.SHA256()),
+        )
+        return signature
+    except ImportError:
+        try:
+            import rsa as _rsa
+            import hashlib
+
+            privkey = _rsa.PrivateKey.load_pkcs1(privkey_pem.encode('utf-8'))
+            signature = _rsa.sign_hash(
+                hashlib.sha256(data).digest(), privkey, 'SHA-256'
+            )
+            return signature
+        except ImportError:
+            raise ImportError(
+                "RSA signing requires 'cryptography' or 'rsa' package. "
+                "Install with: pip install cryptography"
+            )

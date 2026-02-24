@@ -49,7 +49,7 @@ NAV_ICONS = {
     "terminal": ">_",
     "dump": "⤓",
     "settings": "⚙",
-    "info": "ⓘ",
+    "info": "⌬",
     "log": "☷",
 }
 
@@ -65,7 +65,7 @@ class HuaweiFlashApp:
         "terminal": ("Terminal", "Connect to device via Telnet or Serial"),
         "dump": ("Firmware Dump", "Extract firmware partitions from device"),
         "settings": ("Settings", "Configure protocol and network parameters"),
-        "info": ("Firmware Info", "View detailed firmware structure and metadata"),
+        "info": ("Firmware Editor", "Explore, edit, repack and sign HWNP firmware"),
         "log": ("Activity Log", "View application events and operation history"),
     }
 
@@ -242,7 +242,7 @@ class HuaweiFlashApp:
         self._sidebar.add_separator()
         self._sidebar.add_section_label("Config")
         self._sidebar.add_item("Settings", NAV_ICONS["settings"], "settings")
-        self._sidebar.add_item("Info", NAV_ICONS["info"], "info")
+        self._sidebar.add_item("FW Editor", NAV_ICONS["info"], "info")
         self._sidebar.add_item("Log", NAV_ICONS["log"], "log")
 
         def build_footer(parent):
@@ -312,7 +312,7 @@ class HuaweiFlashApp:
             ("terminal", TerminalTab, "Terminal"),
             ("dump", DumpTab, "Dump"),
             ("settings", SettingsTab, "Settings"),
-            ("info", InfoTab, "Info"),
+            ("info", InfoTab, "FW Editor"),
             ("log", LogTab, "Log"),
         ]
 

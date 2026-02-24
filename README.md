@@ -1,86 +1,75 @@
-# HuaweiFirmwareTool
-Tools for modify firmware huawei
+# HuaweiFlash
 
-### Requires on Debian 11
-```
-apt install cmake make g++ openssl zlib1g zlib1g-dev libssl1.1 libssl-dev
-```
+Modern GUI for Huawei ONT firmware management via the OBSC UDP protocol.
 
-### Build
-```
-$ git clone https://github.com/0xuserpag3/HuaweiFirmwareTool.git
-$ cd HuaweiFirmwareTool
-$ mkdir build && cd build
-$ cmake ..
-$ make
-```
+## Features
 
-## Example modify firmware on HG8245
-### Usage:
+- **Device Discovery**: Find ONT devices on local network via UDP broadcast
+- **Firmware Flashing**: Flash HWNP firmware via OBSC protocol
+- **Config Crypto**: AES-128-CBC encryption for device config files
+- **Terminal Access**: Telnet and Serial console
+- **Firmware Dump**: Extract MTD partitions from devices
+- **Preset Management**: Save and load router-specific profiles
+- **CRC32 Verification**: Integrity checks before flashing
+- **Modern UI**: Sidebar navigation, gradient accents, dark/light themes
+
+## Project Structure
 
 ```
- $ ./hw_fmw 
-Usage: ./hw_fmw -d /path/items [-u -f firmware.bin] [-p -o firmware.bin] [-v]
- -d Path (from|to) unpacked files
- -u Unpack (With -f)
- -p Pack (With -o)
- -f Path from firmware.bin
- -o Path to save firmware.bin
- -v Verbose
- ```
-### Unpack:
+hwflash/
+├── core/                # Business logic
+│   ├── protocol.py      # OBSC UDP protocol
+│   ├── firmware.py      # HWNP firmware parser
+│   ├── crypto.py        # AES-128-CBC config encryption
+│   ├── network.py       # Adapter discovery & UDP transport
+│   ├── terminal.py      # Telnet/Serial terminal clients
+│   └── presets.py       # Router preset management
+├── shared/              # Shared utilities
+│   ├── helpers.py       # Type conversion, formatting, subprocess
+│   ├── validators.py    # IP, port, range validation
+│   ├── styles.py        # Theme colors, fonts, animations
+│   └── icons.py         # Logo and icon generation
+├── ui/                  # GUI layer
+│   ├── app.py           # Main application with sidebar
+│   ├── splash.py        # Animated splash screen
+│   ├── tabs/            # Tab implementations
+│   └── components/      # Reusable widgets (cards, sidebar)
+└── main.py              # Entry point
+```
 
+## Quick Start
+
+```bash
+pip install -r hwflash/requirements.txt
+python launcher.py
 ```
-$ ./hw_fmw -d unpack -u -f /home/user/hg8245hv300r015c10spc130_common_all.bin -v
+
+## Running Tests
+
+```bash
+pip install pytest pycryptodome
+python -m pytest tests/ -v
 ```
-Files that will be added to the firmware should be marked with a **'+'** sign in file **upacked/item_list.txt**
-```
-$ head -n 5 unpack/item_list.txt
-HWNP(0x504e5748)
-256 494|4B4|534|5D4|614|;COMMON|CMCC|
-+ 0 file:/var/UpgradeCheck.xml UPGRDCHECK NULL 0
-- 1 flash:flash_config FLASH_CONFIG NULL 0
-+ 2 file:/var/hw_flashcfg_256.xml FLASH_CONFIG1 NULL 0
-```
-### More information about the file "item_list.txt"
-```
-First line: 
-  (0) HWNP(0x504e5748 - little endian) - "Magic"
-Second line: 
-  (0) 256 - size "Product list"
-  (1) 494|... - "Product" list
-After second line: 
-  (0) minus(-) or plus(+) it's "checkbox" for append item to firmware
-  (1) 0 - item index
-  (2) file:/var/UpgradeCheck.xml - item:path
-  (3) UPGRDCHECK - section
-  (4) NULL - version
-  (5) 0 - plocicy 
-```
-### Pack:
-```
-$ ./hw_fmw -d unpack -p -o /home/user/new_hg8245hv300r015c10spc130_common_all.bin -v
-```
-## Example modify/verify firmware on HG8245 (need support check signature)
-### Mark the file to sign
-```
-$ head -n 5 unpack/sig_item_list.txt 
-+ file:/var/UpgradeCheck.xml
-- flash:flash_config
-+ file:/var/hw_flashcfg_256.xml
-- flash:uboot
-- flash:kernel
-```
-### Generate keys:
-```
-$ openssl genrsa -out private.pem 2048
-$ openssl rsa -in private.pem -outform PEM -pubout -out public.pem
-```
-### Make signature:
-```
-$ ./hw_sign -d unpack -k private.pem -o new_signature
-```
-### Verify signature:
-```
-$ ./hw_verify -d unpack -k public.pem -i new_signature
-```
+
+## OBSC Protocol
+
+The OBSC protocol uses UDP to discover and flash firmware to Huawei ONT
+devices in bootloader mode:
+
+1. **Discovery**: Broadcast to port 50000; ONTs respond with device info
+2. **Control**: Send firmware metadata (size, CRC32, frame parameters)
+3. **Data**: Fragment firmware into frames at configurable rate
+4. **Result**: Wait for flash confirmation from the device
+
+## Supported Devices
+
+- Huawei HG8145V5
+- Huawei HG8245H
+- Huawei HG8546M
+- Huawei HG8247H
+- Huawei EG8145V5
+- Other Huawei ONT devices using HWNP firmware format
+
+## License
+
+See [LICENSE](LICENSE) for details.

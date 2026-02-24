@@ -1,4 +1,4 @@
-name: Build OBSC Firmware Tool
+name: Build HuaweiFlash
 
 on:
   push:
@@ -28,38 +28,51 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install ALL dependencies
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r obsc_tool/requirements.txt
+          pip install -r hwflash/requirements.txt
+          pip install pyinstaller
 
-      - name: Build EXE with PyInstaller (all deps bundled)
+      - name: Generate app icon
+        run: |
+          python -c "from hwflash.shared.icons import generate_ico; generate_ico('hwflash.ico')"
+
+      - name: Build EXE with PyInstaller
         run: |
           pyinstaller --onefile --windowed ^
-            --name "OBSCFirmwareTool" ^
-            --add-data "obsc_tool;obsc_tool" ^
-            --hidden-import "obsc_tool" ^
-            --hidden-import "obsc_tool.main" ^
-            --hidden-import "obsc_tool.firmware" ^
-            --hidden-import "obsc_tool.network" ^
-            --hidden-import "obsc_tool.protocol" ^
-            --hidden-import "obsc_tool.presets" ^
-            --hidden-import "obsc_tool.config_crypto" ^
-            --hidden-import "obsc_tool.terminal" ^
-            --hidden-import "obsc_tool.splash" ^
-            --hidden-import "obsc_tool.gui" ^
-            --hidden-import "obsc_tool.gui.constants" ^
-            --hidden-import "obsc_tool.gui.upgrade_tab" ^
-            --hidden-import "obsc_tool.gui.presets_tab" ^
-            --hidden-import "obsc_tool.gui.verification_tab" ^
-            --hidden-import "obsc_tool.gui.crypto_tab" ^
-            --hidden-import "obsc_tool.gui.terminal_tab" ^
-            --hidden-import "obsc_tool.gui.dump_tab" ^
-            --hidden-import "obsc_tool.gui.settings_tab" ^
-            --hidden-import "obsc_tool.gui.info_tab" ^
-            --hidden-import "obsc_tool.gui.log_tab" ^
-            --hidden-import "obsc_tool.gui.theme" ^
-            --hidden-import "obsc_tool.gui.adapters" ^
+            --name "HuaweiFlash" ^
+            --icon "hwflash.ico" ^
+            --add-data "hwflash;hwflash" ^
+            --hidden-import "hwflash" ^
+            --hidden-import "hwflash.main" ^
+            --hidden-import "hwflash.core.firmware" ^
+            --hidden-import "hwflash.core.network" ^
+            --hidden-import "hwflash.core.protocol" ^
+            --hidden-import "hwflash.core.presets" ^
+            --hidden-import "hwflash.core.crypto" ^
+            --hidden-import "hwflash.core.terminal" ^
+            --hidden-import "hwflash.ui" ^
+            --hidden-import "hwflash.ui.app" ^
+            --hidden-import "hwflash.ui.splash" ^
+            --hidden-import "hwflash.ui.tabs.upgrade" ^
+            --hidden-import "hwflash.ui.tabs.presets" ^
+            --hidden-import "hwflash.ui.tabs.verify" ^
+            --hidden-import "hwflash.ui.tabs.crypto" ^
+            --hidden-import "hwflash.ui.tabs.terminal" ^
+            --hidden-import "hwflash.ui.tabs.dump" ^
+            --hidden-import "hwflash.ui.tabs.settings" ^
+            --hidden-import "hwflash.ui.tabs.info" ^
+            --hidden-import "hwflash.ui.tabs.log" ^
+            --hidden-import "hwflash.ui.tabs.theme" ^
+            --hidden-import "hwflash.ui.tabs.adapters" ^
+            --hidden-import "hwflash.ui.components.cards" ^
+            --hidden-import "hwflash.ui.components.sidebar" ^
+            --hidden-import "hwflash.ui.titlebar" ^
+            --hidden-import "hwflash.shared.helpers" ^
+            --hidden-import "hwflash.shared.styles" ^
+            --hidden-import "hwflash.shared.icons" ^
+            --hidden-import "hwflash.shared.validators" ^
             --hidden-import "serial" ^
             --hidden-import "serial.tools" ^
             --hidden-import "serial.tools.list_ports" ^
@@ -69,26 +82,7 @@ jobs:
             --hidden-import "PIL.ImageTk" ^
             --hidden-import "customtkinter" ^
             --hidden-import "darkdetect" ^
-            --hidden-import "sv_ttk" ^
-            --hidden-import "ttkthemes" ^
-            --hidden-import "CTkMessagebox" ^
-            --hidden-import "CTkToolTip" ^
-            --hidden-import "tktooltip" ^
-            --hidden-import "tkinterdnd2" ^
-            --hidden-import "ttkwidgets" ^
-            --hidden-import "pystray" ^
-            --hidden-import "screeninfo" ^
-            --hidden-import "matplotlib" ^
-            --hidden-import "matplotlib.pyplot" ^
-            --hidden-import "matplotlib.backends.backend_tkagg" ^
-            --hidden-import "qrcode" ^
-            --hidden-import "colour" ^
             --hidden-import "psutil" ^
-            --hidden-import "netifaces" ^
-            --hidden-import "pyperclip" ^
-            --hidden-import "plyer" ^
-            --hidden-import "plyer.platforms.win" ^
-            --hidden-import "plyer.platforms.win.notification" ^
             --hidden-import "Crypto" ^
             --hidden-import "Crypto.Cipher" ^
             --hidden-import "Crypto.Cipher.AES" ^
@@ -96,71 +90,23 @@ jobs:
             --hidden-import "defusedxml" ^
             --hidden-import "defusedxml.ElementTree" ^
             --hidden-import "colorama" ^
-            --hidden-import "rich" ^
             --collect-submodules "ttkbootstrap" ^
             --collect-submodules "customtkinter" ^
-            --collect-submodules "plyer" ^
             --collect-data "ttkbootstrap" ^
             --collect-data "customtkinter" ^
-            --collect-data "sv_ttk" ^
-            --collect-data "ttkthemes" ^
-            run_obsc_tool.py
+            launcher.py
         shell: cmd
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: OBSCFirmwareTool-windows
-          path: dist/OBSCFirmwareTool.exe
+          name: HuaweiFlash-windows
+          path: dist/HuaweiFlash.exe
           retention-days: 90
 
       - name: Upload to Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/OBSCFirmwareTool.exe
-          generate_release_notes: true
-
-  build-cpp-windows:
-    runs-on: windows-latest
-    env:
-      VCPKG_DEFAULT_TRIPLET: x64-windows-static
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup vcpkg
-        uses: lukka/run-vcpkg@v11
-        with:
-          vcpkgGitCommitId: 'c82f74667287d3dc386bce81e44964370c91a289'
-
-      - name: Install vcpkg packages
-        run: vcpkg install openssl:x64-windows-static zlib:x64-windows-static
-
-      - name: Build C++ tools with CMake + MSVC
-        run: |
-          cd cpp
-          mkdir build
-          cd build
-          cmake .. -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-static -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
-          cmake --build . --config Release
-
-      - name: Upload C++ Windows artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: HuaweiFirmwareTools-windows
-          path: |
-            cpp/build/Release/hw_fmw.exe
-            cpp/build/Release/hw_sign.exe
-            cpp/build/Release/hw_verify.exe
-          retention-days: 90
-
-      - name: Upload to Release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            cpp/build/Release/hw_fmw.exe
-            cpp/build/Release/hw_sign.exe
-            cpp/build/Release/hw_verify.exe
+          files: dist/HuaweiFlash.exe
           generate_release_notes: true

@@ -1,0 +1,25 @@
+# HuaweiFlash - Dependencies
+#
+# ── Core UI ──────────────────────────────────────────────────
+ttkbootstrap>=1.10
+Pillow>=10.2
+customtkinter>=5.2
+#
+# ── UI Themes & Styling ─────────────────────────────────────
+darkdetect>=0.8
+#
+# ── Terminal & Serial ────────────────────────────────────────
+pyserial>=3.5
+#
+# ── System Info ──────────────────────────────────────────────
+psutil>=5.9
+#
+# ── Cryptography ─────────────────────────────────────────────
+pycryptodome>=3.19.1
+#
+# ── File Format Helpers ──────────────────────────────────────
+chardet>=5.0
+defusedxml>=0.7
+#
+# ── Console Output ───────────────────────────────────────────
+colorama>=0.4

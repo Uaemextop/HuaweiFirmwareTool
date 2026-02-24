@@ -386,17 +386,20 @@ class UDPTransport:
         # Join multicast group if specified
         if self.multicast_group:
             try:
+                if self.bind_ip and self.bind_ip != "0.0.0.0":
+                    iface_addr = socket.inet_aton(self.bind_ip)
+                else:
+                    iface_addr = struct.pack('!I', 0)  # INADDR_ANY
                 mreq = struct.pack(
                     '4s4s',
                     socket.inet_aton(self.multicast_group),
-                    socket.inet_aton(self.bind_ip),
+                    iface_addr,
                 )
                 self.sock.setsockopt(
                     socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
                 # Set multicast interface to the bind IP
                 self.sock.setsockopt(
-                    socket.IPPROTO_IP, socket.IP_MULTICAST_IF,
-                    socket.inet_aton(self.bind_ip))
+                    socket.IPPROTO_IP, socket.IP_MULTICAST_IF, iface_addr)
                 # TTL=1 keeps multicast on local network
                 self.sock.setsockopt(
                     socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 1)

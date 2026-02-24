@@ -1817,7 +1817,7 @@ class OBSCToolApp:
             self.term_nic_combo.current(0)
             # If an Ethernet adapter is detected, set the terminal host to its gateway
             adapter = self.adapters[0]
-            name_lower = (adapter.name + " " + adapter.description).lower()
+            name_lower = (adapter.name + " " + (adapter.description or "")).lower()
             if any(kw in name_lower for kw in ('ethernet', 'eth', 'lan')):
                 if adapter.gateway and adapter.gateway != "N/A":
                     self.term_host_var.set(adapter.gateway)

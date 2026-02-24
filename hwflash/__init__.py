@@ -1,5 +1,5 @@
 """
-OBSC Firmware Tool - Open Source Huawei ONT Firmware Flasher
+hwflash — Open-Source Huawei ONT Firmware Flasher
 
 An open-source reimplementation of the Huawei OBSCTool for flashing
 firmware to ONT (Optical Network Terminal) devices via UDP broadcast.
@@ -11,15 +11,15 @@ Features:
   - Configurable frame size, interval, flash mode
   - Device discovery and status display
   - Audit logging
-  - Modern Windows 11 themed GUI
+  - Modern themed GUI with animated splash
 
 Usage:
-    python hwflash/main.py
+    python -m hwflash.main
 
 Requirements:
-    Python 3.10+ (Windows 11)
-    No external dependencies (uses tkinter)
+    Python 3.10+
 """
 
-__version__ = "1.0.0"
+from hwflash._version import __version__  # noqa: F401
+
 __author__ = "HuaweiFirmwareTool Contributors"

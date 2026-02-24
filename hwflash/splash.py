@@ -374,7 +374,7 @@ class SplashScreen:
 
         # ── Version + copyright ───────────────────────────────────────────────
         try:
-            from hwflash import __version__ as ver
+            from hwflash._version import __version__ as ver  # noqa: PLC0415
         except Exception:
             ver = "1.0.0"
         self._canvas.create_text(

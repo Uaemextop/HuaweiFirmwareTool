@@ -28,6 +28,7 @@ class CustomTitlebar(tk.Frame):
         self._drag_x = 0
         self._drag_y = 0
         self._maximized = False
+        self._prev_geo = None
 
         left = tk.Frame(self, bg=bg)
         left.pack(side=tk.LEFT, fill=tk.Y, padx=(8, 0))

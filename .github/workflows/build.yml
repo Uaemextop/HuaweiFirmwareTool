@@ -80,13 +80,14 @@ jobs:
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
         with:
-          vcpkgGitCommitId: '2024.09.30'
+          vcpkgGitCommitId: 'c82f74667287d3dc386bce81e44964370c91a289'
 
       - name: Install vcpkg packages
         run: vcpkg install openssl:x64-windows-static zlib:x64-windows-static
 
       - name: Build C++ tools with CMake + MSVC
         run: |
+          cd cpp
           mkdir build
           cd build
           cmake .. -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-static -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
@@ -97,9 +98,9 @@ jobs:
         with:
           name: HuaweiFirmwareTools-windows
           path: |
-            build/Release/hw_fmw.exe
-            build/Release/hw_sign.exe
-            build/Release/hw_verify.exe
+            cpp/build/Release/hw_fmw.exe
+            cpp/build/Release/hw_sign.exe
+            cpp/build/Release/hw_verify.exe
           retention-days: 90
 
       - name: Upload to Release
@@ -107,7 +108,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            build/Release/hw_fmw.exe
-            build/Release/hw_sign.exe
-            build/Release/hw_verify.exe
+            cpp/build/Release/hw_fmw.exe
+            cpp/build/Release/hw_sign.exe
+            cpp/build/Release/hw_verify.exe
           generate_release_notes: true

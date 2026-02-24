@@ -20,6 +20,7 @@ class PresetsTabMixin:
         # ── Preset Selection ─────────────────────────────────────
         select_frame = ttk.LabelFrame(tab, text="Router Presets", padding=10)
         select_frame.pack(fill=tk.X, pady=(0, 10))
+        self.preset_select_frame = select_frame  # Store ref for pack(after=) in siblings
 
         row = ttk.Frame(select_frame)
         row.pack(fill=tk.X, pady=2)
@@ -212,7 +213,7 @@ class PresetsTabMixin:
         if name == self.NEW_PRESET_LABEL:
             # Show create/edit form, hide details panel
             self.preset_create_frame.pack(fill=tk.X, pady=(0, 10),
-                                          after=self.preset_combo.master.master)
+                                          after=self.preset_select_frame)
             self.preset_details_frame.pack_forget()
             self.preset_load_btn.configure(state='disabled')
             self.preset_edit_btn.configure(state='disabled')
@@ -398,7 +399,7 @@ class PresetsTabMixin:
             return
         # Show the editor frame
         self.preset_create_frame.pack(fill=tk.X, pady=(0, 10),
-                                      after=self.preset_combo.master.master)
+                                      after=self.preset_select_frame)
         self.preset_details_frame.pack_forget()
         # Don't overwrite name for built-ins (user should rename)
         if not self.preset_manager.is_builtin(name):

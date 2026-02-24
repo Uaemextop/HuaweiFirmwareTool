@@ -244,6 +244,13 @@ class HWNPFirmware:
         # Use item size from header if available, otherwise default
         item_size = self.item_header_size if self.item_header_size > 0 else HWNP_ITEM_SIZE
 
+        # Some real-world firmwares include padding/extra metadata between the product
+        # list and the item headers. If the default offset yields empty headers, scan.
+        if self.header_layout == 'mixed':
+            detected = self._detect_items_offset(items_offset, item_size)
+            if detected is not None:
+                items_offset = detected
+
         for i in range(self.item_count):
             item_offset = items_offset + i * item_size
             if item_offset + item_size > len(self.raw_data):
@@ -290,6 +297,75 @@ class HWNPFirmware:
                     item.data = self.raw_data[abs_data_offset:abs_data_offset + item.data_size]
 
             self.items.append(item)
+
+    def _detect_items_offset(self, initial_offset, item_size):
+        """Best-effort item table offset detection for mixed-layout files."""
+        if self.item_count <= 0:
+            return None
+
+        max_scan = self.header_offset + max(self.header_size, HWNP_HEADER_SIZE + self.prod_list_size) + 8192
+        max_scan = min(max_scan, len(self.raw_data) - item_size)
+        start = self.header_offset + HWNP_HEADER_SIZE
+        start = min(start, max_scan)
+
+        def _is_printable_path(buf: bytes) -> bool:
+            head = buf.split(b'\x00', 1)[0]
+            if len(head) < 5:
+                return False
+            if b':' not in head[:32]:
+                return False
+            # allow common characters
+            for b in head[:64]:
+                if b < 0x20 or b > 0x7E:
+                    return False
+            return True
+
+        def _candidate_ok(off: int) -> bool:
+            try:
+                idx, crc, data_off, data_sz = struct.unpack_from(self.endian + 'IIII', self.raw_data, off)
+            except struct.error:
+                return False
+
+            if idx > max(4096, self.item_count + 32):
+                return False
+            if data_sz == 0 or data_sz > len(self.raw_data):
+                return False
+            # path field sanity
+            if not _is_printable_path(self.raw_data[off + 16:off + 16 + 128]):
+                return False
+
+            # offset should point into file, either absolute or relative to header_offset
+            abs1 = data_off
+            abs2 = self.header_offset + data_off
+            ok_off = False
+            for a in (abs1, abs2):
+                if 0 <= a <= len(self.raw_data) and a + data_sz <= len(self.raw_data):
+                    ok_off = True
+                    break
+            if not ok_off:
+                return False
+
+            return True
+
+        # Quick check: if initial offset already looks good, keep it.
+        if 0 <= initial_offset <= max_scan and _candidate_ok(initial_offset):
+            return initial_offset
+
+        # Scan for the first offset that looks like a table start and has a few
+        # consecutive valid headers.
+        probe_n = min(3, self.item_count)
+        for off in range(start, max_scan, 4):
+            if not _candidate_ok(off):
+                continue
+            ok = True
+            for i in range(1, probe_n):
+                if not _candidate_ok(off + i * item_size):
+                    ok = False
+                    break
+            if ok:
+                return off
+
+        return None
 
     def _read_string(self, offset, max_len):
         """Read a null-terminated string from the firmware data."""
@@ -342,6 +418,29 @@ class HWNPFirmware:
         data_valid = (calc_raw_crc == self.raw_crc32)
         if not data_valid and self._raw_crc32_alt is not None:
             data_valid = (calc_raw_crc == self._raw_crc32_alt)
+
+        # For mixed-layout firmwares, some vendors use non-standard checksums in
+        # the container fields. In that case, fall back to structural + per-item CRC.
+        if self.header_layout == 'mixed' and (not header_valid or not data_valid):
+            # Structural sanity
+            start, end = self.get_transfer_range()
+            size_ok = (self.raw_size > 0 and (end - start) == self.raw_size)
+            hdr_ok = (HWNP_HEADER_SIZE <= self.header_size <= self.raw_size)
+
+            # Per-item CRC: require that we can extract at least one item with data,
+            # and that all extracted items match their advertised CRC.
+            extracted = [it for it in self.items if it.data and it.data_size]
+            item_ok = False
+            if extracted:
+                bad = 0
+                for it in extracted:
+                    calc = zlib.crc32(it.data) & 0xFFFFFFFF
+                    if it.crc32 and calc != it.crc32:
+                        bad += 1
+                item_ok = (bad == 0)
+
+            if size_ok and hdr_ok and item_ok:
+                return True, True
 
         return header_valid, data_valid
 

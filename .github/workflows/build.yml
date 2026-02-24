@@ -69,33 +69,6 @@ jobs:
           files: dist/OBSCFirmwareTool.exe
           generate_release_notes: true
 
-  build-cpp:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake g++ libssl-dev zlib1g-dev
-
-      - name: Build C++ tools
-        run: |
-          mkdir build && cd build
-          cmake ..
-          make -j$(nproc)
-
-      - name: Upload C++ artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: HuaweiFirmwareTools-linux
-          path: |
-            build/hw_fmw
-            build/hw_sign
-            build/hw_verify
-          retention-days: 90
-
   build-cpp-windows:
     runs-on: windows-latest
     env:

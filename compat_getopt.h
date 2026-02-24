@@ -3,6 +3,10 @@
  *
  * On POSIX systems (Linux, macOS), delegates to <unistd.h>.
  * On Windows (MSVC), provides a minimal getopt() implementation.
+ *
+ * Note: The Windows implementation is not reentrant and not thread-safe,
+ * matching the behavior of POSIX getopt(). Each executable should call
+ * getopt() from a single thread (main).
  */
 #ifndef COMPAT_GETOPT_H
 #define COMPAT_GETOPT_H

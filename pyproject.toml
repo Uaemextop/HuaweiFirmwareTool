@@ -70,4 +70,4 @@ python_functions = ["test_*"]
 
 [tool.coverage.run]
 source = ["obsc_tool", "hwflash"]
-omit = ["obsc_tool/gui/*", "obsc_tool/main.py", "obsc_tool/splash.py"]
+omit = ["obsc_tool/gui/*", "obsc_tool/main.py", "obsc_tool/splash.py", "hwflash/gui/*", "hwflash/main.py", "hwflash/splash.py"]

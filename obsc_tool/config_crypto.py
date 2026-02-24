@@ -5,12 +5,25 @@ Implements the AES-128-CBC encryption used by Huawei devices to protect
 configuration files (hw_ctree.xml). The encryption key is derived from
 the device's chip ID using the template "Df7!ui%s9(lmV1L8".
 
+Uses pycryptodome for AES operations. Falls back to a pure-Python
+implementation if pycryptodome is not available.
+
 Also provides cfgtool-compatible configuration file parsing and editing.
 """
 
-import hashlib
-import struct
 import os
+import logging
+
+logger = logging.getLogger("obsc_tool.config_crypto")
+
+# Try to use pycryptodome (battle-tested) for AES operations
+try:
+    from Crypto.Cipher import AES as _AES
+    from Crypto.Util.Padding import pad as _pkcs7_pad_crypto, unpad as _pkcs7_unpad_crypto
+    _HAS_PYCRYPTODOME = True
+except ImportError:
+    _HAS_PYCRYPTODOME = False
+    logger.warning("pycryptodome not available; using pure-Python AES fallback")
 
 # Known Huawei chip IDs used in ONT devices
 KNOWN_CHIP_IDS = [
@@ -24,6 +37,9 @@ KNOWN_CHIP_IDS = [
 
 # Key template: "Df7!ui%s9(lmV1L8" where %s is the chip ID
 KEY_TEMPLATE = "Df7!ui%s9(lmV1L8"
+
+# Huawei uses a zero IV for config file encryption
+_DEFAULT_IV = b'\x00' * 16
 
 
 def derive_key(chip_id):
@@ -48,41 +64,85 @@ def derive_key(chip_id):
     return key_bytes
 
 
-def _xor_bytes(a, b):
-    """XOR two byte sequences."""
-    return bytes(x ^ y for x, y in zip(a, b))
+# ── AES-128-CBC implementation ──────────────────────────────────
+
+def _pkcs7_pad(data, block_size=16):
+    """Apply PKCS#7 padding."""
+    pad_len = block_size - (len(data) % block_size)
+    return data + bytes([pad_len] * pad_len)
 
 
-def _aes_sbox():
-    """Generate AES S-box lookup table."""
-    sbox = [0] * 256
-    p = 1
-    q = 1
-    while True:
-        # Multiply p by 3 in GF(2^8)
-        p = p ^ (p << 1) ^ (0x1B if p & 0x80 else 0)
-        p &= 0xFF
-        # Divide q by 3 (multiply by 0xF6)
-        q ^= q << 1
-        q ^= q << 2
-        q ^= q << 4
-        q ^= 0x09 if q & 0x80 else 0
-        q &= 0xFF
-        # Compute affine transformation
-        xformed = q ^ ((q << 1) | (q >> 7)) & 0xFF
-        xformed ^= ((q << 2) | (q >> 6)) & 0xFF
-        xformed ^= ((q << 3) | (q >> 5)) & 0xFF
-        xformed ^= ((q << 4) | (q >> 4)) & 0xFF
-        xformed ^= 0x63
-        sbox[p] = xformed & 0xFF
-        if p == 1:
-            break
-    sbox[0] = 0x63
-    return sbox
+def _pkcs7_unpad(data):
+    """Remove PKCS#7 padding with validation.
 
+    Raises:
+        ValueError: If padding is invalid.
+    """
+    if not data:
+        raise ValueError("Empty data cannot be unpadded")
+    pad_len = data[-1]
+    if pad_len < 1 or pad_len > 16:
+        raise ValueError(f"Invalid padding length: {pad_len}")
+    if not all(b == pad_len for b in data[-pad_len:]):
+        raise ValueError("Invalid PKCS#7 padding bytes")
+    return data[:-pad_len]
+
+
+def aes_cbc_encrypt(plaintext, key, iv=None):
+    """Encrypt data using AES-128-CBC.
+
+    Args:
+        plaintext: Data to encrypt (will be PKCS7-padded).
+        key: 16-byte AES key.
+        iv: 16-byte initialization vector (defaults to all zeros).
+
+    Returns:
+        Encrypted bytes (IV is NOT prepended).
+    """
+    if iv is None:
+        iv = _DEFAULT_IV
+
+    if _HAS_PYCRYPTODOME:
+        cipher = _AES.new(key, _AES.MODE_CBC, iv)
+        padded = _pkcs7_pad_crypto(plaintext, _AES.block_size)
+        return cipher.encrypt(padded)
+
+    # Pure-Python fallback
+    return _aes_cbc_encrypt_fallback(plaintext, key, iv)
+
+
+def aes_cbc_decrypt(ciphertext, key, iv=None):
+    """Decrypt data using AES-128-CBC.
+
+    Args:
+        ciphertext: Encrypted data (multiple of 16 bytes).
+        key: 16-byte AES key.
+        iv: 16-byte initialization vector (defaults to all zeros).
+
+    Returns:
+        Decrypted bytes with PKCS7 padding removed.
+    """
+    if iv is None:
+        iv = _DEFAULT_IV
+
+    if _HAS_PYCRYPTODOME:
+        cipher = _AES.new(key, _AES.MODE_CBC, iv)
+        decrypted = cipher.decrypt(ciphertext)
+        try:
+            return _pkcs7_unpad_crypto(decrypted, _AES.block_size)
+        except ValueError:
+            # Return raw decrypted data if padding is invalid
+            return decrypted
+
+    # Pure-Python fallback
+    return _aes_cbc_decrypt_fallback(ciphertext, key, iv)
+
+
+# ── Pure-Python AES fallback ────────────────────────────────────
+# Used only when pycryptodome is not installed.
 
 # Pre-computed AES S-box (standard)
-AES_SBOX = [
+_AES_SBOX = [
     0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
     0xCA, 0x82, 0xC9, 0x7D, 0xFA, 0x59, 0x47, 0xF0, 0xAD, 0xD4, 0xA2, 0xAF, 0x9C, 0xA4, 0x72, 0xC0,
     0xB7, 0xFD, 0x93, 0x26, 0x36, 0x3F, 0xF7, 0xCC, 0x34, 0xA5, 0xE5, 0xF1, 0x71, 0xD8, 0x31, 0x15,
@@ -101,44 +161,18 @@ AES_SBOX = [
     0x8C, 0xA1, 0x89, 0x0D, 0xBF, 0xE6, 0x42, 0x68, 0x41, 0x99, 0x2D, 0x0F, 0xB0, 0x54, 0xBB, 0x16,
 ]
 
-# Inverse S-box
-AES_SBOX_INV = [0] * 256
-for _i, _v in enumerate(AES_SBOX):
-    AES_SBOX_INV[_v] = _i
+_AES_SBOX_INV = [0] * 256
+for _i, _v in enumerate(_AES_SBOX):
+    _AES_SBOX_INV[_v] = _i
 
-# Round constants
-AES_RCON = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36]
+_AES_RCON = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36]
 
 
-def _sub_bytes(state, sbox):
-    """Apply S-box substitution to state."""
-    return [sbox[b] for b in state]
-
-
-def _shift_rows(state):
-    """Shift rows of the state matrix."""
-    # State is a flat list of 16 bytes in column-major order
-    s = list(state)
-    # Row 1: shift left by 1
-    s[1], s[5], s[9], s[13] = s[5], s[9], s[13], s[1]
-    # Row 2: shift left by 2
-    s[2], s[6], s[10], s[14] = s[10], s[14], s[2], s[6]
-    # Row 3: shift left by 3
-    s[3], s[7], s[11], s[15] = s[15], s[3], s[7], s[11]
-    return s
-
-
-def _inv_shift_rows(state):
-    """Inverse shift rows."""
-    s = list(state)
-    s[1], s[5], s[9], s[13] = s[13], s[1], s[5], s[9]
-    s[2], s[6], s[10], s[14] = s[10], s[14], s[2], s[6]
-    s[3], s[7], s[11], s[15] = s[7], s[11], s[15], s[3]
-    return s
+def _xor_bytes(a, b):
+    return bytes(x ^ y for x, y in zip(a, b))
 
 
 def _gmul(a, b):
-    """Galois field multiplication."""
     p = 0
     for _ in range(8):
         if b & 1:
@@ -151,54 +185,17 @@ def _gmul(a, b):
     return p
 
 
-def _mix_columns(state):
-    """Mix columns transformation."""
-    s = list(state)
-    for i in range(4):
-        c = i * 4
-        a = s[c:c + 4]
-        s[c + 0] = _gmul(a[0], 2) ^ _gmul(a[1], 3) ^ a[2] ^ a[3]
-        s[c + 1] = a[0] ^ _gmul(a[1], 2) ^ _gmul(a[2], 3) ^ a[3]
-        s[c + 2] = a[0] ^ a[1] ^ _gmul(a[2], 2) ^ _gmul(a[3], 3)
-        s[c + 3] = _gmul(a[0], 3) ^ a[1] ^ a[2] ^ _gmul(a[3], 2)
-    return s
-
-
-def _inv_mix_columns(state):
-    """Inverse mix columns transformation."""
-    s = list(state)
-    for i in range(4):
-        c = i * 4
-        a = s[c:c + 4]
-        s[c + 0] = _gmul(a[0], 14) ^ _gmul(a[1], 11) ^ _gmul(a[2], 13) ^ _gmul(a[3], 9)
-        s[c + 1] = _gmul(a[0], 9) ^ _gmul(a[1], 14) ^ _gmul(a[2], 11) ^ _gmul(a[3], 13)
-        s[c + 2] = _gmul(a[0], 13) ^ _gmul(a[1], 9) ^ _gmul(a[2], 14) ^ _gmul(a[3], 11)
-        s[c + 3] = _gmul(a[0], 11) ^ _gmul(a[1], 13) ^ _gmul(a[2], 9) ^ _gmul(a[3], 14)
-    return s
-
-
-def _add_round_key(state, round_key):
-    """XOR state with round key."""
-    return [s ^ k for s, k in zip(state, round_key)]
-
-
 def _key_expansion(key):
-    """Expand AES-128 key to round keys."""
-    # Key is 16 bytes = 4 words
     w = []
     for i in range(4):
         w.append(list(key[4 * i:4 * i + 4]))
-
     for i in range(4, 44):
         temp = list(w[i - 1])
         if i % 4 == 0:
-            # RotWord + SubWord + Rcon
             temp = temp[1:] + temp[:1]
-            temp = [AES_SBOX[b] for b in temp]
-            temp[0] ^= AES_RCON[i // 4 - 1]
+            temp = [_AES_SBOX[b] for b in temp]
+            temp[0] ^= _AES_RCON[i // 4 - 1]
         w.append([a ^ b for a, b in zip(w[i - 4], temp)])
-
-    # Convert words to round keys (each 16 bytes)
     round_keys = []
     for r in range(11):
         rk = []
@@ -209,121 +206,90 @@ def _key_expansion(key):
 
 
 def _aes_encrypt_block(block, round_keys):
-    """Encrypt a single 16-byte block with AES-128."""
     state = list(block)
-
-    # Initial round key
-    state = _add_round_key(state, round_keys[0])
-
-    # Rounds 1-9
+    state = [s ^ k for s, k in zip(state, round_keys[0])]
     for r in range(1, 10):
-        state = _sub_bytes(state, AES_SBOX)
-        state = _shift_rows(state)
-        state = _mix_columns(state)
-        state = _add_round_key(state, round_keys[r])
-
-    # Final round (no MixColumns)
-    state = _sub_bytes(state, AES_SBOX)
-    state = _shift_rows(state)
-    state = _add_round_key(state, round_keys[10])
-
+        state = [_AES_SBOX[b] for b in state]
+        s = list(state)
+        s[1], s[5], s[9], s[13] = s[5], s[9], s[13], s[1]
+        s[2], s[6], s[10], s[14] = s[10], s[14], s[2], s[6]
+        s[3], s[7], s[11], s[15] = s[15], s[3], s[7], s[11]
+        state = s
+        ns = list(state)
+        for i in range(4):
+            c = i * 4
+            a = ns[c:c + 4]
+            ns[c] = _gmul(a[0], 2) ^ _gmul(a[1], 3) ^ a[2] ^ a[3]
+            ns[c + 1] = a[0] ^ _gmul(a[1], 2) ^ _gmul(a[2], 3) ^ a[3]
+            ns[c + 2] = a[0] ^ a[1] ^ _gmul(a[2], 2) ^ _gmul(a[3], 3)
+            ns[c + 3] = _gmul(a[0], 3) ^ a[1] ^ a[2] ^ _gmul(a[3], 2)
+        state = [s ^ k for s, k in zip(ns, round_keys[r])]
+    state = [_AES_SBOX[b] for b in state]
+    s = list(state)
+    s[1], s[5], s[9], s[13] = s[5], s[9], s[13], s[1]
+    s[2], s[6], s[10], s[14] = s[10], s[14], s[2], s[6]
+    s[3], s[7], s[11], s[15] = s[15], s[3], s[7], s[11]
+    state = [ss ^ k for ss, k in zip(s, round_keys[10])]
     return bytes(state)
 
 
 def _aes_decrypt_block(block, round_keys):
-    """Decrypt a single 16-byte block with AES-128."""
     state = list(block)
-
-    # Initial round key (round 10)
-    state = _add_round_key(state, round_keys[10])
-
-    # Rounds 9 down to 1
+    state = [s ^ k for s, k in zip(state, round_keys[10])]
     for r in range(9, 0, -1):
-        state = _inv_shift_rows(state)
-        state = _sub_bytes(state, AES_SBOX_INV)
-        state = _add_round_key(state, round_keys[r])
-        state = _inv_mix_columns(state)
-
-    # Final round
-    state = _inv_shift_rows(state)
-    state = _sub_bytes(state, AES_SBOX_INV)
-    state = _add_round_key(state, round_keys[0])
-
+        s = list(state)
+        s[1], s[5], s[9], s[13] = s[13], s[1], s[5], s[9]
+        s[2], s[6], s[10], s[14] = s[10], s[14], s[2], s[6]
+        s[3], s[7], s[11], s[15] = s[7], s[11], s[15], s[3]
+        state = [_AES_SBOX_INV[b] for b in s]
+        state = [ss ^ k for ss, k in zip(state, round_keys[r])]
+        ns = list(state)
+        for i in range(4):
+            c = i * 4
+            a = ns[c:c + 4]
+            ns[c] = _gmul(a[0], 14) ^ _gmul(a[1], 11) ^ _gmul(a[2], 13) ^ _gmul(a[3], 9)
+            ns[c + 1] = _gmul(a[0], 9) ^ _gmul(a[1], 14) ^ _gmul(a[2], 11) ^ _gmul(a[3], 13)
+            ns[c + 2] = _gmul(a[0], 13) ^ _gmul(a[1], 9) ^ _gmul(a[2], 14) ^ _gmul(a[3], 11)
+            ns[c + 3] = _gmul(a[0], 11) ^ _gmul(a[1], 13) ^ _gmul(a[2], 9) ^ _gmul(a[3], 14)
+        state = ns
+    s = list(state)
+    s[1], s[5], s[9], s[13] = s[13], s[1], s[5], s[9]
+    s[2], s[6], s[10], s[14] = s[10], s[14], s[2], s[6]
+    s[3], s[7], s[11], s[15] = s[7], s[11], s[15], s[3]
+    state = [_AES_SBOX_INV[b] for b in s]
+    state = [ss ^ k for ss, k in zip(state, round_keys[0])]
     return bytes(state)
 
 
-def _pkcs7_pad(data, block_size=16):
-    """Apply PKCS#7 padding."""
-    pad_len = block_size - (len(data) % block_size)
-    return data + bytes([pad_len] * pad_len)
-
-
-def _pkcs7_unpad(data):
-    """Remove PKCS#7 padding."""
-    if not data:
-        return data
-    pad_len = data[-1]
-    if pad_len < 1 or pad_len > 16:
-        return data  # Not padded
-    if all(b == pad_len for b in data[-pad_len:]):
-        return data[:-pad_len]
-    return data  # Invalid padding, return as-is
-
-
-def aes_cbc_encrypt(plaintext, key, iv=None):
-    """Encrypt data using AES-128-CBC.
-
-    Args:
-        plaintext: Data to encrypt (will be PKCS7-padded).
-        key: 16-byte AES key.
-        iv: 16-byte initialization vector (defaults to all zeros).
-
-    Returns:
-        Encrypted bytes (IV is NOT prepended).
-    """
-    if iv is None:
-        iv = b'\x00' * 16
-
+def _aes_cbc_encrypt_fallback(plaintext, key, iv):
+    """Pure-Python AES-128-CBC encrypt (fallback)."""
     round_keys = _key_expansion(key)
     padded = _pkcs7_pad(plaintext)
     ciphertext = bytearray()
     prev = iv
-
     for i in range(0, len(padded), 16):
         block = padded[i:i + 16]
         xored = _xor_bytes(block, prev)
         encrypted = _aes_encrypt_block(xored, round_keys)
         ciphertext.extend(encrypted)
         prev = encrypted
-
     return bytes(ciphertext)
 
 
-def aes_cbc_decrypt(ciphertext, key, iv=None):
-    """Decrypt data using AES-128-CBC.
-
-    Args:
-        ciphertext: Encrypted data (multiple of 16 bytes).
-        key: 16-byte AES key.
-        iv: 16-byte initialization vector (defaults to all zeros).
-
-    Returns:
-        Decrypted bytes with PKCS7 padding removed.
-    """
-    if iv is None:
-        iv = b'\x00' * 16
-
+def _aes_cbc_decrypt_fallback(ciphertext, key, iv):
+    """Pure-Python AES-128-CBC decrypt (fallback)."""
     round_keys = _key_expansion(key)
     plaintext = bytearray()
     prev = iv
-
     for i in range(0, len(ciphertext), 16):
         block = ciphertext[i:i + 16]
         decrypted = _aes_decrypt_block(block, round_keys)
         plaintext.extend(_xor_bytes(decrypted, prev))
         prev = block
-
-    return _pkcs7_unpad(bytes(plaintext))
+    try:
+        return _pkcs7_unpad(bytes(plaintext))
+    except ValueError:
+        return bytes(plaintext)
 
 
 def encrypt_config(data, chip_id="SD5116H"):

@@ -55,7 +55,7 @@ main(int argc, char *argv[])
         }
     }
 
-    if ((fpack & funpack) | (!fpack & !funpack) | (funpack & fout) | (fpack & fin)) {
+    if ((fpack && funpack) || (!fpack && !funpack) || (funpack && fout) || (fpack && fin)) {
         usage_print();
     }
 

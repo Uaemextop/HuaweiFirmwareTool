@@ -127,14 +127,12 @@ def _discover_adapters_windows():
 
     try:
         # Get adapter hardware info (MAC, status, speed)
-        cmd_adapter = (
-            'powershell -Command "'
-            'Get-NetAdapter | '
-            'Select-Object Name,InterfaceIndex,MacAddress,Status,LinkSpeed | '
-            'ConvertTo-Csv -NoTypeInformation"'
-        )
         result = subprocess.run(
-            cmd_adapter, capture_output=True, text=True, timeout=5, shell=True
+            ['powershell', '-NoProfile', '-Command',
+             'Get-NetAdapter | '
+             'Select-Object Name,InterfaceIndex,MacAddress,Status,LinkSpeed | '
+             'ConvertTo-Csv -NoTypeInformation'],
+            capture_output=True, text=True, timeout=5
         )
         if result.returncode == 0:
             lines = result.stdout.strip().split('\n')
@@ -151,16 +149,14 @@ def _discover_adapters_windows():
 
     try:
         # Get default gateway per adapter
-        cmd_gw = (
-            'powershell -Command "'
-            'Get-NetIPConfiguration | '
-            'Where-Object { $_.IPv4DefaultGateway } | '
-            'Select-Object InterfaceAlias,'
-            '@{N=\'Gateway\';E={$_.IPv4DefaultGateway.NextHop}} | '
-            'ConvertTo-Csv -NoTypeInformation"'
-        )
         result = subprocess.run(
-            cmd_gw, capture_output=True, text=True, timeout=5, shell=True
+            ['powershell', '-NoProfile', '-Command',
+             'Get-NetIPConfiguration | '
+             'Where-Object { $_.IPv4DefaultGateway } | '
+             "Select-Object InterfaceAlias,"
+             "@{N='Gateway';E={$_.IPv4DefaultGateway.NextHop}} | "
+             'ConvertTo-Csv -NoTypeInformation'],
+            capture_output=True, text=True, timeout=5
         )
         if result.returncode == 0:
             lines = result.stdout.strip().split('\n')
@@ -173,15 +169,13 @@ def _discover_adapters_windows():
 
     try:
         # Get IP addresses
-        cmd = (
-            'powershell -Command "'
-            'Get-NetIPAddress -AddressFamily IPv4 | '
-            'Where-Object { $_.IPAddress -ne \'127.0.0.1\' } | '
-            'Select-Object InterfaceAlias,IPAddress,PrefixLength,InterfaceIndex | '
-            'ConvertTo-Csv -NoTypeInformation"'
-        )
         result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=5, shell=True
+            ['powershell', '-NoProfile', '-Command',
+             'Get-NetIPAddress -AddressFamily IPv4 | '
+             "Where-Object { $_.IPAddress -ne '127.0.0.1' } | "
+             'Select-Object InterfaceAlias,IPAddress,PrefixLength,InterfaceIndex | '
+             'ConvertTo-Csv -NoTypeInformation'],
+            capture_output=True, text=True, timeout=5
         )
         if result.returncode == 0:
             lines = result.stdout.strip().split('\n')

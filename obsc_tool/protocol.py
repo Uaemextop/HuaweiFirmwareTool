@@ -64,6 +64,13 @@ RESULT_CODES = {
     0xF7204045: "Flash write error",
 }
 
+# Validation limits for protocol parameters
+MIN_FRAME_SIZE = 64
+MAX_FRAME_SIZE = 65500
+MIN_FRAME_INTERVAL_MS = 0
+MAX_FRAME_INTERVAL_MS = 1000
+MAX_FIRMWARE_SIZE = 256 * 1024 * 1024  # 256 MB
+
 
 # ── OBSC Packet Structures ──────────────────────────────────────
 
@@ -233,9 +240,28 @@ class OBSCWorker:
         Args:
             firmware_data: Raw firmware bytes to send.
             version_pkg: Version string for the firmware package.
+
+        Raises:
+            ValueError: If parameters are out of valid range.
         """
         if self._running:
             return
+
+        # Validate parameters before starting
+        if not firmware_data:
+            raise ValueError("No firmware data provided")
+        if len(firmware_data) > MAX_FIRMWARE_SIZE:
+            raise ValueError(
+                f"Firmware too large: {len(firmware_data):,} bytes "
+                f"(max {MAX_FIRMWARE_SIZE:,})")
+        if not (MIN_FRAME_SIZE <= self.frame_size <= MAX_FRAME_SIZE):
+            raise ValueError(
+                f"frame_size {self.frame_size} out of range "
+                f"[{MIN_FRAME_SIZE}, {MAX_FRAME_SIZE}]")
+        if not (MIN_FRAME_INTERVAL_MS <= self.frame_interval_ms <= MAX_FRAME_INTERVAL_MS):
+            raise ValueError(
+                f"frame_interval_ms {self.frame_interval_ms} out of range "
+                f"[{MIN_FRAME_INTERVAL_MS}, {MAX_FRAME_INTERVAL_MS}]")
 
         self._running = True
         self._session_id = int(time.time()) & 0xFFFFFFFF
@@ -305,9 +331,11 @@ class OBSCWorker:
     def _handle_discovery_reply(self, data, addr):
         """Process a discovery reply from an ONT device."""
         ip = addr[0]
-        if ip in self._devices:
-            self._devices[ip].last_seen = time.time()
-            return
+
+        with self._lock:
+            if ip in self._devices:
+                self._devices[ip].last_seen = time.time()
+                return
 
         device = ONTDevice()
         device.ip = ip
@@ -333,6 +361,10 @@ class OBSCWorker:
                     pass
 
         with self._lock:
+            # Double-check after acquiring the lock
+            if ip in self._devices:
+                self._devices[ip].last_seen = time.time()
+                return
             self._devices[ip] = device
 
         self._emit(self.on_device_found, device)

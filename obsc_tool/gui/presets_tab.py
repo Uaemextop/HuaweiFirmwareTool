@@ -384,7 +384,7 @@ class PresetsTabMixin:
         self.np_verify_sig_var.set(tmpl['verify_signature'])
         self.np_skip_product_var.set(tmpl['skip_product_check'])
         self.np_discovery_var.set(str(tmpl['discovery_duration']))
-        self.np_ctrl_retries_var.set(str(tmpl['data_retries']))
+        self.np_ctrl_retries_var.set(str(tmpl['ctrl_retries']))
         self.np_data_retries_var.set(str(tmpl['data_retries']))
         self.np_check_policy_var.set(tmpl['check_policy'])
         self.np_bom_code_var.set(tmpl['bom_code'])

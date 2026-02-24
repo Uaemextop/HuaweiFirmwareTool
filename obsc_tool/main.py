@@ -24,6 +24,7 @@ import time
 import datetime
 import logging
 import zlib
+import struct
 
 # ttkbootstrap gives us modern themes, meter widgets, icons, and better
 # styling.  Fall back to plain ttk if it is not installed.
@@ -1033,10 +1034,10 @@ class OBSCToolApp:
         row = ttk.Frame(op_frame)
         row.pack(fill=tk.X, pady=2)
         ttk.Label(row, text="Chip ID:", width=14).pack(side=tk.LEFT)
-        self.crypto_chip_var = tk.StringVar(value="SD5116H")
+        self.crypto_chip_var = tk.StringVar(value="Auto")
         ttk.Combobox(
             row, textvariable=self.crypto_chip_var,
-            values=KNOWN_CHIP_IDS + ["Custom"],
+            values=["Auto"] + KNOWN_CHIP_IDS + ["Custom"],
             width=15,
         ).pack(side=tk.LEFT, padx=(0, 5))
         ttk.Label(row, text="Key template: Df7!ui%s9(lmV1L8", font=('Segoe UI', 8)).pack(side=tk.LEFT)
@@ -1258,15 +1259,54 @@ class OBSCToolApp:
         self.dump_output.pack(fill=tk.BOTH, expand=True)
 
     def _build_info_tab(self):
-        """Build the firmware information tab."""
+        """Build the firmware information tab (HWFW_GUI style).
+
+        Adapted from csersoft/HWFW_GUI: tree view showing firmware
+        structure with header, product list, and item details.
+        Supports item export and product list viewing.
+        """
         tab = self.tab_info
 
-        self.info_text = scrolledtext.ScrolledText(
-            tab, wrap=tk.WORD,
-            font=('Consolas', 10),
+        # ── Toolbar ──────────────────────────────────────────────
+        toolbar = ttk.Frame(tab)
+        toolbar.pack(fill=tk.X, pady=(0, 5))
+        ttk.Button(toolbar, text="📋 Refresh Info",
+                   command=self._refresh_fw_info, width=14).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Button(toolbar, text="💾 Export Item",
+                   command=self._export_fw_item, width=14).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Button(toolbar, text="✅ Verify CRC32",
+                   command=self._verify_fw_crc, width=14).pack(side=tk.LEFT, padx=(0, 5))
+
+        self.fw_info_status_var = tk.StringVar(value="Load a firmware file first")
+        ttk.Label(toolbar, textvariable=self.fw_info_status_var,
+                  font=('Segoe UI', 9)).pack(side=tk.LEFT, padx=10)
+
+        # ── Paned window: tree + details ─────────────────────────
+        paned = ttk.PanedWindow(tab, orient=tk.HORIZONTAL)
+        paned.pack(fill=tk.BOTH, expand=True)
+
+        # Left: Tree view (like HWFW_GUI's TreeView)
+        tree_frame = ttk.Frame(paned)
+        paned.add(tree_frame, weight=1)
+
+        self.fw_tree = ttk.Treeview(tree_frame, show='tree', selectmode='browse')
+        fw_tree_scroll = ttk.Scrollbar(tree_frame, orient=tk.VERTICAL,
+                                       command=self.fw_tree.yview)
+        self.fw_tree.configure(yscrollcommand=fw_tree_scroll.set)
+        self.fw_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        fw_tree_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        self.fw_tree.bind('<<TreeviewSelect>>', self._on_fw_tree_select)
+
+        # Right: Details (like HWFW_GUI's ListView)
+        detail_frame = ttk.Frame(paned)
+        paned.add(detail_frame, weight=2)
+
+        self.fw_detail_text = scrolledtext.ScrolledText(
+            detail_frame, wrap=tk.WORD,
+            font=('Consolas', 9),
             state='disabled',
         )
-        self.info_text.pack(fill=tk.BOTH, expand=True)
+        self.fw_detail_text.pack(fill=tk.BOTH, expand=True)
 
     def _build_log_tab(self):
         """Build the log viewer tab."""
@@ -1286,6 +1326,198 @@ class OBSCToolApp:
             state='disabled',
         )
         self.log_text.pack(fill=tk.BOTH, expand=True)
+
+    # ── Firmware Info Handlers (HWFW_GUI style) ──────────────────
+
+    def _refresh_fw_info(self):
+        """Refresh the firmware info tree view."""
+        if not self.firmware:
+            messagebox.showinfo("No Firmware", "Load a firmware file first (Upgrade tab).")
+            return
+
+        # Clear tree
+        for item in self.fw_tree.get_children():
+            self.fw_tree.delete(item)
+
+        fw = self.firmware
+        info = fw.get_info()
+
+        # Root nodes (like HWFW_GUI's TreeView: Header, Products, Items)
+        hdr_node = self.fw_tree.insert('', 'end', text='📄 Firmware Header',
+                                       values=('header',), tags=('header',))
+        prod_node = self.fw_tree.insert('', 'end', text='📦 Product List',
+                                        values=('products',), tags=('products',))
+        items_node = self.fw_tree.insert('', 'end', text='📋 Items',
+                                         values=('items',), tags=('items',))
+
+        # Add individual items as children (like HWFW_GUI item entries)
+        # HW_ItemType_Text from HWFW_GUI: UPGRDCHECK, MODULE, KERNEL, ROOTFS, etc.
+        for item in fw.items:
+            label = f"[{item.index}] {item.section} — {item.item_path}"
+            self.fw_tree.insert(items_node, 'end', text=label,
+                                values=(f'item:{item.index}',),
+                                tags=('item',))
+
+        # Expand all nodes
+        self.fw_tree.item(hdr_node, open=True)
+        self.fw_tree.item(prod_node, open=True)
+        self.fw_tree.item(items_node, open=True)
+
+        # Select header by default
+        self.fw_tree.selection_set(hdr_node)
+        self._on_fw_tree_select(None)
+
+        self.fw_info_status_var.set(
+            f"Loaded: {info['file']} | {info['items']} items | "
+            f"{info['size']:,} bytes")
+
+    def _on_fw_tree_select(self, event):
+        """Handle tree selection to show details in the right panel."""
+        if not self.firmware:
+            return
+        sel = self.fw_tree.selection()
+        if not sel:
+            return
+
+        fw = self.firmware
+        node_text = self.fw_tree.item(sel[0], 'text')
+        node_tags = self.fw_tree.item(sel[0], 'tags')
+
+        lines = []
+        if 'header' in node_tags:
+            lines.append("═══════ Firmware Header ═══════")
+            lines.append(f"  Magic:         0x{fw.magic:08X}  (HWNP)")
+            lines.append(f"  File Size:     {len(fw.raw_data):,} bytes")
+            lines.append(f"  Raw Size:      {fw.raw_size:,}")
+            lines.append(f"  Header Size:   {fw.header_size}")
+            lines.append(f"  Raw CRC32:     0x{fw.raw_crc32:08X}")
+            lines.append(f"  Header CRC32:  0x{fw.header_crc32:08X}")
+            lines.append(f"  Item Count:    {fw.item_count}")
+            lines.append(f"  Prod List Size:{fw.prod_list_size}")
+            lines.append(f"  Item Hdr Size: {fw.item_header_size}")
+
+        elif 'products' in node_tags:
+            lines.append("═══════ Product Compatibility List ═══════")
+            if fw.product_list:
+                for prod in fw.product_list.split('\n'):
+                    prod = prod.strip()
+                    if prod:
+                        lines.append(f"  ✓ {prod}")
+            else:
+                lines.append("  (empty)")
+
+        elif 'item' in node_tags:
+            # Find the item by index
+            vals = self.fw_tree.item(sel[0], 'values')
+            if vals:
+                idx_str = vals[0].replace('item:', '')
+                try:
+                    idx = int(idx_str)
+                except ValueError:
+                    idx = -1
+                item = next((it for it in fw.items if it.index == idx), None)
+                if item:
+                    lines.append(f"═══════ Item #{item.index} ═══════")
+                    lines.append(f"  Path:      {item.item_path}")
+                    lines.append(f"  Type:      {item.section}")
+                    lines.append(f"  Version:   {item.version}")
+                    lines.append(f"  CRC32:     0x{item.crc32:08X}")
+                    lines.append(f"  Offset:    0x{item.data_offset:08X}")
+                    lines.append(f"  Size:      {item.data_size:,} bytes")
+                    lines.append(f"  Policy:    0x{item.policy:08X}")
+                    # Check for whwh sub-header (like HWFW_GUI IDT_WHWH)
+                    if item.data and len(item.data) >= 4:
+                        sub_magic = struct.unpack_from('<I', item.data, 0)[0]
+                        if sub_magic == 0x68776877:  # 'whwh'
+                            lines.append(f"  Sub-Magic: 0x{sub_magic:08X} (whwh)")
+                            if len(item.data) >= 80:
+                                sub_ver = item.data[4:68].split(b'\x00')[0].decode('ascii', errors='replace')
+                                lines.append(f"  Sub-Ver:   {sub_ver}")
+
+        elif 'items' in node_tags:
+            lines.append("═══════ All Items Summary ═══════")
+            lines.append(f"  Total items: {fw.item_count}")
+            lines.append(f"  Total data:  {fw.get_total_data_size():,} bytes")
+            lines.append("")
+            lines.append(f"  {'#':>3}  {'Type':<14}  {'Size':>12}  {'CRC32':<12}  Path")
+            lines.append("  " + "─" * 70)
+            for item in fw.items:
+                lines.append(
+                    f"  {item.index:3d}  {item.section:<14}  "
+                    f"{item.data_size:>10,}  0x{item.crc32:08X}  {item.item_path}")
+
+        self.fw_detail_text.configure(state='normal')
+        self.fw_detail_text.delete('1.0', tk.END)
+        self.fw_detail_text.insert('1.0', '\n'.join(lines))
+        self.fw_detail_text.configure(state='disabled')
+
+    def _export_fw_item(self):
+        """Export the selected firmware item data to a file."""
+        if not self.firmware:
+            messagebox.showinfo("No Firmware", "Load a firmware file first.")
+            return
+
+        sel = self.fw_tree.selection()
+        if not sel:
+            messagebox.showinfo("No Selection", "Select an item in the tree to export.")
+            return
+
+        tags = self.fw_tree.item(sel[0], 'tags')
+        if 'item' not in tags:
+            messagebox.showinfo("Select Item", "Select a specific item (not header/products) to export.")
+            return
+
+        vals = self.fw_tree.item(sel[0], 'values')
+        if not vals:
+            return
+        try:
+            idx = int(vals[0].replace('item:', ''))
+        except ValueError:
+            return
+
+        item = next((it for it in self.firmware.items if it.index == idx), None)
+        if not item or not item.data:
+            messagebox.showwarning("No Data", "This item has no data to export.")
+            return
+
+        path = filedialog.asksaveasfilename(
+            title=f"Export Item #{item.index} ({item.section})",
+            initialfile=f"item_{item.index}_{item.section}.bin",
+            filetypes=[("Binary files", "*.bin"), ("All files", "*.*")],
+        )
+        if path:
+            with open(path, 'wb') as f:
+                f.write(item.data)
+            self._log(f"Exported item #{item.index} ({item.section}) -> {path}")
+            self.fw_info_status_var.set(f"Exported: {os.path.basename(path)} ({item.data_size:,} bytes)")
+
+    def _verify_fw_crc(self):
+        """Verify firmware CRC32 checksums."""
+        if not self.firmware:
+            messagebox.showinfo("No Firmware", "Load a firmware file first.")
+            return
+
+        hdr_ok, data_ok = self.firmware.validate_crc32()
+
+        results = []
+        results.append(f"Header CRC32: {'✅ PASS' if hdr_ok else '❌ FAIL'}")
+        results.append(f"Data CRC32:   {'✅ PASS' if data_ok else '❌ FAIL'}")
+
+        # Check individual items
+        for item in self.firmware.items:
+            if item.data:
+                calc = zlib.crc32(item.data) & 0xFFFFFFFF
+                ok = (calc == item.crc32)
+                results.append(f"  Item #{item.index} ({item.section}): "
+                              f"{'✅' if ok else '❌'} "
+                              f"calc=0x{calc:08X} hdr=0x{item.crc32:08X}")
+
+        msg = '\n'.join(results)
+        self.fw_info_status_var.set(
+            f"CRC32: Header {'OK' if hdr_ok else 'FAIL'}, "
+            f"Data {'OK' if data_ok else 'FAIL'}")
+        messagebox.showinfo("CRC32 Verification", msg)
+        self._log(f"CRC32 verification: header={'ok' if hdr_ok else 'fail'}, data={'ok' if data_ok else 'fail'}")
 
     # ── Preset Management ────────────────────────────────────────
 
@@ -1360,9 +1592,11 @@ class OBSCToolApp:
                                    "Cannot overwrite a built-in preset. Choose a different name.")
             return
 
+        model = self.new_preset_model_var.get() or "Custom"
+        description = self.new_preset_desc_var.get() or f"Custom preset for {model}"
         preset_data = {
-            'model': self.new_preset_model_var.get() or "Custom",
-            'description': self.new_preset_desc_var.get() or f"Custom preset for {preset_data['model']}",
+            'model': model,
+            'description': description,
             'frame_size': int(self.np_frame_size_var.get()),
             'frame_interval_ms': int(self.np_frame_interval_var.get()),
             'flash_mode': self.np_flash_mode_var.get(),
@@ -1526,8 +1760,10 @@ class OBSCToolApp:
     # ── Config Crypto Handlers ───────────────────────────────────
 
     def _get_chip_id(self):
-        """Get the selected chip ID."""
+        """Get the selected chip ID, or None for auto-detect."""
         chip = self.crypto_chip_var.get()
+        if chip == "Auto":
+            return None  # caller should use auto-detect
         if chip == "Custom":
             custom = self.crypto_custom_chip_var.get().strip()
             if not custom:
@@ -1573,7 +1809,9 @@ class OBSCToolApp:
             messagebox.showwarning("Missing Path", "Select input and output files.")
             return
         chip_id = self._get_chip_id()
-        if not chip_id:
+        if chip_id is None:
+            # Auto-detect mode — try all known chip IDs
+            self._crypto_auto_detect_and_save(in_path, out_path)
             return
         try:
             with open(in_path, 'rb') as f:
@@ -1605,7 +1843,10 @@ class OBSCToolApp:
             messagebox.showwarning("Missing Path", "Select input and output files.")
             return
         chip_id = self._get_chip_id()
-        if not chip_id:
+        if chip_id is None:
+            messagebox.showwarning("Select Chip ID",
+                                   "Auto-detect is only available for decryption.\n"
+                                   "Please select a specific chip ID for encryption.")
             return
         try:
             with open(in_path, 'rb') as f:
@@ -1643,6 +1884,35 @@ class OBSCToolApp:
                                     f"Detected chip ID: {chip_id}\n"
                                     f"Key: Df7!ui{chip_id}9(lmV1L8\n"
                                     f"Config loaded in editor.")
+            else:
+                messagebox.showwarning("No Match",
+                                       "Could not decrypt with any known chip ID.\n"
+                                       "Try entering a custom chip ID.")
+        except Exception as e:
+            messagebox.showerror("Error", str(e))
+
+    def _crypto_auto_detect_and_save(self, in_path, out_path):
+        """Auto-detect the chip ID and decrypt+save in one step."""
+        try:
+            with open(in_path, 'rb') as f:
+                data = f.read()
+            results = try_decrypt_all_keys(data)
+            if results:
+                chip_id, decrypted = results[0]
+                self.crypto_chip_var.set(chip_id)
+                with open(out_path, 'wb') as f:
+                    f.write(decrypted)
+                try:
+                    text = decrypted.decode('utf-8', errors='replace')
+                    self.cfg_text.delete('1.0', tk.END)
+                    self.cfg_text.insert('1.0', text)
+                except Exception:
+                    pass
+                self._log(f"Auto-detected chip: {chip_id}, decrypted {in_path} -> {out_path}")
+                messagebox.showinfo("Auto-Detect Success",
+                                    f"Detected chip ID: {chip_id}\n"
+                                    f"Key: Df7!ui{chip_id}9(lmV1L8\n"
+                                    f"Output: {out_path}")
             else:
                 messagebox.showwarning("No Match",
                                        "Could not decrypt with any known chip ID.\n"
@@ -1969,8 +2239,8 @@ class OBSCToolApp:
 
         # Update text widgets
         colors = THEMES[self.current_theme]
-        for text_widget in [self.log_text, self.info_text, self.preset_details_text,
-                            self.cfg_text, self.dump_output]:
+        for text_widget in [self.log_text, self.preset_details_text,
+                            self.cfg_text, self.dump_output, self.fw_detail_text]:
             text_widget.configure(
                 bg=colors['log_bg'],
                 fg=colors['log_fg'],
@@ -1988,7 +2258,7 @@ class OBSCToolApp:
         responsive during the PowerShell/ipconfig calls on Windows.
         """
         # Show a loading state while discovering
-        self.adapter_combo['values'] = ["⏳ Detecting adapters…"]
+        self.adapter_combo['values'] = ["Detecting adapters..."]
         self.adapter_combo.current(0)
         self.adapter_detail_var.set("")
 
@@ -2023,13 +2293,25 @@ class OBSCToolApp:
         self._refresh_term_nic()
 
     def _on_adapter_selected(self, event):
-        """Update adapter detail display when selection changes."""
+        """Update adapter detail display and auto-populate IP fields."""
         adapter = self._get_selected_adapter()
         if adapter:
             details = adapter.details_dict()
             text = "  |  ".join(f"{k}: {v}" for k, v in details.items()
                                 if v and v != "N/A" and k not in ("Name",))
             self.adapter_detail_var.set(text)
+            # Auto-populate manual IP fields from detected adapter
+            if adapter.ip:
+                self.ip_mode_ip_var.set(adapter.ip)
+            if adapter.netmask:
+                self.ip_mode_mask_var.set(adapter.netmask)
+            # Check if gateway is valid (not empty or "N/A")
+            has_gateway = adapter.gateway and adapter.gateway != "N/A"
+            if has_gateway:
+                self.ip_mode_gw_var.set(adapter.gateway)
+                # Auto-populate terminal host with adapter gateway
+                if hasattr(self, 'term_host_var'):
+                    self.term_host_var.set(adapter.gateway)
         else:
             self.adapter_detail_var.set("")
 
@@ -2287,35 +2569,8 @@ class OBSCToolApp:
         if not self.firmware:
             return
 
-        info = self.firmware.get_info()
-        hdr_ok, data_ok = self.firmware.validate_crc32()
-
-        lines = [
-            f"File: {info['file']}",
-            f"Size: {info['size']:,} bytes ({info['size']/1024/1024:.2f} MB)",
-            f"Items: {info['items']}",
-            f"Products: {info['products']}",
-            f"Header CRC32: {'VALID ✅' if hdr_ok else 'INVALID ❌'}",
-            f"Data CRC32: {'VALID ✅' if data_ok else 'INVALID ❌'}",
-            "",
-            "=" * 60,
-            "Items:",
-            "=" * 60,
-        ]
-
-        for item in info['items_detail']:
-            lines.append(f"")
-            lines.append(f"  [{item['index']}] {item['path']}")
-            lines.append(f"      Section: {item['section']}")
-            lines.append(f"      Version: {item['version']}")
-            lines.append(f"      Size: {item['size']:,} bytes")
-            lines.append(f"      CRC32: {item['crc32']}")
-            lines.append(f"      Policy: {item['policy']}")
-
-        self.info_text.configure(state='normal')
-        self.info_text.delete('1.0', tk.END)
-        self.info_text.insert('1.0', '\n'.join(lines))
-        self.info_text.configure(state='disabled')
+        # Refresh the new tree-based view
+        self._refresh_fw_info()
 
     # ── Discovery ────────────────────────────────────────────────
 

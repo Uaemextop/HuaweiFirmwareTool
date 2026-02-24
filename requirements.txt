@@ -3,7 +3,7 @@
 #
 # Core UI
 ttkbootstrap==1.10.1
-Pillow==10.2.0
+Pillow==10.3.0
 customtkinter==5.2.2
 
 # UI themes & styling

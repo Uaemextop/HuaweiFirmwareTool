@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **CRITICAL**: Updated Pillow from 10.2.0 to 10.3.0 to fix buffer overflow vulnerability (CVE-2024-28219)
+  - Affected versions: < 10.3.0
+  - Impact: Buffer overflow in image processing
+  - Severity: High
+  - Action: All users should update immediately
+
 ### Added
 - Modern Python packaging with `pyproject.toml`
 - Comprehensive linting configuration (`.pylintrc`, `.flake8`)

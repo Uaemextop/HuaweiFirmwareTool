@@ -12,7 +12,7 @@ import os
 import struct
 import tempfile
 import pytest
-from obsc_tool.firmware import HWNPFirmware, HWNPItem, HWNP_MAGIC, HWNP_HEADER_SIZE
+from firmware_tool.firmware import HWNPFirmware, HWNPItem, HWNP_MAGIC, HWNP_HEADER_SIZE
 
 
 class TestHWNPItem:

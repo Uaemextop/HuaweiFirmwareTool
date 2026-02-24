@@ -26,28 +26,28 @@ except ImportError:
     HAS_TTKB = False
 
 from obsc_tool import __version__
-from obsc_tool.presets import PresetManager
-from obsc_tool.terminal import TelnetClient, SerialClient
+from firmware_tool.presets import PresetManager
+from firmware_tool.terminal import TelnetClient, SerialClient
 
 # Shared constants — re-exported so existing callers still work
-from obsc_tool.gui.constants import (  # noqa: F401
+from firmware_tool.gui.constants import (  # noqa: F401
     _safe_int, THEMES, IP_MODE_DEFAULTS,
     OBSC_MULTICAST_ADDR, DEVICE_STALE_TIMEOUT,
     TTKB_DARK, TTKB_LIGHT,
 )
 
 # Tab / feature mixins
-from obsc_tool.gui.upgrade_tab import UpgradeTabMixin
-from obsc_tool.gui.presets_tab import PresetsTabMixin
-from obsc_tool.gui.verification_tab import VerificationTabMixin
-from obsc_tool.gui.crypto_tab import CryptoTabMixin
-from obsc_tool.gui.terminal_tab import TerminalTabMixin
-from obsc_tool.gui.dump_tab import DumpTabMixin
-from obsc_tool.gui.settings_tab import SettingsTabMixin
-from obsc_tool.gui.info_tab import InfoTabMixin
-from obsc_tool.gui.log_tab import LogTabMixin
-from obsc_tool.gui.theme import ThemeMixin
-from obsc_tool.gui.adapters import AdaptersMixin
+from firmware_tool.gui.upgrade_tab import UpgradeTabMixin
+from firmware_tool.gui.presets_tab import PresetsTabMixin
+from firmware_tool.gui.verification_tab import VerificationTabMixin
+from firmware_tool.gui.crypto_tab import CryptoTabMixin
+from firmware_tool.gui.terminal_tab import TerminalTabMixin
+from firmware_tool.gui.dump_tab import DumpTabMixin
+from firmware_tool.gui.settings_tab import SettingsTabMixin
+from firmware_tool.gui.info_tab import InfoTabMixin
+from firmware_tool.gui.log_tab import LogTabMixin
+from firmware_tool.gui.theme import ThemeMixin
+from firmware_tool.gui.adapters import AdaptersMixin
 
 logger = logging.getLogger("obsc_tool")
 

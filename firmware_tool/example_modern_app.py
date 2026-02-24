@@ -9,17 +9,17 @@ import tkinter as tk
 from tkinter import ttk
 
 # Import design system
-from obsc_tool.gui.styles.design_system import (
+from firmware_tool.gui.styles.design_system import (
     Colors, Fonts, Spacing, apply_modern_style
 )
 
 # Import shared widgets
-from obsc_tool.gui.widgets import (
+from firmware_tool.gui.widgets import (
     FileSelector, ProgressWidget, DataTable, LogViewer, ModernWindow
 )
 
 # Import controllers
-from obsc_tool.controllers import (
+from firmware_tool.controllers import (
     FirmwareController, NetworkController, SettingsController
 )
 

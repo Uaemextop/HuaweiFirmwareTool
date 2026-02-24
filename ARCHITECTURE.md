@@ -7,7 +7,7 @@ This document describes the new modular architecture for the OBSC Firmware Tool.
 ## New Directory Structure
 
 ```
-obsc_tool/
+firmware_tool/
 ├── assets/
 │   ├── icons/          # SVG icon files
 │   ├── logos/          # Application logos
@@ -40,7 +40,7 @@ obsc_tool/
 Provides consistent styling across the application:
 
 ```python
-from obsc_tool.gui.styles.design_system import (
+from firmware_tool.gui.styles.design_system import (
     Colors, Fonts, Spacing, apply_modern_style
 )
 
@@ -73,7 +73,7 @@ Reusable UI components eliminate code duplication:
 
 #### FileSelector
 ```python
-from obsc_tool.gui.widgets import FileSelector
+from firmware_tool.gui.widgets import FileSelector
 
 file_selector = FileSelector(
     parent,
@@ -91,7 +91,7 @@ path = file_selector.get_path()
 
 #### ProgressWidget
 ```python
-from obsc_tool.gui.widgets import ProgressWidget
+from firmware_tool.gui.widgets import ProgressWidget
 
 progress = ProgressWidget(parent, show_cancel=True)
 progress.pack(fill=tk.X)
@@ -106,7 +106,7 @@ progress.stop()
 
 #### DataTable
 ```python
-from obsc_tool.gui.widgets import DataTable
+from firmware_tool.gui.widgets import DataTable
 
 columns = [
     {'id': 'name', 'text': 'Name', 'width': 150},
@@ -125,7 +125,7 @@ selected = table.get_selection()
 
 #### LogViewer
 ```python
-from obsc_tool.gui.widgets import LogViewer
+from firmware_tool.gui.widgets import LogViewer
 
 log_viewer = LogViewer(parent, height=15)
 log_viewer.pack(fill=tk.BOTH, expand=True)
@@ -139,7 +139,7 @@ log_viewer.add_log("Error encountered", "error")
 
 #### ModernWindow
 ```python
-from obsc_tool.gui.widgets import ModernWindow
+from firmware_tool.gui.widgets import ModernWindow
 
 # Create window with custom frame
 root = ModernWindow("App Title", "800x600")
@@ -159,7 +159,7 @@ Controllers handle business logic and emit events:
 
 #### FirmwareController
 ```python
-from obsc_tool.controllers import FirmwareController
+from firmware_tool.controllers import FirmwareController
 
 controller = FirmwareController()
 
@@ -179,7 +179,7 @@ if controller.validate_firmware():
 
 #### NetworkController
 ```python
-from obsc_tool.controllers import NetworkController
+from firmware_tool.controllers import NetworkController
 
 controller = NetworkController()
 
@@ -197,7 +197,7 @@ devices = controller.scan_network("192.168.1", 5555, 1, 254)
 
 #### SettingsController
 ```python
-from obsc_tool.controllers import SettingsController
+from firmware_tool.controllers import SettingsController
 
 controller = SettingsController()
 
@@ -221,7 +221,7 @@ Common utility functions:
 
 #### Validators
 ```python
-from obsc_tool.utils import safe_int, is_valid_ip, is_valid_port
+from firmware_tool.utils import safe_int, is_valid_ip, is_valid_port
 
 # Safe type conversion
 port = safe_int(user_input, default=5555, min_val=1, max_val=65535)
@@ -234,7 +234,7 @@ if is_valid_ip(ip_str) and is_valid_port(port_str):
 
 #### Formatters
 ```python
-from obsc_tool.utils import format_bytes, format_duration, format_speed
+from firmware_tool.utils import format_bytes, format_duration, format_speed
 
 print(format_bytes(1536))      # "1.50 KB"
 print(format_duration(3665))   # "1h 1m 5s"
@@ -243,7 +243,7 @@ print(format_speed(1048576))   # "1.00 MB/s"
 
 #### Threading
 ```python
-from obsc_tool.utils import run_in_thread, thread_safe_call
+from firmware_tool.utils import run_in_thread, thread_safe_call
 
 @run_in_thread(daemon=True)
 def long_running_task():
@@ -304,7 +304,7 @@ class UpgradeTab(ttk.Frame):
 
 ## Example Application
 
-See `obsc_tool/example_modern_app.py` for a complete working example demonstrating all new components.
+See `firmware_tool/example_modern_app.py` for a complete working example demonstrating all new components.
 
 To run the example:
 ```bash

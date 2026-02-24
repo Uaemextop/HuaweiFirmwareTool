@@ -4,7 +4,7 @@ import threading
 import tkinter as tk
 from tkinter import ttk
 
-from obsc_tool.network import discover_adapters
+from firmware_tool.network import discover_adapters
 
 
 class AdaptersMixin:

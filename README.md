@@ -41,7 +41,7 @@ cd HuaweiFirmwareTool
 pip install -r requirements.txt
 
 # Run GUI application
-python run_obsc_tool.py
+python run_firmware_tool.py
 ```
 
 #### C++ Tools (Linux/macOS)
@@ -133,7 +133,7 @@ openssl rsa -in private.pem -pubout -out public.pem
 
 1. **Launch Application:**
    ```bash
-   python run_obsc_tool.py
+   python run_firmware_tool.py
    ```
 
 2. **Load Firmware:**
@@ -166,7 +166,7 @@ Comprehensive documentation is available in the `docs/` directory:
 ### Quick Links
 
 - [Firmware File Format (HWNP)](ANALISIS_EXE.md) - Detailed analysis of HWNP structure
-- [OBSC Protocol](obsc_tool/README.md) - Protocol documentation
+- [OBSC Protocol](firmware_tool/README.md) - Protocol documentation
 - [C++ Tools Help](#c-tools-detailed-usage)
 
 ## 🛠️ Development
@@ -206,15 +206,15 @@ pytest tests/unit/test_firmware.py -v
 
 ```bash
 # Format code
-black obsc_tool/
-isort obsc_tool/
+black firmware_tool/
+isort firmware_tool/
 
 # Lint code
-flake8 obsc_tool/
-pylint obsc_tool/
+flake8 firmware_tool/
+pylint firmware_tool/
 
 # Type checking
-mypy obsc_tool/
+mypy firmware_tool/
 ```
 
 ### Building Executables
@@ -222,7 +222,7 @@ mypy obsc_tool/
 **Python Executable (Windows):**
 ```bash
 pip install -r requirements-build.txt
-pyinstaller run_obsc_tool.py --onefile --windowed --name OBSCFirmwareTool
+pyinstaller run_firmware_tool.py --onefile --windowed --name OBSCFirmwareTool
 ```
 
 **C++ Tools:**
@@ -235,7 +235,7 @@ cmake --build . --config Release
 
 ```
 HuaweiFirmwareTool/
-├── obsc_tool/              # Python GUI application
+├── firmware_tool/              # Python GUI application
 │   ├── main.py             # Main application
 │   ├── firmware.py         # HWNP parser
 │   ├── protocol.py         # OBSC protocol
@@ -269,7 +269,7 @@ This project includes comprehensive unit tests:
 - Item extraction tests
 
 **Test Coverage:**
-- `obsc_tool.firmware`: Well covered
+- `firmware_tool.firmware`: Well covered
 - More tests coming for `protocol.py` and `network.py`
 
 ## 🔒 Security
@@ -345,7 +345,7 @@ Contributions are welcome! Please see [DEVELOPMENT.md](docs/DEVELOPMENT.md) for 
 2. Create feature branch: `git checkout -b feature/amazing-feature`
 3. Make changes and add tests
 4. Run tests: `pytest tests/`
-5. Run linters: `black obsc_tool/ && flake8 obsc_tool/`
+5. Run linters: `black firmware_tool/ && flake8 firmware_tool/`
 6. Commit changes: `git commit -m 'feat: Add amazing feature'`
 7. Push branch: `git push origin feature/amazing-feature`
 8. Open pull request

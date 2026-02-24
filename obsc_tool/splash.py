@@ -18,7 +18,19 @@ DEPENDENCIES = [
     ("ttkbootstrap", "ttkbootstrap", "Modern themed widgets"),
     ("PIL", "Pillow", "Image support"),
     ("serial", "pyserial", "Serial terminal support"),
+    ("psutil", "psutil", "System & process info"),
+    ("netifaces", "netifaces", "Network interface details"),
+    ("pyperclip", "pyperclip", "Clipboard support"),
+    ("plyer", "plyer", "Desktop notifications"),
+    ("Crypto", "pycryptodome", "AES encryption"),
+    ("chardet", "chardet", "Character encoding detection"),
+    ("defusedxml", "defusedxml", "Safe XML parsing"),
+    ("colorama", "colorama", "Colored terminal output"),
+    ("rich", "rich", "Rich text formatting"),
 ]
+
+# Pip install timeout (seconds). Override with OBSC_PIP_TIMEOUT env var.
+PIP_TIMEOUT = int(os.environ.get("OBSC_PIP_TIMEOUT", "60"))
 
 
 class SplashScreen:
@@ -135,7 +147,7 @@ class SplashScreen:
                 [sys.executable, "-m", "pip", "install", "--quiet", package],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
-                timeout=30,
+                timeout=PIP_TIMEOUT,
             )
             return True
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired,
@@ -197,7 +209,7 @@ def _ensure_dependencies_cli():
                     [sys.executable, "-m", "pip", "install", "--quiet", pip_name],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
-                    timeout=30,
+                    timeout=PIP_TIMEOUT,
                 )
             except (subprocess.CalledProcessError, subprocess.TimeoutExpired,
                     FileNotFoundError, OSError):

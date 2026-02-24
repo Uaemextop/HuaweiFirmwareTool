@@ -362,7 +362,7 @@ class OBSCToolApp:
             ip_row2, textvariable=self.ip_mode_gw_var, width=16)
         self.ip_mode_gw_entry.pack(side=tk.LEFT, padx=(0, 12))
         ttk.Label(ip_row2, text="DNS:", width=12).pack(side=tk.LEFT)
-        self.ip_mode_dns_var = tk.StringVar(value=IP_MODE_DEFAULTS['dns1'])
+        self.ip_mode_dns_var = tk.StringVar(value=IP_MODE_DEFAULTS.get('dns1', '8.8.8.8'))
         self.ip_mode_dns_entry = ttk.Entry(
             ip_row2, textvariable=self.ip_mode_dns_var, width=16)
         self.ip_mode_dns_entry.pack(side=tk.LEFT)
@@ -756,23 +756,26 @@ class OBSCToolApp:
             state='readonly', width=35,
         )
         self.preset_combo.pack(side=tk.LEFT, padx=(0, 5))
-        ttk.Button(row, text="Load", command=self._load_preset, width=8).pack(side=tk.LEFT, padx=2)
-        ttk.Button(row, text="Edit", command=self._load_preset_into_editor, width=8).pack(side=tk.LEFT, padx=2)
-        ttk.Button(row, text="Delete", command=self._delete_preset, width=8).pack(side=tk.LEFT, padx=2)
+        self.preset_load_btn = ttk.Button(row, text="Load", command=self._load_preset, width=8)
+        self.preset_load_btn.pack(side=tk.LEFT, padx=2)
+        self.preset_edit_btn = ttk.Button(row, text="Load to Editor", command=self._load_preset_into_editor, width=14)
+        self.preset_edit_btn.pack(side=tk.LEFT, padx=2)
+        self.preset_delete_btn = ttk.Button(row, text="Delete", command=self._delete_preset, width=8)
+        self.preset_delete_btn.pack(side=tk.LEFT, padx=2)
 
-        # Preset description (must be created before _refresh_preset_list)
+        # Preset description
         self.preset_desc_var = tk.StringVar(value="Select a preset to see its description")
         ttk.Label(select_frame, textvariable=self.preset_desc_var,
                   font=('Segoe UI', 9), wraplength=600).pack(fill=tk.X, pady=(5, 0))
 
         self.preset_combo.bind('<<ComboboxSelected>>', self._on_preset_selected)
 
-        # ── Create / Edit Preset ─────────────────────────────────
-        create_frame = ttk.LabelFrame(tab, text="Create / Edit Preset", padding=10)
-        create_frame.pack(fill=tk.X, pady=(0, 10))
+        # ── Create / Edit Preset (hidden by default) ─────────────
+        self.preset_create_frame = ttk.LabelFrame(tab, text="Create / Edit Preset", padding=10)
+        # NOT packed yet — shown only when "New Preset..." is selected
 
         # --- Row: Name + Model ---
-        row = ttk.Frame(create_frame)
+        row = ttk.Frame(self.preset_create_frame)
         row.pack(fill=tk.X, pady=2)
         ttk.Label(row, text="Preset Name:", width=16).pack(side=tk.LEFT)
         self.new_preset_name_var = tk.StringVar()
@@ -787,14 +790,14 @@ class OBSCToolApp:
         ).pack(side=tk.LEFT)
 
         # --- Row: Description ---
-        row = ttk.Frame(create_frame)
+        row = ttk.Frame(self.preset_create_frame)
         row.pack(fill=tk.X, pady=2)
         ttk.Label(row, text="Description:", width=16).pack(side=tk.LEFT)
         self.new_preset_desc_var = tk.StringVar()
         ttk.Entry(row, textvariable=self.new_preset_desc_var, width=60).pack(side=tk.LEFT, fill=tk.X, expand=True)
 
         # --- Transfer Settings ---
-        tsf = ttk.LabelFrame(create_frame, text="Transfer Settings", padding=5)
+        tsf = ttk.LabelFrame(self.preset_create_frame, text="Transfer Settings", padding=5)
         tsf.pack(fill=tk.X, pady=(5, 2))
 
         r1 = ttk.Frame(tsf)
@@ -827,7 +830,7 @@ class OBSCToolApp:
                         variable=self.np_delete_cfg_var).pack(side=tk.LEFT)
 
         # --- Network Settings ---
-        nsf = ttk.LabelFrame(create_frame, text="Network Settings", padding=5)
+        nsf = ttk.LabelFrame(self.preset_create_frame, text="Network Settings", padding=5)
         nsf.pack(fill=tk.X, pady=(2, 2))
 
         r3 = ttk.Frame(nsf)
@@ -852,7 +855,7 @@ class OBSCToolApp:
         ttk.Entry(r4, textvariable=self.np_machine_filter_var, width=20).pack(side=tk.LEFT)
 
         # --- Advanced Settings ---
-        asf = ttk.LabelFrame(create_frame, text="Advanced / Verification", padding=5)
+        asf = ttk.LabelFrame(self.preset_create_frame, text="Advanced / Verification", padding=5)
         asf.pack(fill=tk.X, pady=(2, 2))
 
         r5 = ttk.Frame(asf)
@@ -892,21 +895,21 @@ class OBSCToolApp:
         ttk.Entry(r7, textvariable=self.np_bom_code_var, width=16).pack(side=tk.LEFT)
 
         # --- Action Buttons ---
-        btn_row = ttk.Frame(create_frame)
+        btn_row = ttk.Frame(self.preset_create_frame)
         btn_row.pack(fill=tk.X, pady=(8, 0))
-        ttk.Button(btn_row, text="💾 Save New Preset",
-                   command=self._save_preset, width=18).pack(side=tk.LEFT, padx=(0, 5))
+        ttk.Button(btn_row, text="💾 Save Preset",
+                   command=self._save_preset, width=16).pack(side=tk.LEFT, padx=(0, 5))
         ttk.Button(btn_row, text="📋 Copy Current Settings",
                    command=self._copy_current_to_preset_editor, width=22).pack(side=tk.LEFT, padx=(0, 5))
-        ttk.Button(btn_row, text="🔄 Reset to Defaults",
-                   command=self._reset_preset_editor, width=20).pack(side=tk.LEFT)
+        ttk.Button(btn_row, text="🔄 Reset Fields",
+                   command=self._reset_preset_editor, width=14).pack(side=tk.LEFT)
 
-        # ── Preset Details ───────────────────────────────────────
-        details_frame = ttk.LabelFrame(tab, text="Preset Details", padding=10)
-        details_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 5))
+        # ── Preset Details (shown when an existing preset is selected) ──
+        self.preset_details_frame = ttk.LabelFrame(tab, text="Preset Details", padding=10)
+        self.preset_details_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 5))
 
         self.preset_details_text = scrolledtext.ScrolledText(
-            details_frame, wrap=tk.WORD,
+            self.preset_details_frame, wrap=tk.WORD,
             font=('Consolas', 9),
             state='disabled', height=10,
         )
@@ -1521,21 +1524,46 @@ class OBSCToolApp:
 
     # ── Preset Management ────────────────────────────────────────
 
+    NEW_PRESET_LABEL = "\u2795 New Preset..."
+
     def _refresh_preset_list(self):
-        """Refresh the preset combobox values."""
-        names = self.preset_manager.list_presets()
+        """Refresh the preset combobox values with New Preset option."""
+        names = [self.NEW_PRESET_LABEL] + self.preset_manager.list_presets()
         self.preset_combo['values'] = names
-        if names:
+        if len(names) > 1:
+            self.preset_combo.current(1)
+            self._on_preset_selected(None)
+        else:
             self.preset_combo.current(0)
             self._on_preset_selected(None)
 
     def _on_preset_selected(self, event):
-        """Handle preset selection change."""
+        """Handle preset selection — show editor or details panel."""
         name = self.preset_var.get()
+
+        if name == self.NEW_PRESET_LABEL:
+            # Show create/edit form, hide details panel
+            self.preset_create_frame.pack(fill=tk.X, pady=(0, 10),
+                                          after=self.preset_combo.master.master)
+            self.preset_details_frame.pack_forget()
+            self.preset_load_btn.configure(state='disabled')
+            self.preset_edit_btn.configure(state='disabled')
+            self.preset_delete_btn.configure(state='disabled')
+            self.preset_desc_var.set("Fill in the fields below to create a new preset")
+            self._reset_preset_editor()
+            return
+
+        # Existing preset selected — hide editor, show details
+        self.preset_create_frame.pack_forget()
+        self.preset_details_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 5))
+        self.preset_load_btn.configure(state='normal')
+        self.preset_edit_btn.configure(state='normal')
+        builtin = self.preset_manager.is_builtin(name)
+        self.preset_delete_btn.configure(state='disabled' if builtin else 'normal')
+
         preset = self.preset_manager.get_preset(name)
         if preset:
             self.preset_desc_var.set(preset.get('description', 'No description'))
-            # Show details
             lines = []
             for key, val in sorted(preset.items()):
                 if key.startswith('_'):
@@ -1549,7 +1577,7 @@ class OBSCToolApp:
     def _load_preset(self):
         """Load the selected preset into the current settings."""
         name = self.preset_var.get()
-        if not name:
+        if not name or name == self.NEW_PRESET_LABEL:
             messagebox.showwarning("No Preset", "Please select a preset first.")
             return
 
@@ -1619,6 +1647,13 @@ class OBSCToolApp:
 
         self.preset_manager.save_preset(name, preset_data)
         self._refresh_preset_list()
+        # Select the newly saved preset and show its details
+        try:
+            idx = list(self.preset_combo['values']).index(name)
+            self.preset_combo.current(idx)
+            self._on_preset_selected(None)
+        except ValueError:
+            pass
         self._log(f"Saved preset: {name}")
         messagebox.showinfo("Preset Saved", f"Preset '{name}' saved successfully.")
 
@@ -1688,11 +1723,15 @@ class OBSCToolApp:
     def _load_preset_into_editor(self):
         """Load the selected preset into the preset editor for editing."""
         name = self.preset_var.get()
-        if not name:
+        if not name or name == self.NEW_PRESET_LABEL:
             return
         preset = self.preset_manager.get_preset(name)
         if not preset:
             return
+        # Show the editor frame
+        self.preset_create_frame.pack(fill=tk.X, pady=(0, 10),
+                                      after=self.preset_combo.master.master)
+        self.preset_details_frame.pack_forget()
         # Don't overwrite name for built-ins (user should rename)
         if not self.preset_manager.is_builtin(name):
             self.new_preset_name_var.set(name)

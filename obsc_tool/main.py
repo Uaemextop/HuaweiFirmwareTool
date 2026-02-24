@@ -1754,21 +1754,37 @@ class OBSCToolApp:
     # ── Adapter Management ───────────────────────────────────────
 
     def _refresh_adapters(self):
-        """Refresh the list of network adapters.
+        """Refresh the list of network adapters in a background thread.
 
         Ethernet adapters are sorted first because the OBSC protocol
         requires a wired LAN connection to the ONT device.
+        The actual discovery runs off the main thread so the GUI stays
+        responsive during the PowerShell/ipconfig calls on Windows.
         """
-        self.adapters = discover_adapters()
-        # Sort: Ethernet adapters first (match original tool: "本地网卡")
-        def _eth_sort_key(a):
-            name_lower = (a.name + " " + a.description).lower()
-            if 'ethernet' in name_lower or 'eth' in name_lower or 'lan' in name_lower:
-                return 0
-            if 'wi-fi' in name_lower or 'wireless' in name_lower or 'wlan' in name_lower:
-                return 2
-            return 1
-        self.adapters.sort(key=_eth_sort_key)
+        # Show a loading state while discovering
+        self.adapter_combo['values'] = ["⏳ Detecting adapters…"]
+        self.adapter_combo.current(0)
+        self.adapter_detail_var.set("")
+
+        def _discover():
+            adapters = discover_adapters()
+            # Sort: Ethernet adapters first (match original tool: "本地网卡")
+            def _eth_sort_key(a):
+                name_lower = (a.name + " " + (a.description or "")).lower()
+                if 'ethernet' in name_lower or 'eth' in name_lower or 'lan' in name_lower:
+                    return 0
+                if 'wi-fi' in name_lower or 'wireless' in name_lower or 'wlan' in name_lower:
+                    return 2
+                return 1
+            adapters.sort(key=_eth_sort_key)
+            # Schedule UI update on the main thread
+            self.root.after(0, lambda: self._finish_refresh_adapters(adapters))
+
+        threading.Thread(target=_discover, daemon=True).start()
+
+    def _finish_refresh_adapters(self, adapters):
+        """Update UI with discovered adapters (called on main thread)."""
+        self.adapters = adapters
         names = [a.display_name() for a in self.adapters]
         self.adapter_combo['values'] = names
         if names:

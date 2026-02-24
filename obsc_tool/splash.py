@@ -135,7 +135,7 @@ class SplashScreen:
                 [sys.executable, "-m", "pip", "install", "--quiet", package],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
-                timeout=120,
+                timeout=30,
             )
             return True
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired,
@@ -149,11 +149,21 @@ class SplashScreen:
         self.root.after(0, lambda: self.progress.configure(value=progress_value))
 
 
+def _is_frozen():
+    """Return True if running from a PyInstaller bundle."""
+    return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
+
+
 def ensure_dependencies_gui():
     """Show splash screen and install dependencies.
 
     Returns True if the app should launch, False on critical failure.
     """
+    # When running from a PyInstaller EXE, all dependencies are already
+    # bundled — skip the check entirely to avoid blank-screen delays.
+    if _is_frozen():
+        return True
+
     # Quick check — if all deps are already present, skip splash
     all_present = True
     for import_name, _, _ in DEPENDENCIES:
@@ -187,7 +197,7 @@ def _ensure_dependencies_cli():
                     [sys.executable, "-m", "pip", "install", "--quiet", pip_name],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
-                    timeout=120,
+                    timeout=30,
                 )
             except (subprocess.CalledProcessError, subprocess.TimeoutExpired,
                     FileNotFoundError, OSError):

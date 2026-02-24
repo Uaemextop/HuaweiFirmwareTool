@@ -134,7 +134,7 @@ def _discover_adapters_windows():
             'ConvertTo-Csv -NoTypeInformation"'
         )
         result = subprocess.run(
-            cmd_adapter, capture_output=True, text=True, timeout=10, shell=True
+            cmd_adapter, capture_output=True, text=True, timeout=5, shell=True
         )
         if result.returncode == 0:
             lines = result.stdout.strip().split('\n')
@@ -160,7 +160,7 @@ def _discover_adapters_windows():
             'ConvertTo-Csv -NoTypeInformation"'
         )
         result = subprocess.run(
-            cmd_gw, capture_output=True, text=True, timeout=10, shell=True
+            cmd_gw, capture_output=True, text=True, timeout=5, shell=True
         )
         if result.returncode == 0:
             lines = result.stdout.strip().split('\n')
@@ -181,7 +181,7 @@ def _discover_adapters_windows():
             'ConvertTo-Csv -NoTypeInformation"'
         )
         result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=10, shell=True
+            cmd, capture_output=True, text=True, timeout=5, shell=True
         )
         if result.returncode == 0:
             lines = result.stdout.strip().split('\n')

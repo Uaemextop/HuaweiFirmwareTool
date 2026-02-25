@@ -199,9 +199,269 @@ Leave empty (no product list) to allow any device.
 
 ### Signing
 
-The ONT device verifies firmware signatures during the update process. The tool's CRC32 check has been bypassed (see `unlock_ont_tool.py`), but the device-side RSA verification is separate and cannot be bypassed from this tool.
+The ONT device verifies firmware signatures using a certificate chain. The tool's CRC32 check has been bypassed (see `unlock_ont_tool.py`), but the device-side RSA verification is separate.
+
+#### Certificate Chain (from firmware analysis)
+
+```
+Huawei Root CA (4096-bit RSA, self-signed)
+  └── Huawei Code Signing Certificate Authority 2 (2048-bit RSA)
+       └── Transmission & Access Product Line Code Signing Certificate 3 (2048-bit RSA)
+            └── Signs firmware packages
+  └── Huawei Timestamp Certificate Authority 2 (2048-bit RSA)
+       └── Huawei Time Stamping Signer (2048-bit RSA)
+            └── Countersigns packages
+```
+
+#### Signature Format
+
+**V3 format** (BIN130 `file:/var/signature`, section=SIGNATURE):
+```
+<item_count>\n
+<sha256_hex> <item_path>\n
+<sha256_hex> <item_path>\n
+...
+<256-byte RSA-2048 signature>
+```
+The signature covers the text portion (SHA-256 of all text before the signature).
+
+**V5 format** (BIN131-135 `file:/var/signature` or `signinfo_v5`, section=SIGNINFO):
+```
++0x00: magic "whwh" (4 bytes)
++0x04: version_string (e.g. "V500R020C00SPC060B031 | SIGNINFO") (60 bytes)
++0x40: signing metadata (timestamps, counters)
++0x68: SHA-256 hash list with item paths (text format)
++0xNN: X.509 certificate chain (DER-encoded)
+       - Code Signing Certificate
+       - Code Signing CA 2
+       - Timestamp Signer
+       - Timestamp CA 2
+       (multiple cert groups for different signing epochs)
+-256:  RSA-2048 signature (last 256 bytes)
+```
+
+#### Key Files Found in Firmware (EG8145V5 rootfs)
+
+| File | Type | Purpose |
+|------|------|---------|
+| `/etc/app_cert.crt` | X.509 (4096-bit RSA) | Huawei Root CA — root of trust for firmware signing |
+| `/etc/wap/root.crt` | X.509 (2048-bit RSA) | Huawei Fixed Network Product CA — device TLS |
+| `/etc/wap/pub.crt` | X.509 (2048-bit RSA) | ont.huawei.com device certificate |
+| `/etc/wap/prvt.key` | RSA-2048 (AES-256-CBC encrypted) | Device TLS private key |
+| `/etc/wap/plugroot.crt` | X.509 (2048-bit RSA) | HuaWei ONT CA (self-signed) — plugin signing |
+| `/etc/wap/plugpub.crt` | X.509 | Plugin public certificate |
+| `/etc/wap/plugprvt.key` | RSA (AES-256-CBC encrypted) | Plugin signing private key |
+| `/etc/wap/su_pub_key` | RSA-256 public key | Superuser verification (trivially breakable) |
+
+**No private signing key for firmware was found.** The firmware signing private key is held exclusively by Huawei's build infrastructure and is not present in any device, EXE, or firmware image.
+
+#### How to Sign Custom Packages
+
+Since the actual Huawei private key is unavailable, there are two approaches:
+
+1. **Use the existing bypassed tool**: The `unlock_ont_tool.py` bypasses the CRC32 check in the EXE, allowing it to send packages with modified content. The device-side verification must be separately handled.
+
+2. **Generate your own key pair** (for devices with disabled signature check):
+```bash
+# Generate a 2048-bit RSA key pair
+openssl genrsa -out my_private.pem 2048
+openssl rsa -in my_private.pem -pubout -out my_public.pem
+
+# Sign using the C++ tools from this repo
+./build/hw_sign -d my_package/ -k my_private.pem -o my_package/var/signature
+
+# Verify
+./build/hw_verify -d my_package/ -k my_public.pem -i my_package/var/signature
+```
+
+---
+
+## AES Encryption Analysis (hw_ctree.xml)
+
+The device encrypts its configuration file (`hw_ctree.xml`) using AES. The `aescrypt2` utility handles this:
+
+```
+Usage: aescrypt2 <mode> <input> <output>
+  mode: 0 = encrypt, 1 = decrypt
+```
+
+**Key findings:**
+- `aescrypt2` is a 5.4 KB ARM binary wrapper that calls `OS_AescryptEncrypt`/`OS_AescryptDecrypt` from `libhw_ssp_basic.so`
+- The AES implementation uses mbedTLS (`mbedtls_aes_crypt_cbc`, `mbedtls_aescrypt2`)
+- The key is NOT passed as a command-line argument — it is **hardcoded internally** in `libhw_ssp_basic.so`
+- The function `HW_XML_GetEncryptedKey` retrieves the internal key at runtime
+- The key derivation uses MD5-based PBKDF from mbedTLS aescrypt format: `key = MD5(password + IV)` repeated to fill 256 bits
+- Encrypted files use the mbedTLS aescrypt2 format: `AESCRYPT(1) + IV(16) + encrypted_data + HMAC(32)`
+
+**Related crypto libraries on device:**
+| Library | Purpose |
+|---------|---------|
+| `libhw_ssp_basic.so` (961 KB) | Main crypto: AES, SHA256, MD5, base64, XML encryption |
+| `librsa_crypt.so` (9 KB) | RSA encrypt/decrypt/keygen wrapper around mbedTLS |
+| `libhw_smp_sign.so` (87 KB) | CMS/PKCS#7 signature verification (firmware, vouchers) |
+| `libpolarssl.so` (476 KB) | mbedTLS cryptographic primitives |
+| `libcrypto.so.1.1` | OpenSSL (for TLS) |
+| `libwlan_aes_crypto.so` (5 KB) | WLAN-specific AES |
 
 For testing purposes, you can use unsigned packages with devices that have had their signature verification disabled.
+
+---
+
+## Firmware Analysis (EG8145V5-V500R022C00SPC340B019)
+
+Full analysis of the production firmware downloaded from the releases.
+
+### Firmware Structure
+
+The `.bin` file is a single HWNP package containing 13 items:
+
+| # | Path | Size | Section | Notes |
+|---|------|------|---------|-------|
+| 0 | `file:/var/UpgradeCheck.xml` | 2,633 B | UPGRDCHECK | Hardware/software compatibility checks |
+| 1 | `flash:signinfo` | 16,384 B | SIGNINFO | `whwh` signed block with X.509 cert chain |
+| 2 | `flash:uboot` | 503,808 B | UBOOT | `whwh` wrapped U-Boot bootloader |
+| 3 | `flash:kernel` | 2,138,112 B | KERNEL | `whwh` wrapped Linux kernel (ARM uImage) |
+| 4 | `flash:rootfs` | 38,137,856 B | ROOTFS | `whwh` wrapped SquashFS filesystem |
+| 5 | `file:/mnt/jffs2/Updateflag` | 2 B | UPDATEFLAG | "N\n" marker |
+| 6 | `file:/mnt/jffs2/ttree_spec_smooth.tar.gz` | 8,712 B | UNKNOWN | Encrypted spec tree |
+| 7 | `file:/var/setequiptestmodeoff` | 791 B | UNKNOWN | Script (AUTO-EXEC) — exits equip test mode |
+| 8 | `file:/var/dealcplgin.sh` | 244 B | UNKNOWN | Script (AUTO-EXEC) — cplugin cleanup |
+| 9 | `file:/mnt/jffs2/app/preload_cplugin.tar.gz` | 2,047,991 B | UNKNOWN | Gzip — kernelapp C-plugin (net mgmt agent) |
+| 10 | `file:/mnt/jffs2/sdkfs` | 98,388 B | sdk | `whwh` wrapped SquashFS — VoIP codec SDK |
+| 11 | `file:/mnt/jffs2/plugin_timestamp` | 28 B | UNKNOWN | "V500R022C00SPC340A2402080348" |
+| 12 | `file:/var/efs` | 68 B | EFS | Equipment footer ("HW\x00\x02" + MA5600 + CHS) |
+
+### U-Boot Analysis
+
+- **U-Boot 2020.01** (V500R022C00 V5 - V001)
+- Architecture: ARM Cortex-A9 (HiSilicon SoC)
+- Wrapped in `whwh` header with version string
+- **Boot encryption support**: has `export work key`, `get work key`, `save work key` — manages AES work keys for encrypted flash partitions
+- **Secure boot**: validates `Cert/Uboot Head magic`, checks e-fuse data, CRC validation of boot chain
+- **Dual boot**: supports A/B partition switching ("Boot Area Change, Start from slave system")
+- **Flash types**: SPI NOR, SPI NAND, parallel NAND, eMMC
+- **E-fuse security**: reads hardware fuses for key derivation (`efuse read type`, `secram efuse crc check`)
+
+Key strings found:
+```
+encrypt head decrypt fial, e_part_index:%d
+<fatal error> encrypt version[%u] nor support!
+export work key err
+save work key err, ret=%d, part_index=%d
+get work key err
+Cert/Uboot Head magic 0x%08x is not right, %s area is not OK!
+```
+
+### Kernel Analysis
+
+- **Linux 5.10.0** (SMP, ARM)
+- Compiler: `arm-euler-linux-musleabi-gcc 7.3.0`
+- Built: Wed Sep 27 00:43:40 CST 2023
+- uImage format: Load address `0x80E08000`, entry `0x80E08000`
+- Inner kernel is LZMA-compressed (decompresses to 4.2 MB)
+- Crypto subsystem: `aes-generic`, `sha256_generic`, `cryptd`, `crc32c_generic`, `ctr`, `jitterentropy_rng`
+- HiSilicon platform: `hisi_clk_*` drivers, ARM Cortex-A9 GIC/SCU/TWD
+
+### Rootfs Analysis (SquashFS)
+
+- 5,075 files, 703 directories, 266 symlinks
+- musl libc (not glibc) — lightweight embedded C library
+- **87 shell scripts** in `/bin/` covering: WiFi management, DSP control, customization, factory reset, diagnostics
+- **180+ shared libraries** (`libhw_*.so`) forming the HuaWei Application Platform (WAP)
+
+#### Key Crypto Components
+
+| Binary/Library | Size | Purpose |
+|---------------|------|---------|
+| `/bin/aescrypt2` | 5.4 KB | AES encrypt/decrypt wrapper — calls `OS_AescryptEncrypt/Decrypt` |
+| `/bin/decrypt_boardinfo` | — | Board info decryptor (`DM_DecryptBoardInfo`) |
+| `/bin/keyfilemng` | 30 KB | Flash key file manager (save/restore/check) |
+| `/bin/backupKey` | 9.5 KB | Key backup utility (`SwmReleaseKeyData`) |
+| `/bin/cfgtool` | — | Configuration XML tool (reads/writes encrypted ctree) |
+| `/lib/libhw_ssp_basic.so` | 961 KB | Core crypto: AES-CBC, SHA256, MD5, base64, XML encryption, CRC32 |
+| `/lib/librsa_crypt.so` | 9 KB | RSA encrypt/decrypt/keygen via mbedTLS |
+| `/lib/libhw_smp_sign.so` | 87 KB | CMS/PKCS#7 signature verification (uses CmscbbVerify* API) |
+| `/lib/libpolarssl.so` | 476 KB | mbedTLS cryptographic primitives |
+| `/lib/libcrypto.so.1.1` | 1.8 MB | OpenSSL 1.1 (for TLS) |
+| `/lib/libhw_swm.so` | 170 KB | Software Manager — upgrade orchestration, CRC, cert loading |
+| `/lib/libhw_swm_dll.so` | 412 KB | SWM detail — signature verification, hash checking, upgrade logic |
+| `/lib/libhw_swm_product.so` | 189 KB | SWM product — e-fuse checks, root key, product-specific upgrade |
+
+#### Firmware Signing Verification Chain (on-device)
+
+```
+1. SWM_CheckSignInfo()
+2.   → SWM_SigCms_MainProcPf()         // Main CMS/PKCS#7 verification
+3.     → SWM_Sig_CheckAllItemHash()     // Verify SHA-256 of each item
+4.     → SWM_Sig_CheckHashByType()      // Check hash list integrity
+5.     → SWM_CheckSignInfoPdtCert()     // Validate product certificate
+6.       → SWM_CheckSocRootCa()         // Check against SoC root CA
+7.       → HW_DM_GetRootPubKeyInfo()    // Get root public key from e-fuse/flash
+8.       → CmscbbVerifyDetachSignature* // CMS detached signature verification
+9.     → HW_SWM_CheckBufRsaValid()      // RSA signature validation
+10.    → DM_EfuseGetVersionFromSignInfo // Anti-rollback via e-fuse version
+```
+
+The root of trust is **hardware-bound** (e-fuse in HiSilicon SoC). The `/etc/app_cert.crt` (Huawei Root CA 4096-bit RSA) is verified against the SoC's burned-in root public key hash.
+
+#### Certificate/Key Inventory
+
+| File | Type | Details |
+|------|------|---------|
+| `/etc/app_cert.crt` | X.509 | Huawei Root CA (4096-bit RSA, self-signed) — root of trust |
+| `/etc/debug_check_cert.crt` | DER | Debug upgrade permission certificate |
+| `/etc/wap/root.crt` | X.509 | Huawei Fixed Network Product CA → Huawei Equipment CA |
+| `/etc/wap/pub.crt` | X.509 | ont.huawei.com (2048-bit RSA) — device TLS cert |
+| `/etc/wap/prvt.key` | PEM | RSA-2048 (AES-256-CBC encrypted) — device TLS key |
+| `/etc/wap/plugroot.crt` | X.509 | HuaWei ONT CA (2048-bit, self-signed) — plugin signing |
+| `/etc/wap/plugpub.crt` | X.509 | Plugin public certificate |
+| `/etc/wap/plugprvt.key` | PEM | RSA (AES-256-CBC encrypted) — plugin signing key |
+| `/etc/wap/su_pub_key` | PEM | RSA-256 public key — superuser verification (trivially breakable) |
+| `/etc/wap/hilinkcert/root.pem` | PEM | HiLink root CA |
+| `/etc/wap/hilinkcert/servercert.pem` | X.509 | HiLink server cert |
+| `/etc/wap/hilinkcert/serverkey.pem` | DER | HiLink server key (encrypted) |
+| `/etc/dropbear/dropbear_rsa_host_key` | Dropbear | SSH host key |
+| cplugin `server_key_ssl.pem` | PEM | RSA (AES-256-CBC encrypted) — kernelapp TLS key |
+| cplugin `trust_ssl.pem` | X.509 | HuaWei ONT CA — plugin TLS trust |
+
+#### SDKfs (VoIP Codec SDK)
+
+Small SquashFS containing:
+- `codec_sdk_le964x.ko` — ARM kernel module (Lantiq LE964x VoIP codec)
+- `pef31001_*.bin` / `pef31002_*.bin` — PEF31002 SLIC firmware (Lantiq telephone line interface)
+- `duslicxs2_130_1_0_1.bin` — DuSLIC-xS2 firmware
+- `dxt_fw_pef3201.bin` — PEF3201 firmware
+
+#### C-Plugin (kernelapp)
+
+The `preload_cplugin.tar.gz` contains a management agent plugin:
+- **59 files** including ARM shared libraries and shell scripts
+- `kernelapp.config` — network management config (MQTT, REST, HTTPS)
+- Embedded REST/HTTPS server using `libcivetweb.so`
+- mbedTLS for crypto (`libmbedall.so` 722 KB)
+- `libcurl.so` for HTTP client
+- `libdriver_c.so` (428 KB) — device driver interface
+- Runs in LXC container with CPU/memory limits
+
+### AES Encryption Key Architecture
+
+The AES key used by `aescrypt2` to encrypt/decrypt `hw_ctree.xml` is managed by a multi-layer key hierarchy:
+
+```
+E-fuse (HiSilicon SoC hardware)
+  └── Root Key (burned into chip, irreversible)
+       └── Work Key (derived, stored in flash keyfile partition)
+            └── AES-256-CBC session key (for hw_ctree.xml encryption)
+                 └── Key derivation: MD5(password + IV) via mbedTLS aescrypt2 format
+```
+
+- `HW_SWM_GetWorkSecretKey()` — retrieves the work key from flash
+- `DM_ReadKeyFromFlashHead()` — reads key from flash partition header
+- `HW_DM_GetEncryptedKey()` — gets the AES key for ctree encryption
+- `FT_SSMP_CTREE_ENCRYPT_KEY` — feature flag enabling ctree encryption
+- The key is **NOT** a simple hardcoded string — it is **derived from hardware-specific e-fuse data**
+
+**Conclusion**: The AES key for `hw_ctree.xml` encryption is unique per device (derived from e-fuse). There is no universal key. This is why the ONT tool scripts use `cfgtool set` (which operates through the running firmware's API) rather than directly editing encrypted XML files.
 
 ## Extraction
 
@@ -219,13 +479,16 @@ firmware_packages/
 ├── BIN131_pkg1_module.bin       (2,028 KB)
 ├── BIN132_pkg2_factory_reset.bin (140 KB)
 ├── BIN133_pkg2_telnet.bin       (26 KB)
-├── BIN134_pkg3_full.bin         (1,766 KB)
+├── BIN134_pkg3_full.bin         (1,769 KB)  [MODIFIED: factory reset script]
 ├── BIN135_pkg3_telnet.bin       (26 KB)
+├── huawei_root_ca_pubkey.pem           Huawei Root CA (4096-bit RSA)
+├── huawei_code_signing_ca2_pubkey.pem  Code Signing CA 2 (2048-bit RSA)
+├── huawei_code_signing_pubkey.pem      Code Signing Cert 3 (2048-bit RSA)
 └── scripts/
     ├── BIN130_duit9rr.sh
     ├── BIN131_run.sh
     ├── BIN132_restorefactory_DeleteComponent.sh
     ├── BIN133_run.sh
-    ├── BIN134_duit9rr.sh
+    ├── BIN134_restorefactory_DeleteComponent.sh  [MODIFIED]
     └── BIN135_run.sh
 ```

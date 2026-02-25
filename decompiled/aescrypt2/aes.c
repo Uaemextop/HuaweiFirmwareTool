@@ -216,16 +216,16 @@ int aescrypt2_encrypt(const char *in_path, const char *out_path,
     const uint8_t *password;
     size_t pw_len;
     const char default_pw[] = "";
+    uint8_t *kdata_enc = NULL;
     if (key_str && key_str[0]) {
         if (key_mode) {
             /* key_str is a path to a key file */
-            uint8_t *kdata = NULL;
             size_t klen = 0;
-            if (read_file(key_str, &kdata, &klen) != 0) {
+            if (read_file(key_str, &kdata_enc, &klen) != 0) {
                 free(plain);
                 return -1;
             }
-            password = kdata;
+            password = kdata_enc;
             pw_len = klen;
         } else {
             password = (const uint8_t *)key_str;
@@ -239,6 +239,7 @@ int aescrypt2_encrypt(const char *in_path, const char *out_path,
     /* Generate random IV (also used as salt for PBKDF2) */
     uint8_t iv_random[AESCRYPT2_IV_LEN];
     if (gen_random(iv_random, sizeof(iv_random)) != 0) {
+        free(kdata_enc);
         free(plain);
         return -1;
     }
@@ -246,6 +247,7 @@ int aescrypt2_encrypt(const char *in_path, const char *out_path,
     /* Derive key and IV */
     uint8_t aes_key[32], iv_derived[32];
     ret = derive_key_iv(password, pw_len, iv_random, aes_key, iv_derived);
+    free(kdata_enc);
     if (ret != 0) {
         free(plain);
         return ret;

@@ -96,7 +96,7 @@ static int parse_args(int argc, char **argv, uint32_t *workMode) {
     /* HW_OS_StrToUInt32(argv[1], &mode) */
     ret = HW_OS_StrToUInt32(argv[1], workMode);
     if (*workMode > 1) {
-        printf("invalide operation workMode\n");
+        printf("invalid operation workMode\n");
         return -1;
     }
     return 0;
@@ -118,6 +118,7 @@ int main(int argc, char **argv) {
     memset(inFile, 0, sizeof(inFile));
     if (strlen(argv[2]) >= sizeof(inFile)) {
         report_error(0x49, 1);
+        return -1;
     }
     strncpy(inFile, argv[2], sizeof(inFile) - 1);
 
@@ -125,6 +126,7 @@ int main(int argc, char **argv) {
     memset(outFile, 0, sizeof(outFile));
     if (strlen(argv[3]) >= sizeof(outFile)) {
         report_error(0x4f, 1);
+        return -1;
     }
     strncpy(outFile, argv[3], sizeof(outFile) - 1);
 

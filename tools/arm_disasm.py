@@ -286,7 +286,7 @@ def main() -> None:
 
     print(f"Assembly listing:  {asm_path}")
     print(f"Pseudo-C output:   {pseudo_path}")
-    print(f"Functions found:   {sum(1 for s in elf.dynsyms if s.size > 0 and s.shndx != 0)}")
+    print(f"Functions found:   {sum(1 for s in elf.dynsyms if s.size > 0 and s.shndx != 0 and s.stype == 2)}")
     print(f"PLT imports:       {len(elf.plt_map)}")
     print(f".rodata strings:   {len(elf.strings_map)}")
 

@@ -1,6 +1,7 @@
 #ifndef HW_CTL_H
 #define HW_CTL_H
 
+#include <sstream>
 #include <vector>
 #include <iostream>
 #include "huawei_header.h"

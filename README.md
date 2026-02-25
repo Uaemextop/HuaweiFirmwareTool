@@ -44,6 +44,30 @@ pip install -r hwflash/requirements.txt
 python launcher.py
 ```
 
+## Building C++ Tools
+
+The `cpp/` directory contains native tools (`hw_fmw`, `hw_sign`, `hw_verify`).
+
+### Linux / macOS
+
+```bash
+sudo apt install clang cmake libssl-dev zlib1g-dev make   # Debian/Ubuntu
+# or: brew install cmake openssl zlib                     # macOS
+mkdir build && cd build
+cmake ../cpp -DCMAKE_BUILD_TYPE=Release && make -j$(nproc)
+```
+
+### Termux (Android)
+
+In Termux the OpenSSL development files are bundled in the `openssl` package
+(there is no separate `openssl-dev`):
+
+```bash
+pkg install clang cmake openssl zlib make
+mkdir build && cd build
+cmake ../cpp -DCMAKE_BUILD_TYPE=Release && make -j$(nproc)
+```
+
 ## Running Tests
 
 ```bash

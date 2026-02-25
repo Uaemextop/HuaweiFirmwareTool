@@ -6,6 +6,10 @@ import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
 from typing import TYPE_CHECKING
 
+from hwflash.shared.styles import FONT_FAMILY
+from hwflash.ui.components.cards import GradientBar
+from hwflash.ui.components.factory import ActionSpec
+
 if TYPE_CHECKING:
     from hwflash.ui.state import AppState, AppController
     from hwflash.shared.styles import ThemeEngine
@@ -20,9 +24,13 @@ class DumpTab(ttk.Frame):
         self.s = state
         self.ctrl = ctrl
         self.engine = engine
+        self.widgets = ctrl.get_engine("widgets")
         self._build()
 
     def _build(self):
+        accent_start, accent_end = self.engine.gradient("accent")
+        GradientBar(self, height=2, color_start=accent_start, color_end=accent_end).pack(fill=tk.X, pady=(0, 6))
+
         # Info
         info_frame = ttk.LabelFrame(self, text="Firmware Dump (via Telnet)", padding=6)
         info_frame.pack(fill=tk.X, pady=(0, 6))
@@ -30,7 +38,7 @@ class DumpTab(ttk.Frame):
         ttk.Label(info_frame,
                   text="Requires active Telnet to the ONT. Enable Telnet first "
                        "(flash 1-TELNET.bin), connect via Terminal tab, then dump here.",
-                  font=('Segoe UI', 9), justify=tk.LEFT, wraplength=700,
+                   font=(FONT_FAMILY, 9), justify=tk.LEFT, wraplength=700,
                   ).pack(fill=tk.X)
 
         # Partition list
@@ -39,28 +47,48 @@ class DumpTab(ttk.Frame):
 
         btn_row = ttk.Frame(part_frame)
         btn_row.pack(fill=tk.X, pady=(0, 4))
-        ttk.Button(btn_row, text="\U0001f50d Read Partitions",
-                   command=self._dump_read_partitions, width=16).pack(side=tk.LEFT, padx=(0, 4))
-        ttk.Button(btn_row, text="\U0001f4be Dump Selected",
-                   command=self._dump_selected, width=14).pack(side=tk.LEFT, padx=(0, 4))
-        ttk.Button(btn_row, text="\U0001f4be Dump All",
-                   command=self._dump_all, width=10).pack(side=tk.LEFT)
+        if self.widgets:
+            self.widgets.actions(
+                btn_row,
+                [
+                    ActionSpec("🔍 Read Partitions", self._dump_read_partitions, width=16),
+                    ActionSpec("💾 Dump Selected", self._dump_selected, width=14),
+                    ActionSpec("💾 Dump All", self._dump_all, width=10, padx=(0, 0)),
+                ],
+                pady=(0, 0),
+            )
+        else:
+            ttk.Button(btn_row, text="\U0001f50d Read Partitions",
+                       command=self._dump_read_partitions, width=16).pack(side=tk.LEFT, padx=(0, 4))
+            ttk.Button(btn_row, text="\U0001f4be Dump Selected",
+                       command=self._dump_selected, width=14).pack(side=tk.LEFT, padx=(0, 4))
+            ttk.Button(btn_row, text="\U0001f4be Dump All",
+                       command=self._dump_all, width=10).pack(side=tk.LEFT)
 
         ttk.Label(btn_row, textvariable=self.s.dump_status_var,
-                  font=('Segoe UI', 9)).pack(side=tk.LEFT, padx=8)
+                  font=(FONT_FAMILY, 9)).pack(side=tk.LEFT, padx=8)
 
         columns = ('id', 'name', 'size', 'erasesize')
-        self.dump_tree = ttk.Treeview(
-            part_frame, columns=columns, show='headings', height=8)
-        self.dump_tree.heading('id', text='MTD #')
-        self.dump_tree.heading('name', text='Partition Name')
-        self.dump_tree.heading('size', text='Size')
-        self.dump_tree.heading('erasesize', text='Erase Size')
-        self.dump_tree.column('id', width=60)
-        self.dump_tree.column('name', width=200)
-        self.dump_tree.column('size', width=120)
-        self.dump_tree.column('erasesize', width=120)
-        self.dump_tree.pack(fill=tk.BOTH, expand=True)
+        if self.widgets:
+            self.dump_tree, _ = self.widgets.table(
+                part_frame,
+                columns=columns,
+                headings=("MTD #", "Partition Name", "Size", "Erase Size"),
+                widths=(60, 200, 120, 120),
+                height=8,
+            )
+        else:
+            self.dump_tree = ttk.Treeview(
+                part_frame, columns=columns, show='headings', height=8)
+            self.dump_tree.heading('id', text='MTD #')
+            self.dump_tree.heading('name', text='Partition Name')
+            self.dump_tree.heading('size', text='Size')
+            self.dump_tree.heading('erasesize', text='Erase Size')
+            self.dump_tree.column('id', width=60)
+            self.dump_tree.column('name', width=200)
+            self.dump_tree.column('size', width=120)
+            self.dump_tree.column('erasesize', width=120)
+            self.dump_tree.pack(fill=tk.BOTH, expand=True)
 
         # Dump output
         out_frame = ttk.LabelFrame(self, text="Dump Output", padding=4)
@@ -76,6 +104,7 @@ class DumpTab(ttk.Frame):
         self.engine.register(self.dump_output,
                              {"bg": "log_bg", "fg": "log_fg",
                               "insertbackground": "fg"})
+        self.engine.attach_hover(self.dump_output, bg="log_bg", hover="surface_alt")
 
     # ── Handlers ─────────────────────────────────────────────────
 

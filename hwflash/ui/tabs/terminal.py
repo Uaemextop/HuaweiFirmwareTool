@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from hwflash.shared.helpers import safe_int as _safe_int
 from hwflash.core.terminal import TelnetClient, FirmwareDumper
 from hwflash.shared.styles import FONT_FAMILY
+from hwflash.ui.components.factory import ActionSpec
 
 if TYPE_CHECKING:
     from hwflash.ui.state import AppState, AppController
@@ -24,6 +25,8 @@ class TerminalTab(ttk.Frame):
         self.s = state
         self.ctrl = ctrl
         self.engine = engine
+        self.widgets = ctrl.get_engine("widgets")
+        self.command_engine = ctrl.get_engine("commands")
         self._build()
 
     # ── Build ────────────────────────────────────────────────────
@@ -69,13 +72,24 @@ class TerminalTab(ttk.Frame):
         # Register for adapter refresh
         s.adapter_combos.append(self.term_nic_combo)
 
-        self.term_connect_btn = ttk.Button(
-            btn_row, text="Connect", command=self._term_connect, width=12)
-        self.term_connect_btn.pack(side=tk.LEFT, padx=(0, 4))
-        self.term_disconnect_btn = ttk.Button(
-            btn_row, text="Disconnect", command=self._term_disconnect,
-            width=12, state='disabled')
-        self.term_disconnect_btn.pack(side=tk.LEFT, padx=(0, 8))
+        if self.widgets:
+            _, action_buttons = self.widgets.actions(
+                btn_row,
+                [
+                    ActionSpec("Connect", self._term_connect, width=12),
+                    ActionSpec("Disconnect", self._term_disconnect, width=12, state="disabled", padx=(0, 8)),
+                ],
+                pady=(0, 0),
+            )
+            self.term_connect_btn, self.term_disconnect_btn = action_buttons
+        else:
+            self.term_connect_btn = ttk.Button(
+                btn_row, text="Connect", command=self._term_connect, width=12)
+            self.term_connect_btn.pack(side=tk.LEFT, padx=(0, 4))
+            self.term_disconnect_btn = ttk.Button(
+                btn_row, text="Disconnect", command=self._term_disconnect,
+                width=12, state='disabled')
+            self.term_disconnect_btn.pack(side=tk.LEFT, padx=(0, 8))
 
         ttk.Label(btn_row, textvariable=s.term_status_var,
                   font=(FONT_FAMILY, 9)).pack(side=tk.LEFT)
@@ -86,7 +100,7 @@ class TerminalTab(ttk.Frame):
 
         cmd_grid = ttk.Frame(cmd_frame)
         cmd_grid.pack(fill=tk.X)
-        quick_cmds = [
+        quick_cmds = self.command_engine.ont_quick_commands() if self.command_engine else [
             ("System Info", "display sysinfo"),
             ("Version", "display version"),
             ("SN", "display sn"),

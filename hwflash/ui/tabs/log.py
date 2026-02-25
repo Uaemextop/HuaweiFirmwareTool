@@ -7,6 +7,9 @@ import tkinter as tk
 from tkinter import ttk, scrolledtext, filedialog
 from typing import TYPE_CHECKING
 
+from hwflash.ui.components.cards import GradientBar
+from hwflash.ui.components.factory import ActionSpec
+
 if TYPE_CHECKING:
     from hwflash.ui.state import AppState, AppController
     from hwflash.shared.styles import ThemeEngine
@@ -21,6 +24,7 @@ class LogTab(ttk.Frame):
         self.s = state
         self.ctrl = ctrl
         self.engine = engine
+        self.widgets = ctrl.get_engine("widgets")
         self._build()
         # Register a proper callable callback — NOT the widget itself
         ctrl.bind_log_widget(self._append_log_entry)
@@ -28,11 +32,24 @@ class LogTab(ttk.Frame):
         self._flush_existing_entries()
 
     def _build(self):
+        accent_start, accent_end = self.engine.gradient("accent")
+        GradientBar(self, height=2, color_start=accent_start, color_end=accent_end).pack(fill=tk.X, pady=(0, 6))
+
         controls = ttk.Frame(self)
         controls.pack(fill=tk.X, pady=(0, 4))
 
-        ttk.Button(controls, text="Clear Log", command=self._clear_log, width=10).pack(side=tk.LEFT)
-        ttk.Button(controls, text="Export Log", command=self._export_log, width=10).pack(side=tk.LEFT, padx=4)
+        if self.widgets:
+            self.widgets.actions(
+                controls,
+                [
+                    ActionSpec("Clear Log", self._clear_log, width=10),
+                    ActionSpec("Export Log", self._export_log, width=10, padx=(4, 0)),
+                ],
+                pady=(0, 0),
+            )
+        else:
+            ttk.Button(controls, text="Clear Log", command=self._clear_log, width=10).pack(side=tk.LEFT)
+            ttk.Button(controls, text="Export Log", command=self._export_log, width=10).pack(side=tk.LEFT, padx=4)
 
         self.log_text = scrolledtext.ScrolledText(
             self, wrap=tk.WORD,
@@ -44,6 +61,7 @@ class LogTab(ttk.Frame):
         self.engine.register(self.log_text,
                              {"bg": "log_bg", "fg": "log_fg",
                               "insertbackground": "fg"})
+        self.engine.attach_hover(self.log_text, bg="log_bg", hover="surface_alt")
 
     def _flush_existing_entries(self):
         """Write any log entries that were queued before this widget existed."""

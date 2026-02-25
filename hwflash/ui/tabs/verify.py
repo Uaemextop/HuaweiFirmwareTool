@@ -6,6 +6,9 @@ import tkinter as tk
 from tkinter import ttk, filedialog
 from typing import TYPE_CHECKING
 
+from hwflash.shared.styles import FONT_FAMILY
+from hwflash.ui.components.cards import GradientBar
+
 if TYPE_CHECKING:
     from hwflash.ui.state import AppState, AppController
     from hwflash.shared.styles import ThemeEngine
@@ -25,6 +28,33 @@ class VerifyTab(ttk.Frame):
     def _build(self):
         s = self.s
 
+        accent_start, accent_end = self.engine.gradient("accent")
+        GradientBar(self, height=2, color_start=accent_start, color_end=accent_end).pack(fill=tk.X, pady=(0, 6))
+
+        fw_meta_frame = ttk.LabelFrame(self, text="Loaded Firmware Metadata", padding=6)
+        fw_meta_frame.pack(fill=tk.X, pady=(0, 6))
+
+        row = ttk.Frame(fw_meta_frame)
+        row.pack(fill=tk.X, pady=2)
+        ttk.Label(row, text="Product ID:", width=14).pack(side=tk.LEFT)
+        ttk.Label(row, textvariable=s.fw_product_id_var).pack(side=tk.LEFT, padx=(0, 12))
+        ttk.Label(row, text="SOC ID:", width=10).pack(side=tk.LEFT)
+        ttk.Label(row, textvariable=s.fw_soc_id_var).pack(side=tk.LEFT)
+
+        row = ttk.Frame(fw_meta_frame)
+        row.pack(fill=tk.X, pady=2)
+        ttk.Label(row, text="Board ID:", width=14).pack(side=tk.LEFT)
+        ttk.Label(row, textvariable=s.fw_board_id_var).pack(side=tk.LEFT, padx=(0, 12))
+        ttk.Label(row, text="Build Date:", width=10).pack(side=tk.LEFT)
+        ttk.Label(row, textvariable=s.fw_build_date_var).pack(side=tk.LEFT)
+
+        row = ttk.Frame(fw_meta_frame)
+        row.pack(fill=tk.X, pady=2)
+        ttk.Label(row, text="HW/SW:", width=14).pack(side=tk.LEFT)
+        ttk.Label(row, textvariable=s.fw_hw_ver_var).pack(side=tk.LEFT)
+        ttk.Label(row, text=" / ").pack(side=tk.LEFT)
+        ttk.Label(row, textvariable=s.fw_sw_ver_var).pack(side=tk.LEFT)
+
         # CRC32
         crc_frame = ttk.LabelFrame(self, text="CRC32 Integrity Verification", padding=6)
         crc_frame.pack(fill=tk.X, pady=(0, 6))
@@ -37,7 +67,7 @@ class VerifyTab(ttk.Frame):
         ttk.Label(crc_frame,
                   text="Validates HWNP header and data CRC32 before transfer. "
                        "Disable only for modified/custom firmware.",
-                  font=('Segoe UI', 8), justify=tk.LEFT, wraplength=700,
+                   font=(FONT_FAMILY, 8), justify=tk.LEFT, wraplength=700,
                   ).pack(fill=tk.X, pady=(2, 0))
 
         # Signature
@@ -53,12 +83,12 @@ class VerifyTab(ttk.Frame):
         row.pack(fill=tk.X, pady=2)
         ttk.Label(row, text="Public Key File:", width=14).pack(side=tk.LEFT)
         ttk.Entry(row, textvariable=s.pubkey_path_var, width=38).pack(side=tk.LEFT, padx=(0, 4))
-        ttk.Button(row, text="Browse", command=self._browse_pubkey, width=8).pack(side=tk.LEFT)
+        ttk.Button(row, text="Browse", command=self._browse_pubkey, width=8, style="App.Accent.TButton").pack(side=tk.LEFT)
 
         ttk.Label(sig_frame,
                   text="HWNP firmware may include an RSA signature (SIGNINFO). "
                        "If you have the public key, enable this to verify authenticity.",
-                  font=('Segoe UI', 8), justify=tk.LEFT, wraplength=700,
+                   font=(FONT_FAMILY, 8), justify=tk.LEFT, wraplength=700,
                   ).pack(fill=tk.X, pady=(2, 0))
 
         # Product compatibility
@@ -73,7 +103,7 @@ class VerifyTab(ttk.Frame):
         ttk.Label(prod_frame,
                   text="Firmware includes a product list of compatible hardware. "
                        "Skipping allows flashing to potentially incompatible devices.",
-                  font=('Segoe UI', 8), justify=tk.LEFT, wraplength=700,
+                   font=(FONT_FAMILY, 8), justify=tk.LEFT, wraplength=700,
                   ).pack(fill=tk.X, pady=(2, 0))
 
         # Pre-flash
@@ -98,7 +128,7 @@ class VerifyTab(ttk.Frame):
         ttk.Label(preflash_frame,
                   text="Additional checks before transfer. Dry run performs all "
                        "steps except sending data — useful for testing configuration.",
-                  font=('Segoe UI', 8), justify=tk.LEFT, wraplength=700,
+                   font=(FONT_FAMILY, 8), justify=tk.LEFT, wraplength=700,
                   ).pack(fill=tk.X, pady=(2, 0))
 
     def _browse_pubkey(self):

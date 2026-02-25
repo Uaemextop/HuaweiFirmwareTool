@@ -133,15 +133,17 @@ class HWNPFirmware:
         legacy_fmt = '<IIIIIIBBHII'
 
         # Layout 2 (seen in real BINs): mixed-endian
+        # The struct layout is identical to legacy for fields at 0x0C+,
+        # but raw_sz (0x04) and raw_crc32 (0x08) are big-endian.
         # 0x00 'HWNP'
         # 0x04 raw_sz (BE u32)
         # 0x08 raw_crc32 (BE u32)
         # 0x0C hdr_sz (LE u32)
         # 0x10 hdr_crc32 (LE u32)
         # 0x14 item_counts (LE u32)
-        # 0x18 unknown/reserved (LE u32)
-        # 0x1C prod_list_sz (LE u32)
-        # 0x20 item_sz/reserved (LE u32; sometimes 0/1)
+        # 0x18 unkn1 (u8), unkn2 (u8), prod_list_sz (LE u16)
+        # 0x1C item_sz (LE u32)
+        # 0x20 reserved (LE u32)
 
         def _score_common(raw_sz: int, hdr_sz: int, item_counts: int, prod_sz: int, item_sz: int) -> int:
             score = 0
@@ -186,8 +188,10 @@ class HWNPFirmware:
         mixed_hdr_crc_le = struct.unpack_from('<I', self.raw_data, offset + 0x10)[0]
         mixed_hdr_crc_be = struct.unpack_from('>I', self.raw_data, offset + 0x10)[0]
         mixed_item_counts = struct.unpack_from('<I', self.raw_data, offset + 0x14)[0]
-        mixed_prod_sz = struct.unpack_from('<I', self.raw_data, offset + 0x1C)[0]
-        mixed_item_sz = struct.unpack_from('<I', self.raw_data, offset + 0x20)[0]
+        # prod_list_sz is u16 at offset 0x1A (same position as legacy struct)
+        mixed_prod_sz = struct.unpack_from('<H', self.raw_data, offset + 0x1A)[0]
+        # item_sz is u32 at offset 0x1C (same position as legacy struct)
+        mixed_item_sz = struct.unpack_from('<I', self.raw_data, offset + 0x1C)[0]
         if mixed_item_sz < 128:
             mixed_item_sz = HWNP_ITEM_SIZE
         score_mixed = _score_common(int(mixed_raw_sz), int(mixed_hdr_sz), int(mixed_item_counts), int(mixed_prod_sz), int(mixed_item_sz))
@@ -562,6 +566,92 @@ class HWNPFirmware:
     def get_total_data_size(self):
         """Get total size of all firmware item data."""
         return sum(item.data_size for item in self.items)
+
+    def get_firmware_summary(self) -> dict:
+        """Extract a comprehensive metadata summary from the actual firmware.
+
+        Analyses header fields, item table, product list tags, per-item
+        version strings, and any UpgradeCheck.xml content to produce the
+        most complete picture possible — regardless of whether the
+        product list contains KEY=VALUE pairs.
+        """
+        summary: dict = {}
+
+        # ── Header info ─────────────────────────────────────────
+        summary['layout'] = self.header_layout
+        summary['raw_size'] = self.raw_size
+        summary['header_size'] = self.header_size
+        summary['item_count'] = self.item_count
+        summary['prod_list_size'] = self.prod_list_size
+        summary['item_header_size'] = self.item_header_size
+        summary['file_size'] = len(self.raw_data)
+        summary['header_offset'] = self.header_offset
+
+        # CRC
+        try:
+            hdr_ok, data_ok = self.validate_crc32()
+        except Exception:
+            hdr_ok, data_ok = False, False
+        summary['header_crc_valid'] = hdr_ok
+        summary['data_crc_valid'] = data_ok
+        summary['header_crc'] = f"0x{self.header_crc32:08X}"
+        summary['raw_crc'] = f"0x{self.raw_crc32:08X}"
+
+        # ── Product list ────────────────────────────────────────
+        raw_pl = self.product_list.strip()
+        summary['product_list_raw'] = raw_pl
+
+        # Try KEY=VALUE parsing
+        kv: dict[str, str] = {}
+        for line in raw_pl.replace('\r\n', '\n').split('\n'):
+            line = line.strip()
+            if '=' in line:
+                k, v = line.split('=', 1)
+                kv[k.strip().upper()] = v.strip()
+        summary['product_kv'] = kv
+
+        # Parse pipe/semicolon-delimited tags (common format)
+        tags: list[str] = []
+        if not kv and raw_pl:
+            for tag in raw_pl.replace(';', '|').split('|'):
+                tag = tag.strip()
+                if tag:
+                    tags.append(tag)
+        summary['product_tags'] = tags
+
+        # ── Version from items ──────────────────────────────────
+        versions = list({it.version for it in self.items if it.version})
+        summary['versions'] = versions
+        summary['firmware_version'] = versions[0] if len(versions) == 1 else (
+            ', '.join(sorted(versions)) if versions else ''
+        )
+
+        # ── Sections ────────────────────────────────────────────
+        sections = list(dict.fromkeys(it.section for it in self.items if it.section))
+        summary['sections'] = sections
+
+        # ── UpgradeCheck.xml extraction ─────────────────────────
+        board_ids: list[str] = []
+        chip_info: dict[str, list[str]] = {}
+        for it in self.items:
+            if (it.item_path or '').lower().endswith('upgradecheck.xml') and it.data:
+                try:
+                    xml_text = it.data.decode('utf-8', errors='replace')
+                except Exception:
+                    continue
+                import re
+                for m in re.finditer(r'BoardId="(\d+)"', xml_text):
+                    bid = m.group(1)
+                    if bid and bid not in board_ids:
+                        board_ids.append(bid)
+                for m in re.finditer(r'<(\w+ChipCheckIns)\s+name="([^"]+)"', xml_text):
+                    chip_type = m.group(1)
+                    names = [n.strip() for n in m.group(2).split(',') if n.strip()]
+                    chip_info[chip_type] = names
+        summary['board_ids'] = board_ids
+        summary['chip_info'] = chip_info
+
+        return summary
 
     # ── Firmware editing / repackaging ───────────────────────────
 

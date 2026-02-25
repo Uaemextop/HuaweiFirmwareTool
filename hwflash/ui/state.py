@@ -47,6 +47,12 @@ class AppState:
         self.firmware_signature_dirty: bool = False
         self.fw_path_var = tk.StringVar(value="No file selected")
         self.fw_info_var = tk.StringVar(value="")
+        self.fw_product_id_var = tk.StringVar(value="")
+        self.fw_soc_id_var = tk.StringVar(value="")
+        self.fw_board_id_var = tk.StringVar(value="")
+        self.fw_hw_ver_var = tk.StringVar(value="")
+        self.fw_sw_ver_var = tk.StringVar(value="")
+        self.fw_build_date_var = tk.StringVar(value="")
 
         # ── Adapter ──────────────────────────────────────────────
         self.adapters: List = []
@@ -161,12 +167,19 @@ class AppController:
     def __init__(self, state: AppState, theme_engine: ThemeEngine):
         self.state = state
         self.theme_engine = theme_engine
+        self._engines: Dict[str, object] = {}
 
         # Callback hooks set by the orchestrator (app.py) after
         # all tabs are created.
         self._refresh_adapters: Optional[Callable] = None
         self._refresh_fw_info: Optional[Callable] = None
         self._update_status_bar: Optional[Callable[[str], None]] = None
+
+    def register_engine(self, name: str, engine: object) -> None:
+        self._engines[name] = engine
+
+    def get_engine(self, name: str, default=None):
+        return self._engines.get(name, default)
 
     # ── Logging ──────────────────────────────────────────────────
 

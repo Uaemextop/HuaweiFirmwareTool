@@ -10,6 +10,8 @@ from hwflash.shared.helpers import safe_int as _safe_int
 from hwflash.core.presets import PRESET_TEMPLATE
 from hwflash.core.protocol import OBSC_SEND_PORT, OBSC_RECV_PORT
 from hwflash.shared.styles import FONT_FAMILY
+from hwflash.ui.components.cards import GradientBar
+from hwflash.ui.components.factory import ActionSpec
 
 if TYPE_CHECKING:
     from hwflash.ui.state import AppState, AppController
@@ -27,12 +29,16 @@ class PresetsTab(ttk.Frame):
         self.s = state
         self.ctrl = ctrl
         self.engine = engine
+        self.widgets = ctrl.get_engine("widgets")
         self._build()
 
     # ── Build ─────────────────────────────────────────────────────────
 
     def _build(self):
         s = self.s
+
+        accent_start, accent_end = self.engine.gradient("accent")
+        GradientBar(self, height=2, color_start=accent_start, color_end=accent_end).pack(fill=tk.X, pady=(0, 8))
 
         # Preset Selection
         select_frame = ttk.LabelFrame(self, text="Router Presets", padding=10)
@@ -47,12 +53,24 @@ class PresetsTab(ttk.Frame):
             state='readonly', width=35,
         )
         self.preset_combo.pack(side=tk.LEFT, padx=(0, 5))
-        self.preset_load_btn = ttk.Button(row, text="Load", command=self._load_preset, width=8)
-        self.preset_load_btn.pack(side=tk.LEFT, padx=2)
-        self.preset_edit_btn = ttk.Button(row, text="Load to Editor", command=self._load_preset_into_editor, width=14)
-        self.preset_edit_btn.pack(side=tk.LEFT, padx=2)
-        self.preset_delete_btn = ttk.Button(row, text="Delete", command=self._delete_preset, width=8)
-        self.preset_delete_btn.pack(side=tk.LEFT, padx=2)
+        if self.widgets:
+            _, action_buttons = self.widgets.actions(
+                row,
+                [
+                    ActionSpec("Load", self._load_preset, width=8, padx=(2, 2)),
+                    ActionSpec("Load to Editor", self._load_preset_into_editor, width=14, padx=(2, 2)),
+                    ActionSpec("Delete", self._delete_preset, width=8, padx=(2, 2)),
+                ],
+                pady=(0, 0),
+            )
+            self.preset_load_btn, self.preset_edit_btn, self.preset_delete_btn = action_buttons
+        else:
+            self.preset_load_btn = ttk.Button(row, text="Load", command=self._load_preset, width=8)
+            self.preset_load_btn.pack(side=tk.LEFT, padx=2)
+            self.preset_edit_btn = ttk.Button(row, text="Load to Editor", command=self._load_preset_into_editor, width=14)
+            self.preset_edit_btn.pack(side=tk.LEFT, padx=2)
+            self.preset_delete_btn = ttk.Button(row, text="Delete", command=self._delete_preset, width=8)
+            self.preset_delete_btn.pack(side=tk.LEFT, padx=2)
 
         ttk.Label(select_frame, textvariable=s.preset_desc_var,
               font=(FONT_FAMILY, 9), wraplength=600).pack(fill=tk.X, pady=(5, 0))
@@ -186,12 +204,23 @@ class PresetsTab(ttk.Frame):
         # Action Buttons
         btn_row = ttk.Frame(self.preset_create_frame)
         btn_row.pack(fill=tk.X, pady=(8, 0))
-        ttk.Button(btn_row, text="Save Preset",
-                   command=self._save_preset, width=16).pack(side=tk.LEFT, padx=(0, 5))
-        ttk.Button(btn_row, text="Copy Current Settings",
-                   command=self._copy_current_to_preset_editor, width=22).pack(side=tk.LEFT, padx=(0, 5))
-        ttk.Button(btn_row, text="Reset Fields",
-                   command=self._reset_preset_editor, width=14).pack(side=tk.LEFT)
+        if self.widgets:
+            self.widgets.actions(
+                btn_row,
+                [
+                    ActionSpec("Save Preset", self._save_preset, width=16, padx=(0, 5)),
+                    ActionSpec("Copy Current Settings", self._copy_current_to_preset_editor, width=22, padx=(0, 5)),
+                    ActionSpec("Reset Fields", self._reset_preset_editor, width=14, padx=(0, 0)),
+                ],
+                pady=(0, 0),
+            )
+        else:
+            ttk.Button(btn_row, text="Save Preset",
+                       command=self._save_preset, width=16).pack(side=tk.LEFT, padx=(0, 5))
+            ttk.Button(btn_row, text="Copy Current Settings",
+                       command=self._copy_current_to_preset_editor, width=22).pack(side=tk.LEFT, padx=(0, 5))
+            ttk.Button(btn_row, text="Reset Fields",
+                       command=self._reset_preset_editor, width=14).pack(side=tk.LEFT)
 
         # Preset Details
         self.preset_details_frame = ttk.LabelFrame(self, text="Preset Details", padding=10)
@@ -206,6 +235,7 @@ class PresetsTab(ttk.Frame):
 
         # Register text widget with theme engine
         self.engine.register(self.preset_details_text, updater=self._update_theme)
+        self.engine.attach_hover(self.preset_details_text, bg="log_bg", hover="surface_alt")
 
         # Populate preset list
         self._refresh_preset_list()

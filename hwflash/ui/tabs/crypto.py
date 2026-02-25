@@ -11,6 +11,8 @@ from hwflash.core.crypto import (
     encrypt_config, decrypt_config, try_decrypt_all_keys,
     CfgFileParser, KNOWN_CHIP_IDS,
 )
+from hwflash.ui.components.cards import GradientBar
+from hwflash.ui.components.factory import ActionSpec
 
 if TYPE_CHECKING:
     from hwflash.ui.state import AppState, AppController
@@ -26,10 +28,14 @@ class CryptoTab(ttk.Frame):
         self.s = state
         self.ctrl = ctrl
         self.engine = engine
+                self.widgets = ctrl.get_engine("widgets")
         self._build()
 
     def _build(self):
         s = self.s
+
+        accent_start, accent_end = self.engine.gradient("accent")
+        GradientBar(self, height=2, color_start=accent_start, color_end=accent_end).pack(fill=tk.X, pady=(0, 6))
 
         # Encrypt / Decrypt
         op_frame = ttk.LabelFrame(self, text="Config File Encryption (aescrypt2)", padding=6)
@@ -159,7 +165,7 @@ class CryptoTab(ttk.Frame):
                                 f"Key: Df7!ui{chip_id}9(lmV1L8\n"
                                 f"Output: {out_path}")
         except Exception as e:
-            messagebox.showerror("Decrypt Error", str(e))
+        ttk.Label(row, text="Key: Df7!ui%s9(lmV1L8", font=("Segoe UI", 8)).pack(side=tk.LEFT)
             self.ctrl.log(f"Decrypt error: {e}")
 
     def _crypto_encrypt(self):
@@ -168,9 +174,20 @@ class CryptoTab(ttk.Frame):
         if not in_path or not out_path:
             messagebox.showwarning("Missing Path", "Select input and output files.")
             return
-        chip_id = self._get_chip_id()
-        if chip_id is None:
-            messagebox.showwarning("Select Chip ID",
+        if self.widgets:
+            self.widgets.actions(
+                btn_row,
+                [
+                    ActionSpec("🔓 Decrypt", self._crypto_decrypt, width=12),
+                    ActionSpec("🔒 Encrypt", self._crypto_encrypt, width=12),
+                    ActionSpec("🔍 Auto-Detect Key", self._crypto_auto_detect, width=16, padx=(0, 0)),
+                ],
+                pady=(0, 0),
+            )
+        else:
+            ttk.Button(btn_row, text="🔓 Decrypt", command=self._crypto_decrypt, width=12).pack(side=tk.LEFT, padx=(0, 4))
+            ttk.Button(btn_row, text="🔒 Encrypt", command=self._crypto_encrypt, width=12).pack(side=tk.LEFT, padx=(0, 4))
+            ttk.Button(btn_row, text="🔍 Auto-Detect Key", command=self._crypto_auto_detect, width=16).pack(side=tk.LEFT)
                                    "Auto-detect is only available for decryption.\n"
                                    "Please select a specific chip ID for encryption.")
             return
@@ -194,6 +211,7 @@ class CryptoTab(ttk.Frame):
         if not in_path:
             messagebox.showwarning("No File", "Select an encrypted config file first.")
             return
+        self.engine.attach_hover(self.cfg_text, bg="log_bg", hover="surface_alt")
         try:
             with open(in_path, 'rb') as f:
                 data = f.read()
@@ -280,7 +298,11 @@ class CryptoTab(ttk.Frame):
             self.cfg_text.tag_add('search', pos, end)
             start = end
             count += 1
-        self.cfg_text.tag_configure('search', background='#3B82F6', foreground='#FFFFFF')
+        self.cfg_text.tag_configure(
+            'search',
+            background=self.engine.token("accent", "#3B82F6"),
+            foreground=self.engine.token("fg", "#FFFFFF"),
+        )
         if count > 0:
             self.cfg_text.see(self.cfg_text.tag_ranges('search')[0])
         self.ctrl.log(f"Config search '{query}': {count} match(es)")

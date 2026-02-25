@@ -8,8 +8,10 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from typing import TYPE_CHECKING, Optional
 
+from hwflash.core.crypto import encrypt_config, try_decrypt_all_keys
 from hwflash.core.firmware import HWNPFirmware
 from hwflash.shared.styles import FONT_FAMILY
+from hwflash.ui.components.cards import GradientBar
 
 if TYPE_CHECKING:
     from hwflash.ui.state import AppState, AppController
@@ -18,6 +20,15 @@ if TYPE_CHECKING:
 
 
 _TEXT_ENCODINGS = ("utf-8", "utf-8-sig", "utf-16", "utf-16-le", "utf-16-be", "latin-1")
+
+_META_ALIASES = {
+    "PRODUCT_ID": ("PRODUCT_ID", "PROD_ID", "PRODUCT", "PRODUCTNAME"),
+    "SOC_ID": ("SOC_ID", "SOFT_ID", "SOC", "CHIP_ID", "CHIPID"),
+    "HARDWARE_ID": ("HARDWARE_ID", "HW_ID", "BOARD_ID", "BOARD", "HARDWARE"),
+    "HW_VER": ("HW_VER", "HARDWARE_VER", "HARDWARE_VERSION", "HW_VERSION"),
+    "SW_VER": ("SW_VER", "SOFTWARE_VER", "SOFTWARE_VERSION", "FW_VER", "FW_VERSION"),
+    "BUILD_DATE": ("BUILD_DATE", "DATE", "BUILD", "BUILD_TIME"),
+}
 
 
 def _human_size(value: int) -> str:
@@ -39,13 +50,14 @@ class FirmwareEditorTab(ttk.Frame):
         self.s = state
         self.ctrl = ctrl
         self.engine = engine
+        self.widgets = ctrl.get_engine("widgets")
 
         self._selected_item_index: Optional[int] = None
         self._selected_item_iid: Optional[str] = None
         self._tree_item_lookup: dict[str, int] = {}
         self._current_encoding = tk.StringVar(value="utf-8")
         self._search_var = tk.StringVar()
-        self._nav_mode_var = tk.StringVar(value="By Section")
+        self._payload_mode_var = tk.StringVar(value="All")
         self._status_var = tk.StringVar(value="Load firmware to start")
 
         self._item_path_var = tk.StringVar()
@@ -57,7 +69,7 @@ class FirmwareEditorTab(ttk.Frame):
 
         self._product_id_var = tk.StringVar()
         self._soc_id_var = tk.StringVar()
-        self._board_id_var = tk.StringVar()
+        self._hardware_id_var = tk.StringVar()
         self._hw_ver_var = tk.StringVar()
         self._sw_ver_var = tk.StringVar()
         self._build_date_var = tk.StringVar()
@@ -67,14 +79,22 @@ class FirmwareEditorTab(ttk.Frame):
         self._signature_tail = b""
 
         self._original_items: dict[int, bytes] = {}
+        self._auto_crypto_items: dict[int, str] = {}
+        self._metadata_syncing = False
+        self._metadata_apply_after_id = None
+        self._metadata_rows: dict[str, tuple[ttk.Label, ttk.Entry]] = {}
 
         self._build_ui()
+        self._bind_metadata_auto_apply()
 
     def _build_ui(self):
         top = ttk.Frame(self, padding=(8, 8, 8, 4))
         top.pack(fill=tk.X)
 
         self._build_action_menus(top)
+
+        accent_start, accent_end = self.engine.gradient("accent")
+        GradientBar(self, height=2, color_start=accent_start, color_end=accent_end).pack(fill=tk.X)
 
         ttk.Separator(self, orient=tk.HORIZONTAL).pack(fill=tk.X)
 
@@ -94,9 +114,11 @@ class FirmwareEditorTab(ttk.Frame):
         ttk.Label(status, textvariable=self._status_var, font=(FONT_FAMILY, 9, "italic")).pack(side=tk.LEFT)
 
         self.engine.register(self._text_editor, {"bg": "bg_input", "fg": "fg", "insertbackground": "fg"})
-        self.engine.register(self._product_text, {"bg": "bg_input", "fg": "fg", "insertbackground": "fg"})
         self.engine.register(self._signature_text, {"bg": "bg_input", "fg": "fg", "insertbackground": "fg"})
         self.engine.register(self._item_details_text, {"bg": "bg_input", "fg": "fg", "insertbackground": "fg"})
+        self.engine.register(self.fw_tree, updater=lambda _colors: self.fw_tree.configure(style="Treeview"))
+        self.engine.attach_hover(self._text_editor, bg="bg_input", hover="surface_alt")
+        self.engine.attach_hover(self._signature_text, bg="bg_input", hover="surface_alt")
 
     def _build_action_menus(self, parent):
         wrap = ttk.Frame(parent)
@@ -151,19 +173,19 @@ class FirmwareEditorTab(ttk.Frame):
         tools_menu.add_command(label="Find Text", command=self._find_in_editor)
         tools_btn.configure(menu=tools_menu)
 
-        ttk.Button(wrap, text="Apply Text", bootstyle="primary", command=self._apply_text_edit).pack(side=tk.RIGHT)
+        ttk.Button(wrap, text="Apply Text", style="App.Accent.TButton", command=self._apply_text_edit).pack(side=tk.RIGHT)
         ttk.Button(wrap, text="Save As", command=self._save_firmware_as).pack(side=tk.RIGHT, padx=(0, 6))
         ttk.Button(wrap, text="Repack", command=self._repack_in_memory).pack(side=tk.RIGHT, padx=(0, 6))
 
     def _build_tree_panel(self, parent):
         search_row = ttk.Frame(parent)
         search_row.pack(fill=tk.X, pady=(0, 6))
-        ttk.Label(search_row, text="Navigator", font=(FONT_FAMILY, 10, "bold")).pack(side=tk.LEFT)
+        ttk.Label(search_row, text="Payload Items", font=(FONT_FAMILY, 10, "bold")).pack(side=tk.LEFT)
         ttk.Combobox(
             search_row,
-            textvariable=self._nav_mode_var,
-            values=["By Section", "Flat List", "Textual First"],
-            width=12,
+            textvariable=self._payload_mode_var,
+            values=["All", "Text", "Binary"],
+            width=10,
             state="readonly",
         ).pack(side=tk.LEFT, padx=(8, 0))
         ttk.Button(search_row, text="Rebuild", width=8, command=self._refresh_fw_info).pack(side=tk.LEFT, padx=(4, 8))
@@ -174,14 +196,29 @@ class FirmwareEditorTab(ttk.Frame):
         tree_wrap = ttk.Frame(parent)
         tree_wrap.pack(fill=tk.BOTH, expand=True)
 
-        self.fw_tree = ttk.Treeview(tree_wrap, columns=("section", "size", "crc"), show="tree headings", selectmode="browse")
-        self.fw_tree.heading("#0", text="Path", anchor="w")
+        self.fw_tree = ttk.Treeview(
+            tree_wrap,
+            columns=("idx", "path", "section", "version", "size", "policy", "type", "enc", "crc"),
+            show="headings",
+            selectmode="browse",
+        )
+        self.fw_tree.heading("idx", text="#", anchor="e")
+        self.fw_tree.heading("path", text="Path", anchor="w")
         self.fw_tree.heading("section", text="Section", anchor="w")
+        self.fw_tree.heading("version", text="Version", anchor="w")
         self.fw_tree.heading("size", text="Size", anchor="e")
+        self.fw_tree.heading("policy", text="Policy", anchor="e")
+        self.fw_tree.heading("type", text="Kind", anchor="w")
+        self.fw_tree.heading("enc", text="Encoding", anchor="w")
         self.fw_tree.heading("crc", text="CRC32", anchor="w")
-        self.fw_tree.column("#0", width=280, minwidth=150)
+        self.fw_tree.column("idx", width=44, minwidth=40, anchor="e")
+        self.fw_tree.column("path", width=280, minwidth=180)
         self.fw_tree.column("section", width=90, minwidth=70)
+        self.fw_tree.column("version", width=80, minwidth=70)
         self.fw_tree.column("size", width=90, minwidth=80, anchor="e")
+        self.fw_tree.column("policy", width=75, minwidth=60, anchor="e")
+        self.fw_tree.column("type", width=90, minwidth=70)
+        self.fw_tree.column("enc", width=100, minwidth=90)
         self.fw_tree.column("crc", width=110, minwidth=100)
 
         sy = ttk.Scrollbar(tree_wrap, orient=tk.VERTICAL, command=self.fw_tree.yview)
@@ -235,6 +272,9 @@ class FirmwareEditorTab(ttk.Frame):
         ttk.Button(top, text="Reload", width=9, command=self._load_selected_item_text).pack(side=tk.RIGHT)
         ttk.Button(top, text="Find", width=8, command=self._find_in_editor).pack(side=tk.RIGHT, padx=(0, 4))
 
+        self._text_mode_var = tk.StringVar(value="")
+        ttk.Label(parent, textvariable=self._text_mode_var, font=(FONT_FAMILY, 8, "italic")).pack(anchor="w", pady=(0, 4))
+
         wrap = ttk.Frame(parent)
         wrap.pack(fill=tk.BOTH, expand=True)
 
@@ -250,36 +290,57 @@ class FirmwareEditorTab(ttk.Frame):
         wrap.columnconfigure(0, weight=1)
 
     def _build_metadata_tab(self, parent):
-        grid = ttk.Frame(parent)
+        # ── Firmware Analysis (read-only summary) ───────────────
+        ttk.Label(parent, text="Firmware Analysis", font=(FONT_FAMILY, 10, "bold")).pack(anchor="w")
+
+        info_wrap = ttk.Frame(parent)
+        info_wrap.pack(fill=tk.BOTH, expand=True, pady=(4, 0))
+        self._fw_info_text = tk.Text(info_wrap, wrap=tk.WORD, font=("Consolas", 9), state="disabled", height=18)
+        sy = ttk.Scrollbar(info_wrap, orient=tk.VERTICAL, command=self._fw_info_text.yview)
+        self._fw_info_text.configure(yscrollcommand=sy.set)
+        self._fw_info_text.grid(row=0, column=0, sticky="nsew")
+        sy.grid(row=0, column=1, sticky="ns")
+        info_wrap.rowconfigure(0, weight=1)
+        info_wrap.columnconfigure(0, weight=1)
+
+        # ── Product Metadata (editable KV fields) ──────────────
+        edit_lf = ttk.LabelFrame(parent, text="Product Metadata (editable)", padding=6)
+        edit_lf.pack(fill=tk.X, pady=(8, 0))
+
+        grid = ttk.Frame(edit_lf)
         grid.pack(fill=tk.X)
 
         fields = [
-            ("Product ID", self._product_id_var),
-            ("Soft ID (SOC_ID)", self._soc_id_var),
-            ("Board ID", self._board_id_var),
-            ("HW Ver", self._hw_ver_var),
-            ("SW Ver", self._sw_ver_var),
-            ("Build Date", self._build_date_var),
-            ("Declared Product Size", self._prod_size_var),
+            ("Product ID", self._product_id_var, "product"),
+            ("SOC ID", self._soc_id_var, "soc"),
+            ("Hardware ID", self._hardware_id_var, "hardware"),
+            ("HW Ver", self._hw_ver_var, "hwver"),
+            ("SW Ver", self._sw_ver_var, "swver"),
+            ("Build Date", self._build_date_var, "build"),
+            ("Product List Size", self._prod_size_var, "size"),
         ]
 
-        for row, (label, var) in enumerate(fields):
-            ttk.Label(grid, text=f"{label}:").grid(row=row, column=0, sticky="w", pady=3)
-            ttk.Entry(grid, textvariable=var).grid(row=row, column=1, sticky="ew", pady=3, padx=(8, 0))
+        for row, (label, var, key) in enumerate(fields):
+            lbl = ttk.Label(grid, text=f"{label}:")
+            ent = ttk.Entry(grid, textvariable=var)
+            lbl.grid(row=row, column=0, sticky="w", pady=2)
+            ent.grid(row=row, column=1, sticky="ew", pady=2, padx=(8, 0))
+            self._metadata_rows[key] = (lbl, ent)
 
         grid.columnconfigure(1, weight=1)
+        self._metadata_empty_hint = ttk.Label(
+            edit_lf,
+            text="No KEY=VALUE metadata in product list. Add fields to embed custom metadata on repack.",
+            font=(FONT_FAMILY, 8, "italic"),
+        )
+        self._metadata_empty_hint.pack(anchor="w", pady=(4, 0))
+        ttk.Label(
+            edit_lf,
+            text="Fields auto-apply to product list as you type.",
+            font=(FONT_FAMILY, 8, "italic"),
+        ).pack(anchor="w", pady=(2, 0))
 
-        ttk.Label(parent, text="Product List Text (editable)", font=(FONT_FAMILY, 9, "bold")).pack(anchor="w", pady=(10, 4))
-
-        wrap = ttk.Frame(parent)
-        wrap.pack(fill=tk.BOTH, expand=True)
-        self._product_text = tk.Text(wrap, wrap=tk.WORD, height=10, font=("Consolas", 9))
-        sy = ttk.Scrollbar(wrap, orient=tk.VERTICAL, command=self._product_text.yview)
-        self._product_text.configure(yscrollcommand=sy.set)
-        self._product_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        sy.pack(side=tk.RIGHT, fill=tk.Y)
-
-        ttk.Button(parent, text="Apply Product Metadata", bootstyle="primary", command=self._apply_product_metadata).pack(anchor="e", pady=(8, 0))
+        self.engine.register(self._fw_info_text, {"bg": "bg_input", "fg": "fg", "insertbackground": "fg"})
 
     def _build_item_tab(self, parent):
         grid = ttk.Frame(parent)
@@ -303,7 +364,7 @@ class FirmwareEditorTab(ttk.Frame):
 
         grid.columnconfigure(1, weight=1)
 
-        ttk.Button(parent, text="Apply Item Fields", bootstyle="primary", command=self._apply_item_fields).pack(anchor="e", pady=(8, 8))
+        ttk.Button(parent, text="Apply Item Fields", style="App.Accent.TButton", command=self._apply_item_fields).pack(anchor="e", pady=(8, 8))
 
         ttk.Label(parent, text="Selected Item Summary", font=(FONT_FAMILY, 9, "bold")).pack(anchor="w")
         self._item_details_text = tk.Text(parent, wrap=tk.WORD, height=10, font=("Consolas", 9), state="disabled")
@@ -321,7 +382,7 @@ class FirmwareEditorTab(ttk.Frame):
         row2.pack(fill=tk.X, pady=(6, 6))
         ttk.Button(row2, text="Save Signature", command=self._save_signature_file).pack(side=tk.LEFT)
         ttk.Button(row2, text="Verify", command=self._verify_signature).pack(side=tk.LEFT, padx=(6, 0))
-        ttk.Button(row2, text="Sign", bootstyle="primary", command=self._sign_firmware).pack(side=tk.LEFT, padx=(6, 0))
+        ttk.Button(row2, text="Sign", style="App.Accent.TButton", command=self._sign_firmware).pack(side=tk.LEFT, padx=(6, 0))
 
         self._signature_text = tk.Text(parent, wrap=tk.NONE, font=("Consolas", 9))
         self._signature_text.pack(fill=tk.BOTH, expand=True)
@@ -344,8 +405,10 @@ class FirmwareEditorTab(ttk.Frame):
         self.s.firmware_path = path
         self.s.fw_path_var.set(path)
         self._original_items = {item.index: bytes(item.data or b"") for item in fw.items}
+        self._auto_crypto_items.clear()
         self._mark_clean()
         self.s.firmware_signature_dirty = False
+        self._load_metadata()
         self._refresh_fw_info()
 
     def _load_firmware_dialog(self):
@@ -369,6 +432,7 @@ class FirmwareEditorTab(ttk.Frame):
         fw = self.s.firmware
         self._tree_item_lookup.clear()
         self._selected_item_iid = None
+        self._auto_crypto_items.clear()
 
         roots = self.fw_tree.get_children("")
         if roots:
@@ -381,45 +445,15 @@ class FirmwareEditorTab(ttk.Frame):
 
         self._normalize_item_indices(fw)
 
-        root_meta = self.fw_tree.insert("", "end", iid="meta", text="[Metadata]", values=("-", "-", "-"))
-        self.fw_tree.insert(root_meta, "end", iid="meta:product", text="Product List", values=("META", str(fw.prod_list_size), "-"))
-        self.fw_tree.insert("", "end", iid="signature", text="[Signature]", values=("SIG", "-", "-"))
-
-        mode = self._nav_mode_var.get()
-        if mode == "By Section":
-            section_nodes: dict[str, str] = {}
-            for pos, item in enumerate(fw.items):
-                section = (item.section or "UNKNOWN").strip() or "UNKNOWN"
-                if section not in section_nodes:
-                    sec_iid = f"sec:{section}:{len(section_nodes)}"
-                    section_nodes[section] = self.fw_tree.insert(
-                        "",
-                        "end",
-                        iid=sec_iid,
-                        text=f"[{section}]",
-                        values=("group", "-", "-"),
-                    )
-                self._insert_item_node(section_nodes[section], item, pos)
-            for sec_iid in section_nodes.values():
-                self.fw_tree.item(sec_iid, open=True)
-        elif mode == "Textual First":
-            txt_root = self.fw_tree.insert("", "end", iid="group:text", text="[Text-like Items]", values=("group", "-", "-"))
-            bin_root = self.fw_tree.insert("", "end", iid="group:bin", text="[Binary-like Items]", values=("group", "-", "-"))
-            for pos, item in enumerate(fw.items):
-                preview = fw.get_item_text_preview(item)
-                parent = txt_root if preview.get("is_text") else bin_root
-                self._insert_item_node(parent, item, pos)
-            self.fw_tree.item(txt_root, open=True)
-            self.fw_tree.item(bin_root, open=True)
-        else:
-            for pos, item in enumerate(fw.items):
-                self._insert_item_node("", item, pos)
-
-        self.fw_tree.item(root_meta, open=True)
+        for pos, item in enumerate(fw.items):
+            self._insert_item_node(item, pos)
 
         dirty_tag = " *modified" if getattr(self.s, "firmware_dirty", False) else ""
+        versions = list({it.version for it in fw.items if it.version})
+        ver_str = versions[0] if len(versions) == 1 else ""
+        prod_str = fw.product_list.strip()[:40] or "(no product list)"
         self.s.fw_info_var.set(
-            f"HWNP | {fw.item_count} items | {_human_size(len(fw.raw_data))} | Products: {fw.product_list[:60]}{dirty_tag}"
+            f"HWNP {fw.header_layout} | {fw.item_count} items | {_human_size(len(fw.raw_data))} | {ver_str} | {prod_str}{dirty_tag}"
         )
 
         if self._selected_item_index is not None and any(it.index == self._selected_item_index for it in fw.items):
@@ -427,15 +461,31 @@ class FirmwareEditorTab(ttk.Frame):
         elif fw.items:
             self._select_item_by_index(0)
 
-    def _insert_item_node(self, parent: str, item: "HWNPItem", position: int):
-        display = self._display_item_path(item.item_path)
+    def _insert_item_node(self, item: "HWNPItem", position: int):
         iid = f"itm:{position}:{item.index}"
+        preview = self.s.firmware.get_item_text_preview(item) if self.s.firmware else {"is_text": False}
+        kind = "text" if preview.get("is_text") else "binary"
+        encoding = preview.get("encoding", "-") if preview.get("is_text") else "-"
+        mode = self._payload_mode_var.get().lower()
+        if mode == "text" and kind != "text":
+            return
+        if mode == "binary" and kind != "binary":
+            return
         self.fw_tree.insert(
-            parent,
+            "",
             "end",
             iid=iid,
-            text=display,
-            values=(item.section, _human_size(item.data_size), f"0x{item.crc32:08X}"),
+            values=(
+                item.index,
+                self._display_item_path(item.item_path),
+                item.section,
+                item.version or "-",
+                _human_size(item.data_size),
+                str(item.policy),
+                kind,
+                encoding,
+                f"0x{item.crc32:08X}",
+            ),
         )
         self._tree_item_lookup[iid] = item.index
 
@@ -464,7 +514,7 @@ class FirmwareEditorTab(ttk.Frame):
             hay = f"{item.item_path} {item.section} {item.version}".lower()
             if term not in hay:
                 continue
-            self._insert_item_node("", item, pos)
+            self._insert_item_node(item, pos)
 
         if self._tree_item_lookup:
             first_iid = next(iter(self._tree_item_lookup.keys()))
@@ -486,13 +536,7 @@ class FirmwareEditorTab(ttk.Frame):
             self._nb.select(0)
             return
 
-        if iid.startswith("meta"):
-            self._load_metadata()
-            self._nb.select(1)
-            return
-
-        if iid == "signature":
-            self._nb.select(3)
+        self._load_metadata()
 
     def _display_item_path(self, item_path: str) -> str:
         if ":" in item_path:
@@ -540,21 +584,81 @@ class FirmwareEditorTab(ttk.Frame):
 
         return data.decode("latin-1", errors="replace"), "latin-1"
 
+    def _is_config_xml_item(self, item_path: str) -> bool:
+        lower = (item_path or "").lower().replace("\\", "/")
+        return lower.endswith("hw_tree.xml") or lower.endswith("hw_ctree.xml")
+
+    def _try_auto_decrypt_config(self, item: "HWNPItem") -> tuple[str, str, str] | None:
+        candidates = try_decrypt_all_keys(item.data or b"")
+        if not candidates:
+            return None
+        chip_id, xml_data = candidates[0]
+        text, enc = self._decode_payload(xml_data)
+        self._auto_crypto_items[item.index] = chip_id
+        return text, enc, chip_id
+
     def _load_selected_item_text(self):
+        fw = self.s.firmware
         item = self._get_selected_item()
-        if not item:
+        if not fw or not item:
             return
-        text, enc = self._decode_payload(item.data or b"")
+
+        preview = fw.get_item_text_preview(item)
+        decrypted = None
+        chip_hint = ""
+
+        if self._is_config_xml_item(item.item_path):
+            decrypted = self._try_auto_decrypt_config(item)
+            if decrypted:
+                text, enc, chip_hint = decrypted
+            else:
+                text, enc = self._decode_payload(item.data or b"")
+        elif preview.get("is_text"):
+            text = preview.get("text", "")
+            enc = preview.get("encoding", "utf-8")
+        else:
+            text, enc = self._decode_payload(item.data or b"")
+
         self._current_encoding.set(enc)
+        self._text_editor.configure(state="normal")
         self._text_editor.delete("1.0", tk.END)
-        self._text_editor.insert("1.0", text)
-        self._set_status(f"Loaded item #{item.index} text view ({enc})")
+        if preview.get("is_text") or decrypted:
+            self._text_editor.configure(state="normal")
+            self._text_editor.insert("1.0", text)
+            mode = f"text ({enc})"
+            if chip_hint:
+                mode = f"xml decrypted ({chip_hint})"
+            self._text_mode_var.set(f"Editor mode: {mode}")
+            self._set_status(f"Loaded item #{item.index} text view ({mode})")
+            return
+
+        calc_crc = zlib.crc32(item.data or b"") & 0xFFFFFFFF
+        details = (
+            f"Binary payload selected\n\n"
+            f"Path      : {item.item_path}\n"
+            f"Section   : {item.section}\n"
+            f"Version   : {item.version or '-'}\n"
+            f"Policy    : {item.policy}\n"
+            f"Size      : {item.data_size:,} bytes\n"
+            f"CRC Header: 0x{item.crc32:08X}\n"
+            f"CRC Actual: 0x{calc_crc:08X}\n\n"
+            f"Use Import Binary / Export Binary for binary edits."
+        )
+        self._text_editor.insert("1.0", details)
+        self._text_editor.configure(state="disabled")
+        self._text_mode_var.set("Editor mode: binary info only")
+        self._set_status(f"Loaded item #{item.index} binary summary")
 
     def _apply_text_edit(self):
         fw = self.s.firmware
         item = self._get_selected_item()
         if not fw or not item:
             messagebox.showinfo("No Item", "Select an item first.")
+            return
+
+        preview = fw.get_item_text_preview(item)
+        if not preview.get("is_text") and item.index not in self._auto_crypto_items:
+            messagebox.showinfo("Binary Item", "Selected item is binary. Use Import Binary instead of text editor.")
             return
 
         encoding = self._current_encoding.get().strip() or "utf-8"
@@ -565,6 +669,10 @@ class FirmwareEditorTab(ttk.Frame):
         except LookupError:
             payload = text.encode("utf-8", errors="replace")
             self._current_encoding.set("utf-8")
+
+        chip_id = self._auto_crypto_items.get(item.index)
+        if chip_id:
+            payload = encrypt_config(payload, chip_id)
 
         fw.replace_item_data(item.index, payload)
         self._mark_dirty(signature_dirty=True)
@@ -634,9 +742,44 @@ class FirmwareEditorTab(ttk.Frame):
             out[key.strip().upper()] = value.strip()
         return out
 
+    def _pick_kv(self, kv: dict[str, str], canonical_key: str) -> str:
+        for key in _META_ALIASES.get(canonical_key, (canonical_key,)):
+            value = kv.get(key, "").strip()
+            if value:
+                return value
+        return ""
+
+    def _update_metadata_visibility(self):
+        visibility = {
+            "product": bool(self._product_id_var.get().strip()),
+            "soc": bool(self._soc_id_var.get().strip()),
+            "hardware": bool(self._hardware_id_var.get().strip()),
+            "hwver": bool(self._hw_ver_var.get().strip()),
+            "swver": bool(self._sw_ver_var.get().strip()),
+            "build": bool(self._build_date_var.get().strip()),
+            "size": True,  # always show prod list size
+        }
+        any_kv = any(v for k, v in visibility.items() if k != "size")
+        for key, visible in visibility.items():
+            label, entry = self._metadata_rows[key]
+            if visible:
+                label.grid()
+                entry.grid()
+            else:
+                label.grid_remove()
+                entry.grid_remove()
+        if any_kv:
+            self._metadata_empty_hint.pack_forget()
+        else:
+            self._metadata_empty_hint.pack(anchor="w", pady=(4, 0))
+
     def _merge_product_kv(self, base_text: str, updates: dict[str, str]) -> str:
         lines = base_text.splitlines() if base_text else []
         used = {key: False for key in updates}
+        alias_to_canonical: dict[str, str] = {}
+        for canonical in updates:
+            for alias in _META_ALIASES.get(canonical, (canonical,)):
+                alias_to_canonical[alias] = canonical
         merged: list[str] = []
 
         for line in lines:
@@ -645,11 +788,12 @@ class FirmwareEditorTab(ttk.Frame):
                 continue
             key, _ = line.split("=", 1)
             key_u = key.strip().upper()
-            if key_u in updates:
-                value = updates[key_u].strip()
+            canonical = alias_to_canonical.get(key_u)
+            if canonical:
+                value = updates[canonical].strip()
                 if value:
-                    merged.append(f"{key_u}={value}")
-                used[key_u] = True
+                    merged.append(f"{canonical}={value}")
+                used[canonical] = True
             else:
                 merged.append(line)
 
@@ -664,17 +808,109 @@ class FirmwareEditorTab(ttk.Frame):
         if not fw:
             return
 
-        self._product_text.delete("1.0", tk.END)
-        self._product_text.insert("1.0", fw.product_list)
+        # ── Populate analysis summary ───────────────────────────
+        summary = fw.get_firmware_summary()
+        self._populate_firmware_info(summary)
 
-        kv = self._parse_product_kv(fw.product_list)
-        self._product_id_var.set(kv.get("PRODUCT_ID", ""))
-        self._soc_id_var.set(kv.get("SOC_ID", ""))
-        self._board_id_var.set(kv.get("BOARD_ID", ""))
-        self._hw_ver_var.set(kv.get("HW_VER", ""))
-        self._sw_ver_var.set(kv.get("SW_VER", ""))
-        self._build_date_var.set(kv.get("BUILD_DATE", ""))
+        # ── Populate editable KV fields (from product_kv) ──────
+        kv = summary.get("product_kv", {})
+        self._metadata_syncing = True
+        self._product_id_var.set(self._pick_kv(kv, "PRODUCT_ID"))
+        self._soc_id_var.set(self._pick_kv(kv, "SOC_ID"))
+        self._hardware_id_var.set(self._pick_kv(kv, "HARDWARE_ID"))
+        self._hw_ver_var.set(self._pick_kv(kv, "HW_VER"))
+
+        # Fall back to firmware version from items if no KV SW_VER
+        sw = self._pick_kv(kv, "SW_VER")
+        if not sw:
+            sw = summary.get("firmware_version", "")
+        self._sw_ver_var.set(sw)
+
+        self._build_date_var.set(self._pick_kv(kv, "BUILD_DATE"))
         self._prod_size_var.set(str(fw.prod_list_size))
+        self._metadata_syncing = False
+        self._update_metadata_visibility()
+        self._sync_shared_metadata(kv, summary)
+
+    def _populate_firmware_info(self, summary: dict):
+        """Fill the read-only firmware analysis text widget."""
+        lines: list[str] = []
+
+        # Header
+        lines.append("── HEADER ──────────────────────────────")
+        lines.append(f"  Layout        : {summary.get('layout', '?')}")
+        lines.append(f"  File Size     : {_human_size(summary.get('file_size', 0))}")
+        lines.append(f"  Raw Size      : {_human_size(summary.get('raw_size', 0))}")
+        lines.append(f"  Header Size   : {summary.get('header_size', 0)} bytes")
+        lines.append(f"  Item Count    : {summary.get('item_count', 0)}")
+        lines.append(f"  Prod List Size: {summary.get('prod_list_size', 0)} bytes")
+        lines.append(f"  Item Hdr Size : {summary.get('item_header_size', 0)} bytes")
+        lines.append(f"  Header Offset : 0x{summary.get('header_offset', 0):X}")
+
+        # CRC
+        hdr_ok = summary.get("header_crc_valid", False)
+        data_ok = summary.get("data_crc_valid", False)
+        hdr_icon = "PASS" if hdr_ok else "FAIL"
+        data_icon = "PASS" if data_ok else "FAIL"
+        lines.append(f"  Header CRC    : {summary.get('header_crc', '?')} [{hdr_icon}]")
+        lines.append(f"  Raw CRC       : {summary.get('raw_crc', '?')} [{data_icon}]")
+
+        # Version
+        lines.append("")
+        lines.append("── FIRMWARE VERSION ────────────────────")
+        fw_ver = summary.get("firmware_version", "")
+        if fw_ver:
+            lines.append(f"  {fw_ver}")
+        else:
+            lines.append("  (none)")
+
+        # Product list
+        lines.append("")
+        lines.append("── PRODUCT LIST ────────────────────────")
+        raw_pl = summary.get("product_list_raw", "")
+        if raw_pl:
+            lines.append(f"  Raw: {raw_pl}")
+        else:
+            lines.append("  (empty)")
+
+        tags = summary.get("product_tags", [])
+        if tags:
+            lines.append(f"  Tags: {', '.join(tags)}")
+
+        kv = summary.get("product_kv", {})
+        if kv:
+            lines.append("  KEY=VALUE pairs:")
+            for k, v in kv.items():
+                lines.append(f"    {k} = {v}")
+
+        # Sections
+        sections = summary.get("sections", [])
+        if sections:
+            lines.append("")
+            lines.append("── SECTIONS ────────────────────────────")
+            lines.append(f"  {', '.join(sections)}")
+
+        # Board IDs
+        board_ids = summary.get("board_ids", [])
+        if board_ids:
+            lines.append("")
+            lines.append("── BOARD IDs (UpgradeCheck.xml) ────────")
+            lines.append(f"  {', '.join(board_ids)}")
+
+        # Chip info
+        chip_info = summary.get("chip_info", {})
+        if chip_info:
+            lines.append("")
+            lines.append("── CHIP INFO (UpgradeCheck.xml) ────────")
+            for chip_type, names in chip_info.items():
+                label = chip_type.replace("CheckIns", "").replace("Chip", " Chip")
+                lines.append(f"  {label}: {', '.join(names)}")
+
+        text = "\n".join(lines)
+        self._fw_info_text.configure(state="normal")
+        self._fw_info_text.delete("1.0", "end")
+        self._fw_info_text.insert("1.0", text)
+        self._fw_info_text.configure(state="disabled")
 
     def _apply_product_metadata(self):
         fw = self.s.firmware
@@ -682,11 +918,11 @@ class FirmwareEditorTab(ttk.Frame):
             messagebox.showinfo("No Firmware", "Load firmware first.")
             return
 
-        base_text = self._product_text.get("1.0", tk.END).rstrip("\n")
+        base_text = fw.product_list
         updates = {
             "PRODUCT_ID": self._product_id_var.get(),
             "SOC_ID": self._soc_id_var.get(),
-            "BOARD_ID": self._board_id_var.get(),
+            "HARDWARE_ID": self._hardware_id_var.get(),
             "HW_VER": self._hw_ver_var.get(),
             "SW_VER": self._sw_ver_var.get(),
             "BUILD_DATE": self._build_date_var.get(),
@@ -703,12 +939,51 @@ class FirmwareEditorTab(ttk.Frame):
         min_size = len(merged.encode("ascii", errors="replace")) + 1
         fw.prod_list_size = max(min_size, declared)
 
-        self._product_text.delete("1.0", tk.END)
-        self._product_text.insert("1.0", merged)
+        self._sync_shared_metadata(self._parse_product_kv(merged))
+        self._update_metadata_visibility()
 
         self._mark_dirty(signature_dirty=True)
         self._refresh_fw_info()
         self._set_status("Applied product metadata changes; repack before flashing")
+
+    def _bind_metadata_auto_apply(self):
+        for var in (
+            self._product_id_var,
+            self._soc_id_var,
+            self._hardware_id_var,
+            self._hw_ver_var,
+            self._sw_ver_var,
+            self._build_date_var,
+            self._prod_size_var,
+        ):
+            var.trace_add("write", self._on_metadata_field_changed)
+
+    def _on_metadata_field_changed(self, *_args):
+        if self._metadata_syncing:
+            return
+        if self._metadata_apply_after_id is not None:
+            self.after_cancel(self._metadata_apply_after_id)
+        self._metadata_apply_after_id = self.after(300, self._apply_product_metadata_silent)
+
+    def _apply_product_metadata_silent(self):
+        self._metadata_apply_after_id = None
+        try:
+            self._apply_product_metadata()
+        except Exception:
+            return
+
+    def _sync_shared_metadata(self, kv: dict[str, str], summary: dict | None = None):
+        self.s.fw_product_id_var.set(self._pick_kv(kv, "PRODUCT_ID"))
+        self.s.fw_soc_id_var.set(self._pick_kv(kv, "SOC_ID"))
+        self.s.fw_board_id_var.set(self._pick_kv(kv, "HARDWARE_ID"))
+        self.s.fw_hw_ver_var.set(self._pick_kv(kv, "HW_VER"))
+
+        sw_ver = self._pick_kv(kv, "SW_VER")
+        if not sw_ver and summary:
+            sw_ver = summary.get("firmware_version", "")
+        self.s.fw_sw_ver_var.set(sw_ver)
+
+        self.s.fw_build_date_var.set(self._pick_kv(kv, "BUILD_DATE"))
 
     def _repack_in_memory(self):
         fw = self.s.firmware

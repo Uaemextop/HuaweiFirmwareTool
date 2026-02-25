@@ -13,6 +13,7 @@ from hwflash.core.network import (
 )
 from hwflash.core.protocol import OBSC_SEND_PORT, OBSC_RECV_PORT
 from hwflash.shared.styles import FONT_FAMILY
+from hwflash.ui.components.factory import ActionSpec
 
 if TYPE_CHECKING:
     from hwflash.ui.state import AppState, AppController
@@ -28,6 +29,8 @@ class SettingsTab(ttk.Frame):
         self.s = state
         self.ctrl = ctrl
         self.engine = engine
+        self.widgets = ctrl.get_engine("widgets")
+        self.command_engine = ctrl.get_engine("commands")
         self._build_scrollable()
 
     # ── Scrollable container ──────────────────────────────────────────
@@ -61,6 +64,27 @@ class SettingsTab(ttk.Frame):
     def _build(self):
         s = self.s
         parent = self._inner   # all widgets go inside the scrollable inner frame
+
+        fw_meta_frame = ttk.LabelFrame(parent, text="Loaded Firmware Metadata", padding=8)
+        fw_meta_frame.pack(fill=tk.X, pady=(0, 8))
+
+        row = ttk.Frame(fw_meta_frame); row.pack(fill=tk.X, pady=2)
+        ttk.Label(row, text="Product ID:", width=16).pack(side=tk.LEFT)
+        ttk.Label(row, textvariable=s.fw_product_id_var).pack(side=tk.LEFT, padx=(0, 12))
+        ttk.Label(row, text="SOC ID:", width=10).pack(side=tk.LEFT)
+        ttk.Label(row, textvariable=s.fw_soc_id_var).pack(side=tk.LEFT)
+
+        row = ttk.Frame(fw_meta_frame); row.pack(fill=tk.X, pady=2)
+        ttk.Label(row, text="Board ID:", width=16).pack(side=tk.LEFT)
+        ttk.Label(row, textvariable=s.fw_board_id_var).pack(side=tk.LEFT, padx=(0, 12))
+        ttk.Label(row, text="HW/SW:", width=10).pack(side=tk.LEFT)
+        ttk.Label(row, textvariable=s.fw_hw_ver_var).pack(side=tk.LEFT)
+        ttk.Label(row, text=" / ").pack(side=tk.LEFT)
+        ttk.Label(row, textvariable=s.fw_sw_ver_var).pack(side=tk.LEFT)
+
+        row = ttk.Frame(fw_meta_frame); row.pack(fill=tk.X, pady=2)
+        ttk.Label(row, text="Build Date:", width=16).pack(side=tk.LEFT)
+        ttk.Label(row, textvariable=s.fw_build_date_var).pack(side=tk.LEFT)
 
         auto_row = ttk.Frame(parent)
         auto_row.pack(fill=tk.X, pady=(0, 8))
@@ -116,8 +140,15 @@ class SettingsTab(ttk.Frame):
 
         self.ip_apply_frame = ttk.Frame(ip_frame)
         self.ip_apply_frame.pack(fill=tk.X, pady=(4, 0))
-        ttk.Button(self.ip_apply_frame, text="Apply IP Mode",
-                   command=self._apply_ip_mode, width=16).pack(side=tk.LEFT)
+        if self.widgets:
+            self.widgets.actions(
+                self.ip_apply_frame,
+                [ActionSpec("Apply IP Mode", self._apply_ip_mode, width=16)],
+                pady=(0, 0),
+            )
+        else:
+            ttk.Button(self.ip_apply_frame, text="Apply IP Mode",
+                       command=self._apply_ip_mode, width=16).pack(side=tk.LEFT)
 
         ttk.Label(ip_frame, textvariable=s.ip_mode_status_var,
                   font=(FONT_FAMILY, 9)).pack(fill=tk.X, pady=(3, 0))
@@ -236,12 +267,23 @@ class SettingsTab(ttk.Frame):
 
         btn_row = ttk.Frame(net_frame)
         btn_row.pack(fill=tk.X, pady=(4, 0))
-        ttk.Button(btn_row, text="Apply Static IP",
-                   command=self._apply_static_ip, width=16).pack(side=tk.LEFT, padx=(0, 4))
-        ttk.Button(btn_row, text="Set DHCP",
-                   command=self._apply_dhcp, width=12).pack(side=tk.LEFT, padx=(0, 4))
-        ttk.Button(btn_row, text="Test Socket",
-                   command=self._test_socket, width=12).pack(side=tk.LEFT)
+        if self.widgets:
+            self.widgets.actions(
+                btn_row,
+                [
+                    ActionSpec("Apply Static IP", self._apply_static_ip, width=16),
+                    ActionSpec("Set DHCP", self._apply_dhcp, width=12),
+                    ActionSpec("Test Socket", self._test_socket, width=12, padx=(0, 0)),
+                ],
+                pady=(0, 0),
+            )
+        else:
+            ttk.Button(btn_row, text="Apply Static IP",
+                       command=self._apply_static_ip, width=16).pack(side=tk.LEFT, padx=(0, 4))
+            ttk.Button(btn_row, text="Set DHCP",
+                       command=self._apply_dhcp, width=12).pack(side=tk.LEFT, padx=(0, 4))
+            ttk.Button(btn_row, text="Test Socket",
+                       command=self._test_socket, width=12).pack(side=tk.LEFT)
 
         ttk.Label(net_frame, textvariable=s.net_status_var,
                   font=(FONT_FAMILY, 9)).pack(fill=tk.X, pady=(4, 0))
@@ -279,7 +321,17 @@ class SettingsTab(ttk.Frame):
             return
         self.s.net_status_var.set("Applying...")
         self.s.root.update_idletasks()
-        ok, msg = configure_adapter_ip(adapter_name, ip, mask, gw)
+        if self.command_engine and self.command_engine.can_run("network.configure_static_ip"):
+            result = self.command_engine.run(
+                "network.configure_static_ip",
+                adapter_name=adapter_name,
+                ip=ip,
+                netmask=mask,
+                gateway=gw,
+            )
+            ok, msg = result.ok, result.message
+        else:
+            ok, msg = configure_adapter_ip(adapter_name, ip, mask, gw)
         self.s.net_status_var.set(("\u2705 " if ok else "\u274c ") + msg)
         self.ctrl.log(f"Network config: {msg}")
         if ok:
@@ -298,7 +350,11 @@ class SettingsTab(ttk.Frame):
             return
         self.s.net_status_var.set("Applying DHCP...")
         self.s.root.update_idletasks()
-        ok, msg = set_adapter_dhcp(adapter_name)
+        if self.command_engine and self.command_engine.can_run("network.set_dhcp"):
+            result = self.command_engine.run("network.set_dhcp", adapter_name=adapter_name)
+            ok, msg = result.ok, result.message
+        else:
+            ok, msg = set_adapter_dhcp(adapter_name)
         self.s.net_status_var.set(("\u2705 " if ok else "\u274c ") + msg)
         self.ctrl.log(f"Network config: {msg}")
         if ok:
@@ -308,7 +364,16 @@ class SettingsTab(ttk.Frame):
         adapter = self.ctrl.get_selected_adapter()
         bind_ip = adapter.ip if adapter else "0.0.0.0"
         bind_port = _safe_int(self.s.recv_port_var.get(), OBSC_RECV_PORT)
-        ok, msg = test_socket_bind(bind_ip, bind_port, broadcast=True)
+        if self.command_engine and self.command_engine.can_run("network.test_socket"):
+            result = self.command_engine.run(
+                "network.test_socket",
+                bind_ip=bind_ip,
+                bind_port=bind_port,
+                broadcast=True,
+            )
+            ok, msg = result.ok, result.message
+        else:
+            ok, msg = test_socket_bind(bind_ip, bind_port, broadcast=True)
         self.s.net_status_var.set(("\u2705 " if ok else "\u274c ") + msg)
         self.ctrl.log(f"Socket test: {msg}")
 
@@ -376,7 +441,11 @@ class SettingsTab(ttk.Frame):
                 return
             self.s.ip_mode_status_var.set("Applying DHCP\u2026")
             self.s.root.update_idletasks()
-            ok, msg = set_adapter_dhcp(adapter_name)
+            if self.command_engine and self.command_engine.can_run("network.set_dhcp"):
+                result = self.command_engine.run("network.set_dhcp", adapter_name=adapter_name)
+                ok, msg = result.ok, result.message
+            else:
+                ok, msg = set_adapter_dhcp(adapter_name)
             if ok and mode == "automatic":
                 msg += f" | Multicast: {OBSC_MULTICAST_ADDR}"
         else:
@@ -395,7 +464,17 @@ class SettingsTab(ttk.Frame):
                 return
             self.s.ip_mode_status_var.set("Applying\u2026")
             self.s.root.update_idletasks()
-            ok, msg = configure_adapter_ip(adapter_name, ip, mask, gw)
+            if self.command_engine and self.command_engine.can_run("network.configure_static_ip"):
+                result = self.command_engine.run(
+                    "network.configure_static_ip",
+                    adapter_name=adapter_name,
+                    ip=ip,
+                    netmask=mask,
+                    gateway=gw,
+                )
+                ok, msg = result.ok, result.message
+            else:
+                ok, msg = configure_adapter_ip(adapter_name, ip, mask, gw)
 
         self.s.ip_mode_status_var.set(("\u2705 " if ok else "\u274c ") + msg)
         self.ctrl.log(f"IP Mode ({mode}): {msg}")

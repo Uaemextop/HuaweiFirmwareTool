@@ -20,10 +20,15 @@ except ImportError:
 from hwflash import __version__
 from hwflash.core.presets import PresetManager
 from hwflash.core.terminal import TelnetClient, SerialClient
+from hwflash.core.command_engine import SystemCommandEngine
+from hwflash.core.network import configure_adapter_ip, set_adapter_dhcp, test_socket_bind
 from hwflash.shared.styles import ThemeEngine, TTKB_DARK, FONT_FAMILY
 from hwflash.shared.icons import generate_logo
 from hwflash.ui.components.cards import GradientBar
 from hwflash.ui.components.sidebar import SidebarNav
+from hwflash.ui.components.factory import WidgetFactoryEngine
+from hwflash.ui.orchestrator import AppOrchestratorEngine
+from hwflash.ui.sync_engine import StateSyncEngine
 from hwflash.ui.titlebar import CustomTitlebar
 from hwflash.ui.state import AppState, AppController
 from hwflash.ui.tabs.adapters import refresh_adapters_async
@@ -95,6 +100,12 @@ class HuaweiFlashApp:
         self.state.telnet_client = TelnetClient()
         self.state.serial_client = SerialClient()
         self.ctrl = AppController(self.state, self.engine)
+        self.orchestrator = AppOrchestratorEngine()
+        self.command_engine = SystemCommandEngine()
+        self.sync_engine = StateSyncEngine(self.state)
+        self.widget_factory = WidgetFactoryEngine()
+
+        self._setup_engines()
 
         self._setup_logging()
         self._build_ui()
@@ -110,6 +121,30 @@ class HuaweiFlashApp:
         self.root.bind("<Control-o>", lambda e: self._tabs["upgrade"]._browse_firmware())
         self.root.bind("<<AppClose>>", lambda e: self._on_close())
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
+
+    def _setup_engines(self):
+        self.command_engine.register_many(
+            {
+                "network.configure_static_ip": configure_adapter_ip,
+                "network.set_dhcp": set_adapter_dhcp,
+                "network.test_socket": test_socket_bind,
+            }
+        )
+
+        self.sync_engine.bind_bidirectional(self.state.cfg_ip_var, self.state.ip_mode_ip_var)
+        self.sync_engine.bind_bidirectional(self.state.cfg_mask_var, self.state.ip_mode_mask_var)
+        self.sync_engine.bind_bidirectional(self.state.cfg_gw_var, self.state.ip_mode_gw_var)
+
+        self.orchestrator.register_engine("theme", self.engine)
+        self.orchestrator.register_engine("commands", self.command_engine)
+        self.orchestrator.register_engine("sync", self.sync_engine)
+        self.orchestrator.register_engine("widgets", self.widget_factory)
+
+        self.ctrl.register_engine("orchestrator", self.orchestrator)
+        self.ctrl.register_engine("commands", self.command_engine)
+        self.ctrl.register_engine("sync", self.sync_engine)
+        self.ctrl.register_engine("widgets", self.widget_factory)
+        self.orchestrator.bootstrap()
 
     def _center_window(self, w: int, h: int):
         sw = self.root.winfo_screenwidth()
@@ -378,12 +413,36 @@ class HuaweiFlashApp:
             font=(FONT_FAMILY, 10, "bold"),
         )
         self.style.configure("TButton", font=(FONT_FAMILY, 9), padding=(10, 6))
+        self.style.map(
+            "TButton",
+            background=[("active", colors["accent_hover"]), ("pressed", colors["accent_hover"])],
+            foreground=[("active", colors["fg"]), ("pressed", colors["fg"])],
+        )
+        self.style.configure(
+            "App.Accent.TButton",
+            font=(FONT_FAMILY, 9, "bold"),
+            padding=(10, 6),
+            background=colors["accent"],
+            foreground=colors["fg"],
+        )
+        self.style.map(
+            "App.Accent.TButton",
+            background=[("active", colors["accent_hover"]), ("pressed", colors["accent_hover"])],
+            foreground=[("active", colors["fg"]), ("pressed", colors["fg"])],
+        )
         self.style.configure("TEntry", fieldbackground=colors["bg_input"], foreground=colors["fg"], insertcolor=colors["fg"], padding=6)
+        self.style.map("TEntry", fieldbackground=[("focus", colors["surface_alt"])])
         self.style.configure("TCombobox", fieldbackground=colors["bg_input"], foreground=colors["fg"], padding=4)
+        self.style.map("TCombobox", fieldbackground=[("readonly", colors["bg_input"]), ("focus", colors["surface_alt"])])
         self.style.configure("TCheckbutton", background=colors["bg_card"], foreground=colors["fg_secondary"])
         self.style.configure("TRadiobutton", background=colors["bg_card"], foreground=colors["fg_secondary"])
         self.style.configure("Treeview", rowheight=24, fieldbackground=colors["bg_input"], background=colors["bg_input"], foreground=colors["fg"])
         self.style.configure("Treeview.Heading", background=colors["bg_secondary"], foreground=colors["fg"], font=(FONT_FAMILY, 9, "bold"))
+        self.style.map(
+            "Treeview.Heading",
+            background=[("active", colors["surface_alt"])],
+            foreground=[("active", colors["fg"])],
+        )
         self.style.map("Treeview", background=[("selected", colors["bg_selected"])], foreground=[("selected", colors["fg"])])
 
     def _toggle_theme(self):
@@ -404,6 +463,11 @@ class HuaweiFlashApp:
 
     def _on_close(self):
         s = self.state
+
+        try:
+            self.orchestrator.teardown()
+        except Exception:
+            pass
 
         if s.worker and s.worker.is_running:
             if not messagebox.askyesno("Confirm Exit", "An upgrade is in progress. Exit anyway?"):

@@ -18,6 +18,7 @@ from hwflash.core.protocol import (
     OBSC_SEND_PORT, OBSC_RECV_PORT,
 )
 from hwflash.shared.styles import FONT_FAMILY
+from hwflash.ui.components.factory import ActionSpec
 
 if TYPE_CHECKING:
     from hwflash.ui.state import AppState, AppController
@@ -33,6 +34,7 @@ class UpgradeTab(ttk.Frame):
         self.s = state
         self.ctrl = ctrl
         self.engine = engine
+        self.widgets = ctrl.get_engine("widgets")
         self._tracked_devices: dict = {}
         self._build()
         self._check_stale_devices()
@@ -122,51 +124,71 @@ class UpgradeTab(ttk.Frame):
         # Action buttons
         btn_frame = ttk.Frame(self)
         btn_frame.pack(fill=tk.X, pady=(4, 6))
+        if self.widgets:
+            _, action_buttons = self.widgets.actions(
+                btn_frame,
+                [
+                    ActionSpec("Discover", self._discover_devices, width=14),
+                    ActionSpec("Start Upgrade", self._start_upgrade, width=16),
+                    ActionSpec("Stop", self._stop_upgrade, width=10, padx=(0, 0), state="disabled"),
+                ],
+                pady=(0, 0),
+            )
+            self.discover_btn, self.start_btn, self.stop_btn = action_buttons
+        else:
+            self.discover_btn = ttk.Button(
+                btn_frame, text="Discover",
+                command=self._discover_devices, width=14,
+            )
+            self.discover_btn.pack(side=tk.LEFT, padx=(0, 4))
 
-        self.discover_btn = ttk.Button(
-            btn_frame, text="Discover",
-            command=self._discover_devices, width=14,
-        )
-        self.discover_btn.pack(side=tk.LEFT, padx=(0, 4))
+            self.start_btn = ttk.Button(
+                btn_frame, text="Start Upgrade",
+                command=self._start_upgrade, width=16,
+            )
+            self.start_btn.pack(side=tk.LEFT, padx=(0, 4))
 
-        self.start_btn = ttk.Button(
-            btn_frame, text="Start Upgrade",
-            command=self._start_upgrade, width=16,
-        )
-        self.start_btn.pack(side=tk.LEFT, padx=(0, 4))
-
-        self.stop_btn = ttk.Button(
-            btn_frame, text="Stop",
-            command=self._stop_upgrade, width=10,
-            state='disabled',
-        )
-        self.stop_btn.pack(side=tk.LEFT)
+            self.stop_btn = ttk.Button(
+                btn_frame, text="Stop",
+                command=self._stop_upgrade, width=10,
+                state='disabled',
+            )
+            self.stop_btn.pack(side=tk.LEFT)
 
         # Device table
         dev_frame = ttk.LabelFrame(self, text="Detected Devices", padding=8)
         dev_frame.pack(fill=tk.BOTH, expand=True)
 
         dev_columns = ('ip', 'mac', 'sn', 'model', 'status', 'progress')
-        self.device_tree = ttk.Treeview(
-            dev_frame, columns=dev_columns, show='headings', height=4)
-        self.device_tree.heading('ip', text='IP Address')
-        self.device_tree.heading('mac', text='MAC')
-        self.device_tree.heading('sn', text='Serial Number')
-        self.device_tree.heading('model', text='Model')
-        self.device_tree.heading('status', text='Status')
-        self.device_tree.heading('progress', text='Progress')
-        self.device_tree.column('ip', width=120)
-        self.device_tree.column('mac', width=130)
-        self.device_tree.column('sn', width=130)
-        self.device_tree.column('model', width=90)
-        self.device_tree.column('status', width=100)
-        self.device_tree.column('progress', width=80)
+        if self.widgets:
+            self.device_tree, _ = self.widgets.table(
+                dev_frame,
+                columns=dev_columns,
+                headings=("IP Address", "MAC", "Serial Number", "Model", "Status", "Progress"),
+                widths=(120, 130, 130, 90, 100, 80),
+                height=4,
+            )
+        else:
+            self.device_tree = ttk.Treeview(
+                dev_frame, columns=dev_columns, show='headings', height=4)
+            self.device_tree.heading('ip', text='IP Address')
+            self.device_tree.heading('mac', text='MAC')
+            self.device_tree.heading('sn', text='Serial Number')
+            self.device_tree.heading('model', text='Model')
+            self.device_tree.heading('status', text='Status')
+            self.device_tree.heading('progress', text='Progress')
+            self.device_tree.column('ip', width=120)
+            self.device_tree.column('mac', width=130)
+            self.device_tree.column('sn', width=130)
+            self.device_tree.column('model', width=90)
+            self.device_tree.column('status', width=100)
+            self.device_tree.column('progress', width=80)
 
-        dev_scroll = ttk.Scrollbar(dev_frame, orient=tk.VERTICAL,
-                                   command=self.device_tree.yview)
-        self.device_tree.configure(yscrollcommand=dev_scroll.set)
-        self.device_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        dev_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+            dev_scroll = ttk.Scrollbar(dev_frame, orient=tk.VERTICAL,
+                                       command=self.device_tree.yview)
+            self.device_tree.configure(yscrollcommand=dev_scroll.set)
+            self.device_tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            dev_scroll.pack(side=tk.RIGHT, fill=tk.Y)
 
     # ── Adapter ──────────────────────────────────────────────────
 
@@ -213,11 +235,14 @@ class UpgradeTab(ttk.Frame):
 
             self.s.firmware = fw
             self.s.firmware_path = path
+            self._sync_firmware_metadata(fw.product_list)
 
             size_mb = len(fw.raw_data) / (1024 * 1024)
+            product = self.s.fw_product_id_var.get() or fw.product_list.strip()[:30] or "-"
+            sw_ver = self.s.fw_sw_ver_var.get() or "-"
             self.s.fw_info_var.set(
                 f"{crc_status} HWNP | {fw.item_count} items | "
-                f"{size_mb:.2f} MB | Products: {fw.product_list[:50]}"
+                f"{size_mb:.2f} MB | {product} | {sw_ver}"
             )
             self.ctrl.refresh_fw_info()
             self.ctrl.log(f"Loaded firmware: {os.path.basename(path)} ({size_mb:.2f} MB, {fw.item_count} items)")
@@ -226,6 +251,35 @@ class UpgradeTab(ttk.Frame):
             self.s.fw_info_var.set(f"❌ Error: {e}")
             self.ctrl.log(f"Failed to load firmware: {e}")
             messagebox.showerror("Firmware Error", str(e))
+
+    def _sync_firmware_metadata(self, product_list: str):
+        kv = {}
+        for line in (product_list or "").splitlines():
+            line = line.strip()
+            if not line or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            kv[key.strip().upper()] = value.strip()
+
+        def _pick(*keys: str) -> str:
+            for key in keys:
+                val = kv.get(key, "").strip()
+                if val:
+                    return val
+            return ""
+
+        self.s.fw_product_id_var.set(_pick("PRODUCT_ID", "PROD_ID", "PRODUCT", "PRODUCTNAME"))
+        self.s.fw_soc_id_var.set(_pick("SOC_ID", "SOFT_ID", "SOC", "CHIP_ID", "CHIPID"))
+        self.s.fw_board_id_var.set(_pick("HARDWARE_ID", "HW_ID", "BOARD_ID", "BOARD", "HARDWARE"))
+        self.s.fw_hw_ver_var.set(_pick("HW_VER", "HARDWARE_VER", "HARDWARE_VERSION", "HW_VERSION"))
+
+        sw_ver = _pick("SW_VER", "SOFTWARE_VER", "SOFTWARE_VERSION", "FW_VER", "FW_VERSION")
+        if not sw_ver and self.s.firmware:
+            versions = list({it.version for it in self.s.firmware.items if it.version})
+            sw_ver = versions[0] if len(versions) == 1 else ", ".join(sorted(versions))
+        self.s.fw_sw_ver_var.set(sw_ver)
+
+        self.s.fw_build_date_var.set(_pick("BUILD_DATE", "DATE", "BUILD", "BUILD_TIME"))
 
     # ── Discovery ────────────────────────────────────────────────
 

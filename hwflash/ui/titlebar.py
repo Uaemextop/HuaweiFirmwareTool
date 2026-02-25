@@ -25,7 +25,7 @@ class CustomTitlebar(tk.Frame):
 
         super().__init__(parent, bg=bg, height=40, **kwargs)
         self.pack_propagate(False)
-        self._root = root
+        self._win = root
         self._drag_x = 0
         self._drag_y = 0
         self._maximized = False
@@ -104,34 +104,34 @@ class CustomTitlebar(tk.Frame):
             engine.register(self, updater=self.update_theme)
 
     def _start_drag(self, event):
-        self._drag_x = event.x_root - self._root.winfo_x()
-        self._drag_y = event.y_root - self._root.winfo_y()
+        self._drag_x = event.x_root - self._win.winfo_x()
+        self._drag_y = event.y_root - self._win.winfo_y()
 
     def _on_drag(self, event):
         if self._maximized:
             return
         x = event.x_root - self._drag_x
         y = event.y_root - self._drag_y
-        self._root.geometry(f"+{x}+{y}")
+        self._win.geometry(f"+{x}+{y}")
 
     def _toggle_max(self, event=None):
         if self._maximized:
-            self._root.geometry(self._prev_geo)
+            self._win.geometry(self._prev_geo)
             self._maximized = False
             self._max_btn.configure(text="□")
         else:
-            self._prev_geo = self._root.geometry()
-            sw = self._root.winfo_screenwidth()
-            sh = self._root.winfo_screenheight() - 40
-            self._root.geometry(f"{sw}x{sh}+0+0")
+            self._prev_geo = self._win.geometry()
+            sw = self._win.winfo_screenwidth()
+            sh = self._win.winfo_screenheight() - 40
+            self._win.geometry(f"{sw}x{sh}+0+0")
             self._maximized = True
             self._max_btn.configure(text="❐")
 
     def _on_minimize(self):
-        self._root.iconify()
+        self._win.iconify()
 
     def _on_close(self):
-        self._root.event_generate("<<AppClose>>")
+        self._win.event_generate("<<AppClose>>")
 
     def update_theme(self, theme):
         """Update all titlebar colours for the new theme."""

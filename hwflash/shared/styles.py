@@ -131,6 +131,19 @@ ANIMATION: Dict[str, int] = {
     "pulse_interval": 2000,
 }
 
+SHADOWS: Dict[str, Dict[str, str | int]] = {
+    "sm": {"offset": 1, "blur": 2, "color_key": "shadow"},
+    "md": {"offset": 2, "blur": 4, "color_key": "shadow"},
+    "lg": {"offset": 4, "blur": 8, "color_key": "shadow"},
+}
+
+GRADIENTS: Dict[str, tuple[str, str]] = {
+    "accent": ("accent", "secondary"),
+    "surface": ("gradient_start", "gradient_end"),
+    "status_ok": ("success", "accent"),
+    "status_warn": ("warning", "accent"),
+}
+
 # ── Color utilities ─────────────────────────────────────────────
 
 def _hex_to_rgb(hex_color: str) -> Tuple[int, int, int]:
@@ -299,3 +312,44 @@ class ThemeEngine:
         """Toggle between dark and light themes and apply."""
         self._name = "light" if self._name == "dark" else "dark"
         self.apply()
+
+    # ── Visual engine helpers ───────────────────────────────────
+
+    def token(self, key: str, fallback: Optional[str] = None) -> Optional[str]:
+        """Return a color token by key."""
+        return self.colors.get(key, fallback)
+
+    def shadow(self, level: str = "md") -> Dict[str, str | int]:
+        """Return shadow token data for logical elevation levels."""
+        data = SHADOWS.get(level, SHADOWS["md"]).copy()
+        color_key = data.get("color_key", "shadow")
+        data["color"] = self.colors.get(color_key, self.colors["shadow"])
+        return data
+
+    def gradient(self, name: str = "surface") -> Tuple[str, str]:
+        """Resolve a semantic gradient name into actual colors."""
+        start_key, end_key = GRADIENTS.get(name, GRADIENTS["surface"])
+        return self.colors.get(start_key, self.colors["gradient_start"]), self.colors.get(
+            end_key, self.colors["gradient_end"]
+        )
+
+    def attach_hover(self, widget, *, bg: str = "bg_card", hover: str = "bg_hover") -> None:
+        """Attach a simple hover transition to supported tkinter widgets."""
+
+        def _on_enter(_event):
+            try:
+                widget.configure(bg=self.colors.get(hover, self.colors["bg_hover"]))
+            except Exception:
+                pass
+
+        def _on_leave(_event):
+            try:
+                widget.configure(bg=self.colors.get(bg, self.colors["bg_card"]))
+            except Exception:
+                pass
+
+        try:
+            widget.bind("<Enter>", _on_enter, add="+")
+            widget.bind("<Leave>", _on_leave, add="+")
+        except Exception:
+            pass

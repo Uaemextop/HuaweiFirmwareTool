@@ -52,29 +52,51 @@ MENU_ENABLE_2 = {
     'description': 'Enable menu items in bulk-disable function 2 (7 items)',
 }
 
-# Patches 3A-3C: License corruption bypass
-# Function at VA 0x437240 (file 0x036640) checks license integrity and returns
-# eax=3 for "corrupted". Two code paths lead to "mov eax, 3; jmp epilogue".
-# Changing them to "mov eax, 1" makes the function return "valid" instead.
-# Function at VA 0x434b50 (file 0x033f50) has a je that skips setting bl=1 (success)
-# when corruption is detected; NOPing the je makes it always succeed.
-LIC_CORRUPT_FIX_1 = {
-    'offset': 0x03675e,
-    'original': b'\xb8\x03\x00\x00\x00',  # mov eax, 3
-    'patched': b'\xb8\x01\x00\x00\x00',   # mov eax, 1
-    'description': 'License corruption fix 1: return valid instead of corrupted',
+# Patch 3A: License integrity check — always return "valid" (eax=1)
+# Function at VA 0x437240 (file 0x036640) checks license file integrity.
+# It returns eax=1 (valid), eax=0 (parse error), or eax=3 (corrupted).
+# The WM_INITDIALOG handler (0x008c5f) requires eax==1 to open the main window;
+# any other value silently skips it, so the app appears to "close on startup".
+# Five other callers also gate on eax=1 via switch/case or cmp.
+# Old approach (patching individual mov eax,3) was INCOMPLETE — it missed the
+# eax=0 return paths, so the app still failed to open.
+# New approach: replace the first 5 bytes of the prologue with a jmp to the
+# existing "mov eax, 1" instruction at 0x03684a, bypassing all checks.
+LIC_INTEGRITY_ALWAYS_VALID = {
+    'offset': 0x036640,
+    'original': b'\x55\x8b\xec\x6a\xff',           # push ebp; mov ebp,esp; push -1
+    'patched': b'\xe9\x05\x02\x00\x00',             # jmp 0x03684a (mov eax,1; jmp epilogue)
+    'description': 'License integrity: always return eax=1 (valid)',
 }
-LIC_CORRUPT_FIX_2 = {
-    'offset': 0x03682d,
-    'original': b'\xb8\x03\x00\x00\x00',  # mov eax, 3
-    'patched': b'\xb8\x01\x00\x00\x00',   # mov eax, 1
-    'description': 'License corruption fix 2: return valid instead of corrupted',
+
+# Patch 3B: License file check — always return al=1 (success)
+# Function at VA 0x434b50 (file 0x033f50) reads and validates the license file.
+# Returns al=1 (success) or al=0 (failure). It has 4+ internal failure paths
+# (xor bl,bl at 0x0341dd, three jl jumps at 0x034002/0x0340e4/0x034165).
+# Old approach (NOPing one je at 0x034088) was INCOMPLETE.
+# New approach: replace prologue with "mov al, 1; ret 0x30" (callee-cleanup,
+# matches the original ret 0x30 at 0x034249). Skips all file I/O safely.
+LIC_FILECHECK_ALWAYS_OK = {
+    'offset': 0x033f50,
+    'original': b'\x55\x8b\xec\x6a\xff',           # push ebp; mov ebp,esp; push -1
+    'patched': b'\xb0\x01\xc2\x30\x00',             # mov al,1; ret 0x30
+    'description': 'License file check: always return al=1 (success)',
 }
-LIC_CORRUPT_FIX_3 = {
-    'offset': 0x034088,
-    'original': b'\x74\x07',  # je short +7 (skip success on corruption)
-    'patched': b'\x90\x90',   # nop nop (always set success)
-    'description': 'License corruption fix 3: always return success in 0x434b50',
+
+# Patch 3C: Firmware CRC32 verification bypass
+# The HWNP header validation function at VA 0x42b250 (file 0x02a650) computes
+# CRC32 over firmware data and compares it with the stored CRC in the header.
+# At 0x02a6bc: cmp eax,[esi+8] / sete al / test al,al / je 0x42b3c5
+# The je jumps to the failure path (return 0x800D) on CRC mismatch.
+# NOPing the je allows loading firmware files with modified content (different CRC).
+# Note: firmware RSA signature verification is NOT done by this tool — that is
+# performed by the ONT device itself. Product ID comparison in the same function
+# is data extraction (not a pass/fail gate), so no bypass is needed.
+FW_CRC32_BYPASS = {
+    'offset': 0x02a6c4,
+    'original': b'\x0f\x84\xfb\x00\x00\x00',  # je near 0x42b3c5 (failure)
+    'patched': b'\x90\x90\x90\x90\x90\x90',    # 6x nop (skip CRC failure)
+    'description': 'Firmware CRC32 bypass: skip header CRC check in HWNP validation',
 }
 
 # Patches 4A-4E: License validation bypass
@@ -151,7 +173,8 @@ MSGBOX_NOP_5 = {
 
 CODE_PATCHES = [
     TIMER_BYPASS, MENU_ENABLE_1, MENU_ENABLE_2,
-    LIC_CORRUPT_FIX_1, LIC_CORRUPT_FIX_2, LIC_CORRUPT_FIX_3,
+    LIC_INTEGRITY_ALWAYS_VALID, LIC_FILECHECK_ALWAYS_OK,
+    FW_CRC32_BYPASS,
     LICENSE_CHECK_1, LICENSE_CHECK_2, LICENSE_CHECK_3,
     LICENSE_CHECK_4, LICENSE_CHECK_5,
     MSGBOX_NOP_1, MSGBOX_NOP_2, MSGBOX_NOP_3,
@@ -169,29 +192,12 @@ REMAINING_UTF16_TRANSLATIONS = {
                '2020-$year (C)', 36),
 }
 
-# Error strings to blank out as final safety net
-# Even if all other patches fail, blanking these strings ensures no alarming
-# error message is shown to the user
-ERROR_STRINGS_BLANK = [
-    {
-        'offset': 0x3cfea4,
-        'original_text': '初始化License信息失败',
-        'replacement_text': 'OK',
-        'translated_text': 'Init Lic.fail',
-    },
-    {
-        'offset': 0x3cfe4c,
-        'original_text': 'License信息被破坏。',
-        'replacement_text': 'OK',
-        'translated_text': 'Lic.corrupted',
-    },
-    {
-        'offset': 0x3cfee8,
-        'original_text': '\r\n是否强制初始化license信息？',
-        'replacement_text': '',
-        'translated_text': ' Force init Lic.?',
-    },
-]
+# Error string blanking is no longer needed.
+# Patches 3A and 3B completely bypass the license check functions at the
+# prologue level, so no error dialog can ever be shown. The translated
+# strings ("Init Lic.fail", "Lic.corrupted", "Force init Lic.?") remain
+# in the binary as-is but are never displayed.
+ERROR_STRINGS_BLANK = []
 
 
 def apply_code_patches(file_data):

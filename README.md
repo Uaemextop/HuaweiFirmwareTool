@@ -87,17 +87,22 @@ python3 unlock_ont_tool.py ONT_V100R002C00SPC253_EN.exe ONT_V100R002C00SPC253_EN
 - 124 internal error/log messages (GBK): license, registry, trial, XML, etc.
 
 ### Unlocked features
-- **License corruption bypass**: The license validation functions (VA 0x437240 and 0x434b50)
-  that return "corrupted" status have been patched to always return "valid". This prevents
-  the "Lic.corrupted Force init Lic.?" dialog from appearing.
+- **License integrity bypass** (Patch 3A): Function VA 0x437240 always returns `eax=1`
+  (valid). This is the master license check called from WM_INITDIALOG and 4 other places;
+  without `eax=1` the main window never opens. Replaces prologue with `jmp` to the
+  existing `mov eax, 1` instruction.
+- **License file-check bypass** (Patch 3B): Function VA 0x434b50 always returns `al=1`.
+  This function reads/validates the license file and had 4+ internal failure paths.
+  Replaces prologue with `mov al, 1; ret 0x30`.
 - **License validation bypass**: All 5 code paths that check the license init result and
-  display "Init Lic.fail" are patched to always take the success path. The app no longer
-  shows license errors at startup.
+  display "Init Lic.fail" are patched to always take the success path.
 - **License timer bypass**: The 5-second countdown that closes the app when the license
   is invalid has been disabled.
 - **Menu items enabled**: All 9 greyed-out menu commands (0x420E-0x4216) are now always
-  enabled. These include firmware management operations that were previously gated behind
-  license validation and connection state checks.
+  enabled.
+- **Firmware CRC32 bypass** (Patch 3C): The HWNP header CRC32 check is NOPped, allowing
+  firmware files with modified content to be loaded. Firmware RSA signatures are verified
+  by the ONT device itself, not by this PC tool.
 
 ## Example modify/verify firmware on HG8245 (need support check signature)
 ### Mark the file to sign

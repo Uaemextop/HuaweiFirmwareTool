@@ -266,12 +266,12 @@ Firmware::UnpackToFS(const std::string &path_items,
         std::fstream item_bin(FileOpen(item_path, std::ios::out | std::ios::binary));
         item_bin << raw;
 
-        list_metadata << "- ";
+        list_metadata << "+ ";
         list_metadata << hi.iter << ' ' << hi.item << ' ' << hi.section << ' ';
         list_metadata << (*hi.version ? hi.version : "NULL") << ' ' << hi.policy;
         list_metadata << std::endl;
 
-        list_sig_item << "- " << hi.item << std::endl;
+        list_sig_item << "+ " << hi.item << std::endl;
     }
 }
 
@@ -401,7 +401,18 @@ Firmware::ReadHeaderFromFS(std::stringstream &fd)
     }
 
     fd >> std::dec >> this->hdr.prod_list_sz;
-    fd >> std::setw(this->hdr.prod_list_sz) >> this->prod_list;
+
+    // Read prod_list as the remainder of the same line (after the size number).
+    // Using operator>> would skip the newline and consume the first '+' of the
+    // next item line, corrupting the item-parsing loop that follows.
+    {
+        std::string pl_line;
+        std::getline(fd, pl_line);
+        // pl_line = " " + product_list (or just " " when product_list is empty)
+        if (pl_line.size() > 1) {
+            this->prod_list = pl_line.substr(1); // strip the leading space
+        }
+    }
 
     // Check max value product_list_size
     if (this->prod_list.size() != this->hdr.prod_list_sz) {

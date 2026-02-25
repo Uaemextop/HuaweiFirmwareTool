@@ -104,6 +104,24 @@ python3 unlock_ont_tool.py ONT_V100R002C00SPC253_EN.exe ONT_V100R002C00SPC253_EN
   firmware files with modified content to be loaded. Firmware RSA signatures are verified
   by the ONT device itself, not by this PC tool.
 
+## Embedded Firmware Packages
+
+The EXE contains 6 HWNP firmware packages used by the Enable Package menu:
+
+| Menu Option | Packages | Purpose |
+|------------|----------|---------|
+| Enable Pkg 1 | BIN130 + BIN131 | V3 devices — version-detect upgrade, Telnet + SSH |
+| Enable Pkg 2 | BIN132 + BIN133 | V5 devices — factory reset, then re-enable Telnet + SSH |
+| Enable Pkg 3 | BIN134 + BIN135 | New devices — full upgrade, Telnet + SSH |
+
+Extract packages with:
+```bash
+python3 extract_firmware_packages.py ONT_V100R002C00SPC253_EN.exe firmware_packages/
+```
+
+See [FIRMWARE_PACKAGES.md](FIRMWARE_PACKAGES.md) for detailed analysis, HWNP format
+documentation, and instructions for creating custom packages.
+
 ## Example modify/verify firmware on HG8245 (need support check signature)
 ### Mark the file to sign
 ```

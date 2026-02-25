@@ -72,17 +72,20 @@ The Huawei OBSCTool (`ONT_V100R002C00SPC253.exe`) embeds 6 HWNP firmware package
 
 ---
 
-### Enable Pkg 3 — New Devices (BIN134 + BIN135)
+### Enable Pkg 3 — Factory Reset + Telnet (BIN134 + BIN135) [MODIFIED]
 
-**BIN134** (1,766 KB, 7 items, 30 equipment IDs):
+**BIN134** (1,769 KB, 7 items, 30 equipment IDs):
 - `UpgradeCheck.xml` — Hardware validation
 - `signinfo_v5` (13,868 B) — V5-format signature with device-specific signing
 - `ProductLineMode` (1 B) — Production line mode flag ("\n")
 - `equipment.tar.gz` (1,784,882 B) — Equipment configuration archive
 - `TelnetEnable` (1 B) — Telnet enable flag ("\n")
-- **`duit9rr.sh`** (5,811 B, policy=2 AUTO-EXEC) — Simplified Telnet enabler:
-  - Enables only Telnet (not SSH) via `cfgtool`
-  - Creates `ProductLineMode` and `TelnetEnable` flags
+- **`restorefactory_DeleteComponent.sh`** (9,199 B, policy=2 AUTO-EXEC) — Factory reset script (replaced from BIN132):
+  - Records board info (MachineItem, CfgFeatureWord) before reset
+  - Performs factory reset via `restorefactory` command
+  - Restores boardinfo after reset to preserve device identity
+  - Handles both SD5113 and SD5115/5116 chipsets
+  - Re-enables Telnet after factory reset
   - Installs equipment.tar.gz
   - Shorter than BIN130's version (no version detection, no ramcheck)
 - `efs` — Equipment footer
@@ -91,19 +94,19 @@ The Huawei OBSCTool (`ONT_V100R002C00SPC253.exe`) embeds 6 HWNP firmware package
 - Identical to BIN133 (same CRC, same raw_sz)
 - `run.sh` enables Telnet + SSH after reboot
 
-**How Pkg3 works:** BIN134 is sent first — it directly creates `TelnetEnable` and `ProductLineMode` flags, installs equipment, and enables Telnet via `duit9rr.sh`. After reboot, BIN135's `run.sh` adds SSH access. This is the simplest approach, suitable for devices that haven't been previously configured.
+**How Pkg3 works (MODIFIED):** BIN134 is sent first — it creates `TelnetEnable` and `ProductLineMode` flags, installs equipment, and runs `restorefactory_DeleteComponent.sh` which performs a factory reset while preserving device identity, then re-enables Telnet. After reboot, BIN135's `run.sh` adds SSH access. This combines the factory reset capability of Pkg2 with the equipment installation of the original Pkg3.
 
 ---
 
 ## Key Differences Between Packages
 
-| Feature | Pkg 1 (V3) | Pkg 2 (V5) | Pkg 3 (New) |
+| Feature | Pkg 1 (V3) | Pkg 2 (V5) | Pkg 3 (Modified) |
 |---------|-----------|-----------|------------|
 | Target firmware | V3 (R13–R17) | V5 (R20+) | Any new device |
 | Version detection | ✅ Yes (9 variants) | ❌ No | ❌ No |
-| Factory reset | ❌ No | ✅ Yes | ❌ No |
+| Factory reset | ❌ No | ✅ Yes | ✅ Yes (from Pkg2) |
 | Equipment archive | 9 small + 1 large | None (junk only) | 1 large |
-| Telnet | ✅ Enabled | ✅ Re-enabled after reset | ✅ Enabled |
+| Telnet | ✅ Enabled | ✅ Re-enabled after reset | ✅ Re-enabled after reset |
 | SSH | ✅ Enabled (run.sh) | ✅ Enabled (run.sh) | ✅ Enabled (run.sh) |
 | ProductLineMode | ✅ Created | ❌ No | ✅ Created |
 | TelnetEnable flag | ✅ Created | ❌ No | ✅ Created |

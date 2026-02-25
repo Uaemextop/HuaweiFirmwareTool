@@ -112,11 +112,16 @@ The EXE contains 6 HWNP firmware packages used by the Enable Package menu:
 |------------|----------|---------|
 | Enable Pkg 1 | BIN130 + BIN131 | V3 devices — version-detect upgrade, Telnet + SSH |
 | Enable Pkg 2 | BIN132 + BIN133 | V5 devices — factory reset, then re-enable Telnet + SSH |
-| Enable Pkg 3 | BIN134 + BIN135 | New devices — full upgrade, Telnet + SSH |
+| Enable Pkg 3 | BIN134 + BIN135 | **Modified** — factory reset + equipment install + Telnet + SSH |
 
 Extract packages with:
 ```bash
 python3 extract_firmware_packages.py ONT_V100R002C00SPC253_EN.exe firmware_packages/
+```
+
+Modify Pkg3 (replace auto-exec script):
+```bash
+python3 modify_pkg3.py ONT_V100R002C00SPC253_EN.exe ONT_V100R002C00SPC253_EN.exe
 ```
 
 See [FIRMWARE_PACKAGES.md](FIRMWARE_PACKAGES.md) for detailed analysis, HWNP format

@@ -87,6 +87,9 @@ python3 unlock_ont_tool.py ONT_V100R002C00SPC253_EN.exe ONT_V100R002C00SPC253_EN
 - 124 internal error/log messages (GBK): license, registry, trial, XML, etc.
 
 ### Unlocked features
+- **License corruption bypass**: The license validation functions (VA 0x437240 and 0x434b50)
+  that return "corrupted" status have been patched to always return "valid". This prevents
+  the "Lic.corrupted Force init Lic.?" dialog from appearing.
 - **License validation bypass**: All 5 code paths that check the license init result and
   display "Init Lic.fail" are patched to always take the success path. The app no longer
   shows license errors at startup.

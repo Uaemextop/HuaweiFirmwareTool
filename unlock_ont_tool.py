@@ -52,7 +52,32 @@ MENU_ENABLE_2 = {
     'description': 'Enable menu items in bulk-disable function 2 (7 items)',
 }
 
-# Patches 3A-3E: License validation bypass
+# Patches 3A-3C: License corruption bypass
+# Function at VA 0x437240 (file 0x036640) checks license integrity and returns
+# eax=3 for "corrupted". Two code paths lead to "mov eax, 3; jmp epilogue".
+# Changing them to "mov eax, 1" makes the function return "valid" instead.
+# Function at VA 0x434b50 (file 0x033f50) has a je that skips setting bl=1 (success)
+# when corruption is detected; NOPing the je makes it always succeed.
+LIC_CORRUPT_FIX_1 = {
+    'offset': 0x03675e,
+    'original': b'\xb8\x03\x00\x00\x00',  # mov eax, 3
+    'patched': b'\xb8\x01\x00\x00\x00',   # mov eax, 1
+    'description': 'License corruption fix 1: return valid instead of corrupted',
+}
+LIC_CORRUPT_FIX_2 = {
+    'offset': 0x03682d,
+    'original': b'\xb8\x03\x00\x00\x00',  # mov eax, 3
+    'patched': b'\xb8\x01\x00\x00\x00',   # mov eax, 1
+    'description': 'License corruption fix 2: return valid instead of corrupted',
+}
+LIC_CORRUPT_FIX_3 = {
+    'offset': 0x034088,
+    'original': b'\x74\x07',  # je short +7 (skip success on corruption)
+    'patched': b'\x90\x90',   # nop nop (always set success)
+    'description': 'License corruption fix 3: always return success in 0x434b50',
+}
+
+# Patches 4A-4E: License validation bypass
 # Five code paths check the license init result and display "Init Lic.fail" (string
 # ID 0x07e7) when the check fails. Four use "test eax,eax; jnz skip_error" where
 # eax!=0 means success; we change jnz to jmp (always skip error). The fifth uses
@@ -126,6 +151,7 @@ MSGBOX_NOP_5 = {
 
 CODE_PATCHES = [
     TIMER_BYPASS, MENU_ENABLE_1, MENU_ENABLE_2,
+    LIC_CORRUPT_FIX_1, LIC_CORRUPT_FIX_2, LIC_CORRUPT_FIX_3,
     LICENSE_CHECK_1, LICENSE_CHECK_2, LICENSE_CHECK_3,
     LICENSE_CHECK_4, LICENSE_CHECK_5,
     MSGBOX_NOP_1, MSGBOX_NOP_2, MSGBOX_NOP_3,
@@ -143,15 +169,29 @@ REMAINING_UTF16_TRANSLATIONS = {
                '2020-$year (C)', 36),
 }
 
-# Error string to blank out as final safety net
-# Even if all other patches fail, blanking this string ensures no alarming
+# Error strings to blank out as final safety net
+# Even if all other patches fail, blanking these strings ensures no alarming
 # error message is shown to the user
-ERROR_STRING_BLANK = {
-    'offset': 0x3cfea4,
-    'original_text': '初始化License信息失败',
-    'replacement_text': 'OK',
-    'translated_text': 'Init Lic.fail',
-}
+ERROR_STRINGS_BLANK = [
+    {
+        'offset': 0x3cfea4,
+        'original_text': '初始化License信息失败',
+        'replacement_text': 'OK',
+        'translated_text': 'Init Lic.fail',
+    },
+    {
+        'offset': 0x3cfe4c,
+        'original_text': 'License信息被破坏。',
+        'replacement_text': 'OK',
+        'translated_text': 'Lic.corrupted',
+    },
+    {
+        'offset': 0x3cfee8,
+        'original_text': '\r\n是否强制初始化license信息？',
+        'replacement_text': '',
+        'translated_text': ' Force init Lic.?',
+    },
+]
 
 
 def apply_code_patches(file_data):
@@ -201,28 +241,30 @@ def patch_remaining_strings(file_data):
     return count
 
 
-def blank_error_string(file_data):
-    """Replace the 'Init Lic.fail' error string with 'OK' as final safety net."""
-    info = ERROR_STRING_BLANK
-    offset = info['offset']
-    orig_cn = info['original_text'].encode('utf-16-le')
-    translated = info['translated_text'].encode('utf-16-le')
-    replacement = info['replacement_text'].encode('utf-16-le')
-    orig_len = len(orig_cn)
+def blank_error_strings(file_data):
+    """Replace license error strings with benign text as final safety net."""
+    for info in ERROR_STRINGS_BLANK:
+        offset = info['offset']
+        orig_cn = info['original_text'].encode('utf-16-le')
+        translated = info['translated_text'].encode('utf-16-le')
+        replacement = info['replacement_text'].encode('utf-16-le')
+        orig_len = len(orig_cn)
 
-    actual = bytes(file_data[offset:offset + orig_len])
-    if actual[:len(translated)] == translated or actual[:len(orig_cn)] == orig_cn:
-        if len(replacement) > orig_len:
-            print(f'  WARNING: replacement too long for 0x{offset:06x}, skipping')
-            return
-        # Replace with short benign text + null padding
-        file_data[offset:offset + orig_len] = (
-            replacement + b'\x00' * (orig_len - len(replacement)))
-        print(f'  Blanked error string at 0x{offset:06x}: -> "{info["replacement_text"]}"')
-    elif actual[:len(replacement)] == replacement:
-        print(f'  Error string already blanked at 0x{offset:06x}')
-    else:
-        print(f'  WARNING: Unexpected content at 0x{offset:06x}, skipping')
+        actual = bytes(file_data[offset:offset + orig_len])
+        if actual[:len(translated)] == translated or actual[:len(orig_cn)] == orig_cn:
+            if len(replacement) > orig_len:
+                print(f'  WARNING: replacement too long for 0x{offset:06x}, skipping')
+                continue
+            # Replace with short benign text + null padding
+            file_data[offset:offset + orig_len] = (
+                replacement + b'\x00' * (orig_len - len(replacement)))
+            print(f'  Blanked error string at 0x{offset:06x}: -> "{info["replacement_text"]}"')
+        elif actual[:len(replacement)] == replacement:
+            print(f'  Error string already blanked at 0x{offset:06x}')
+        elif actual == b'\x00' * orig_len:
+            print(f'  Error string already cleared at 0x{offset:06x}')
+        else:
+            print(f'  WARNING: Unexpected content at 0x{offset:06x}, skipping')
 
 
 def fixup_pe_checksum(file_data):
@@ -272,8 +314,8 @@ def main():
     # Translate remaining strings
     patch_remaining_strings(file_data)
 
-    # Blank the error string as final safety net
-    blank_error_string(file_data)
+    # Blank the error strings as final safety net
+    blank_error_strings(file_data)
 
     # Fix PE checksum
     fixup_pe_checksum(file_data)

@@ -13,7 +13,7 @@ firmware's own `aescrypt2` binary and embedded key material (`kmc_store`/`prvt.k
 | `HG8145C_17120_ENG` | V300R017C10SPC120B153 | ✓ | ✓ | 117,359 B |
 | `HG8145V5-V500R020C10SPC212` | V500R020C10SPC212B465 | ✓ | ✓ | 131,509 B |
 | `HG8245C-8145C-BLUE-R019-xpon` | V300R017C10SPC125B176 | ✓ | ✓ | 125,365 B |
-| `HN8145XR-V500R022C10SPC160` | N/A | ✓ | ✗ | — |
+| `HN8145XR-V500R022C10SPC160` | V500R022C10SPC160B014 | ✓ | ✓ | 132,367 B |
 
 ## Files Per Firmware
 
@@ -149,10 +149,29 @@ firmware's own `aescrypt2` binary and embedded key material (`kmc_store`/`prvt.k
 
 ### HN8145XR-V500R022C10SPC160
 
+**Version:** `V500R022C10SPC160B014`
+
 | File | Size | SHA-256 |
 |------|------|---------|
 | `hw_ctree.xml` | 19,144 B | `11254f34b3f232f4…` |
+| `hw_ctree_decrypted.xml` | 132,367 B | `997cb56c6afff659…` |
 | `hw_default_ctree.xml` | 19,144 B | `11254f34b3f232f4…` |
+| `hw_default_ctree_decrypted.xml` | 132,367 B | `997cb56c6afff659…` |
+
+<details>
+<summary>Preview of decrypted hw_ctree.xml</summary>
+
+```xml
+<InternetGatewayDevice>
+	<LANDevice NumberOfInstances="1">
+		<LANDeviceInstance InstanceID="1" X_HW_WlanEnable="1" X_HW_WlanPowerValue="0">
+<!-- SUPPORT_WIFI_START-->
+			<WiFi RadioNumberOfEntries="1" X_HW_PairTrigger="None">
+				<Radio NumberOfInstances="2">
+					<RadioInstance InstanceID="1" SupportedFrequencyBands="2.4GHz" OperatingFrequencyBand="2.4GHz" GuardInterval="Auto" X_HW_TxChainMask="0" X_HW_RxChainMask="0" Enable="1" Status="Up" Alias="cpe-2.4G" Name="cpe-2.4G" LastChange="0" MaxBitRate="0" AutoChannelSupported="1" X_HW_RatePriority="0" X_HW_SameSSIDStatus="0" CountryIEEnable="0"/>
+					<RadioInstance InstanceID="2" SupportedFrequencyBands="5GHz" OperatingFrequencyBand="5GHz" GuardInterval="Auto" X_HW_TxChainMask="0" X_HW_RxChainMask="0" Enable="1" Status="Up" Alias="cpe-5G" Name="cpe-5G" LastChange="0" MaxBitRate="0" AutoChannelSupported="1" X_HW_RatePriority="0" X_HW_SameSSIDStatus="0" CountryIEEnable="0"/>
+```
+</details>
 
 ## Decryption Method
 
@@ -165,11 +184,25 @@ or `/etc/wap/prvt.key`, `/etc/wap/EquipKey` for V300 firmwares).
 sudo chroot <rootfs> qemu-arm-static /bin/aescrypt2 1 <input> <output>
 ```
 
-### HN8145XR Note
+### HN8145XR Decryption
 
-The HN8145XR firmware does not include `kmc_store` files in its rootfs.
-These are generated at first boot from the device's hardware e-fuse,
-making decryption without the physical device impossible.
+The HN8145XR firmware has a split-rootfs layout with 7 SquashFS images.
+The `hw_ctree.xml` is in the first rootfs, while `aescrypt2` is in the
+second (26 MB) rootfs. Unlike other V500 firmwares, HN8145XR does not
+include `kmc_store` files in `/etc/wap/` — the `kmc_store` is normally
+generated at first boot from the device's hardware e-fuse.
+
+However, by creating **empty** `kmc_store_A` and `kmc_store_B` files in
+`/mnt/jffs2/` (the runtime keystore path), `aescrypt2` falls back to a
+default key derivation that successfully decrypts the factory `hw_ctree.xml`.
+
+```bash
+# HN8145XR specific: use second SquashFS for aescrypt2 + empty kmc_store
+mkdir -p <rootfs>/mnt/jffs2/
+touch <rootfs>/mnt/jffs2/kmc_store_A <rootfs>/mnt/jffs2/kmc_store_B
+sudo chroot <rootfs> qemu-arm-static /bin/aescrypt2 1 /tmp/hw_ctree.xml /tmp/out.xml
+# Output is gzip → gunzip → <InternetGatewayDevice> XML
+```
 
 ## Extraction Tool
 

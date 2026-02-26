@@ -25,3 +25,9 @@ hwflash/presets/
 
 # CodeQL build artifacts
 */_codeql_build_dir/
+
+# Downloaded firmware files (already in releases)
+/EG8145V5.bin
+/HN8145XR.bin
+/HG8245C.rar
+*.sqfs

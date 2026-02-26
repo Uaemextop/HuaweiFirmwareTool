@@ -50,9 +50,38 @@ openssl rsa -in firmware_prvt.key -passin pass:<passphrase> -out firmware_prvt_d
 openssl rsa -in firmware_prvt_dec.key -check -noout
 ```
 
-## Analysis Tool
+## Decryption Pipeline Tool
 
-Run the full NAND corruption analysis and extraction:
+`tools/decrypt_ctree.py` automates the full hw_ctree.xml → PEM key pipeline:
+
+```bash
+# Passphrase-only (tries default wordlist on existing keys/ directory)
+python3 tools/decrypt_ctree.py --no-download --pem-dir keys/ --out keys/
+
+# Full pipeline: NAND dump → extract volumes → decrypt hw_ctree.xml → decrypt PEM keys
+python3 tools/decrypt_ctree.py --dump <NAND.BIN> --out keys/
+
+# With eFuse OTP key (enables hw_ctree.xml decryption)
+python3 tools/decrypt_ctree.py --dump <NAND.BIN> --efuse <64-bytes-hex> --out keys/
+
+# Custom passphrase
+python3 tools/decrypt_ctree.py --passphrase <certprvtPassword> --pem-dir keys/ --out keys/
+```
+
+The tool:
+1. Strips OOB from NAND dump → clean 128 MB image
+2. Parses all UBI volumes and saves corrected images individually to `--out`
+3. Extracts KeyFile 96-byte AES header (saved as `keyfile_header_96bytes.bin`)
+4. Scans UBIFS (vol_9) for hw_ctree.xml using node-level parsing
+5. Decrypts hw_ctree.xml (AEST format) using eFuse-derived key if provided
+6. Extracts `certprvtPassword` from decrypted XML
+7. Decrypts all encrypted PEM private keys, saves `.pem` and `.der`
+
+See `keys/HOW_TO_DECRYPT_EFUSE.md` for instructions on obtaining the eFuse key.
+
+## NAND Corruption Analysis Tool
+
 ```bash
 python3 tools/nand_fw_disasm.py --dump <NAND.BIN> --out nand_disasm/
+python3 tools/nand_dump_analyze.py [--dump <NAND.BIN>] [--out <dir>]
 ```

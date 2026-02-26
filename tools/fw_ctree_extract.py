@@ -128,7 +128,7 @@ def classify_file(path: str) -> str:
         head = fh.read(32)
     if not head:
         return "empty"
-    if head[:5] == b"<?xml" or (head[:1] == b"<" and b">" in head[:50]):
+    if head[:5] == b"<?xml" or (head[:1] == b"<" and b">" in head[:50] and head[:1] != b"\x00"):
         return "XML"
     if head[:3] == b"\xef\xbb\xbf" and b"<" in head[:10]:
         return "XML (BOM)"

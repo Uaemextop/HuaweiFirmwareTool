@@ -88,14 +88,39 @@ def main():
         action="store_true",
         help="Re-download even if file exists with correct MD5",
     )
+    parser.add_argument(
+        "--name",
+        metavar="NAME",
+        default=None,
+        help=(
+            "Download only the firmware whose 'name' field matches NAME "
+            "(case-insensitive). E.g. --name EG8145V5"
+        ),
+    )
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
 
-    print(f"Downloading {len(FIRMWARES)} firmware images to {args.output_dir}/\n")
+    # Filter firmware list if --name is given
+    fw_list = FIRMWARES
+    if args.name:
+        fw_list = [
+            fw for fw in FIRMWARES
+            if fw["name"].lower() == args.name.strip().lower()
+        ]
+        if not fw_list:
+            available = ", ".join(fw["name"] for fw in FIRMWARES)
+            print(
+                f"ERROR: No firmware named '{args.name}'. "
+                f"Available names: {available}",
+                file=sys.stderr,
+            )
+            return 1
+
+    print(f"Downloading {len(fw_list)} firmware image(s) to {args.output_dir}/\n")
 
     downloaded_count = 0
-    for fw in FIRMWARES:
+    for fw in fw_list:
         dest = os.path.join(args.output_dir, fw["filename"])
         print(f"[{fw['name']}]")
 
@@ -110,8 +135,8 @@ def main():
             downloaded_count += 1
         print()
 
-    print(f"\nDone: {downloaded_count}/{len(FIRMWARES)} firmwares downloaded successfully")
-    return 0 if downloaded_count == len(FIRMWARES) else 1
+    print(f"\nDone: {downloaded_count}/{len(fw_list)} firmwares downloaded successfully")
+    return 0 if downloaded_count == len(fw_list) else 1
 
 
 if __name__ == "__main__":

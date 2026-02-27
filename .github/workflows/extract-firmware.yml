@@ -266,7 +266,7 @@ jobs:
       - name: Checkout source repo
         uses: actions/checkout@v4
         with:
-          path: /tmp/source_repo
+          path: source_repo
 
       - name: Download firmware artifact
         uses: actions/download-artifact@v4
@@ -287,42 +287,49 @@ jobs:
             exit 1
           fi
 
-          REPO_NAME="firmware-${FW_NAME}"
+          BASE_NAME="firmware-${FW_NAME}"
+          REPO_NAME="$BASE_NAME"
+          COUNTER=1
+
+          # Find an available repo name; append _1, _2, … if needed
+          while true; do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+              -H "Authorization: token ${GH_TOKEN}" \
+              "https://api.github.com/repos/${TARGET_OWNER}/${REPO_NAME}")
+            if [ "$HTTP_CODE" != "200" ]; then
+              break
+            fi
+            echo "Repository ${REPO_NAME} already exists, trying ${BASE_NAME}_${COUNTER}..."
+            REPO_NAME="${BASE_NAME}_${COUNTER}"
+            COUNTER=$((COUNTER + 1))
+          done
+
           echo "=== Creating ${TARGET_OWNER}/${REPO_NAME} ==="
 
-          # Check if repo exists
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+          # Detect if target is org or user
+          OWNER_TYPE=$(curl -s \
             -H "Authorization: token ${GH_TOKEN}" \
-            "https://api.github.com/repos/${TARGET_OWNER}/${REPO_NAME}")
+            "https://api.github.com/users/${TARGET_OWNER}" \
+            | python3 -c "import json,sys; print(json.load(sys.stdin).get('type','User'))")
 
-          if [ "$HTTP_CODE" = "200" ]; then
-            echo "Repository already exists, will push to it"
+          if [ "$OWNER_TYPE" = "Organization" ]; then
+            API_URL="https://api.github.com/orgs/${TARGET_OWNER}/repos"
           else
-            # Detect if target is org or user
-            OWNER_TYPE=$(curl -s \
-              -H "Authorization: token ${GH_TOKEN}" \
-              "https://api.github.com/users/${TARGET_OWNER}" \
-              | python3 -c "import json,sys; print(json.load(sys.stdin).get('type','User'))")
-
-            if [ "$OWNER_TYPE" = "Organization" ]; then
-              API_URL="https://api.github.com/orgs/${TARGET_OWNER}/repos"
-            else
-              API_URL="https://api.github.com/user/repos"
-            fi
-
-            curl -s -X POST \
-              -H "Authorization: token ${GH_TOKEN}" \
-              -H "Content-Type: application/json" \
-              "$API_URL" \
-              -d "{
-                \"name\": \"${REPO_NAME}\",
-                \"description\": \"Extracted content from Huawei ${FW_NAME} firmware\",
-                \"private\": false,
-                \"auto_init\": true
-              }"
-            echo "Waiting for repo to be ready..."
-            sleep 5
+            API_URL="https://api.github.com/user/repos"
           fi
+
+          curl -s -X POST \
+            -H "Authorization: token ${GH_TOKEN}" \
+            -H "Content-Type: application/json" \
+            "$API_URL" \
+            -d "{
+              \"name\": \"${REPO_NAME}\",
+              \"description\": \"Extracted content from Huawei ${FW_NAME} firmware\",
+              \"private\": false,
+              \"auto_init\": true
+            }"
+          echo "Waiting for repo to be ready..."
+          sleep 5
 
           # Clone and push
           cd /tmp
@@ -375,9 +382,10 @@ jobs:
 
           # Copy .github files from source repo
           mkdir -p .github/agents .github/workflows
-          cp /tmp/source_repo/.github/copilot-instructions.md .github/copilot-instructions.md
-          cp /tmp/source_repo/.github/agents/firmware-analyst.agent.md .github/agents/firmware-analyst.agent.md
-          cp /tmp/source_repo/.github/workflows/copilot-setup-steps.yml .github/workflows/copilot-setup-steps.yml
+          SOURCE_REPO="${GITHUB_WORKSPACE}/source_repo"
+          cp "${SOURCE_REPO}/.github/copilot-instructions.md" .github/copilot-instructions.md
+          cp "${SOURCE_REPO}/.github/agents/firmware-analyst.agent.md" .github/agents/firmware-analyst.agent.md
+          cp "${SOURCE_REPO}/.github/workflows/copilot-setup-steps.yml" .github/workflows/copilot-setup-steps.yml
 
           # Commit and push
           git add -A

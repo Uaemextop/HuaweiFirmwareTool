@@ -373,7 +373,7 @@ jobs:
           See \`.github/copilot-instructions.md\` for details.
           READMEEOF
 
-          # Copy .github files from HuaweiFirmwareTool repo (checked out by the job)
+          # Copy .github files from source repo
           mkdir -p .github/agents .github/workflows
           cp /tmp/source_repo/.github/copilot-instructions.md .github/copilot-instructions.md
           cp /tmp/source_repo/.github/agents/firmware-analyst.agent.md .github/agents/firmware-analyst.agent.md

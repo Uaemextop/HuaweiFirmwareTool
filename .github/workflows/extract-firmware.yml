@@ -25,10 +25,6 @@ on:
 permissions:
   contents: write
 
-env:
-  FIRMWARES_DIR: ${{ runner.temp }}/firmwares
-  EXTRACT_DIR: ${{ runner.temp }}/firmware_extract
-
 jobs:
   # ─── Step 1: Download all firmware images ───────────────────────────
   download:
@@ -43,13 +39,13 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y -qq squashfs-tools unrar-free zip
 
       - name: Download firmwares
-        run: python tools/download_firmwares.py --output-dir $FIRMWARES_DIR
+        run: python tools/download_firmwares.py --output-dir "$RUNNER_TEMP/firmwares"
 
       - name: Upload firmware cache
         uses: actions/upload-artifact@v4
         with:
           name: firmwares-raw
-          path: ${{ env.FIRMWARES_DIR }}/
+          path: ${{ runner.temp }}/firmwares/
           retention-days: 1
 
   # ─── Step 2: Extract each firmware in parallel ──────────────────────
@@ -91,12 +87,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: firmwares-raw
-          path: ${{ env.FIRMWARES_DIR }}
+          path: ${{ runner.temp }}/firmwares
 
       - name: Extract RAR contents (if needed)
         if: matrix.firmware.source == 'rar'
         run: |
-          cd $FIRMWARES_DIR
+          cd "$RUNNER_TEMP/firmwares"
           if [ -f HG8245C.rar ]; then
             unrar x -o+ HG8245C.rar .
           fi
@@ -104,11 +100,7 @@ jobs:
       - name: Extract firmware rootfs
         run: |
           set -e
-          FW_FILE="${FIRMWARES_DIR}/${{ matrix.firmware.file }}"
-          NAME="${{ matrix.firmware.name }}"
-          MODE="${{ inputs.extraction_mode }}"
-          OUT="${EXTRACT_DIR}/${NAME}"
-          mkdir -p "$OUT"
+          mkdir -p "$RUNNER_TEMP/firmware_extract/${{ matrix.firmware.name }}"
 
           python3 << 'PYEOF'
           import struct, os, shutil, subprocess, sys, gzip, io, tarfile
@@ -204,10 +196,11 @@ jobs:
                   pos = idx + 5
               return found
 
-          fw_file = os.environ["FIRMWARES_DIR"] + "/" + "${{ matrix.firmware.file }}"
+          _runner_temp = os.environ["RUNNER_TEMP"]
+          fw_file = _runner_temp + "/firmwares/" + "${{ matrix.firmware.file }}"
           name = "${{ matrix.firmware.name }}"
           mode = "${{ inputs.extraction_mode }}"
-          out_dir = os.environ["EXTRACT_DIR"] + "/" + name
+          out_dir = _runner_temp + "/firmware_extract/" + name
 
           print(f"Processing {name} (mode={mode})")
           with open(fw_file, 'rb') as f:
@@ -225,10 +218,10 @@ jobs:
           for i, (offset, size, inodes) in enumerate(sqfs_list):
               label = f"sqfs_{i:02d}_0x{offset:08x}"
               print(f"  [{i}] SquashFS at 0x{offset:08x}, {size:,} bytes, {inodes} inodes")
-              sqfs_path = f"{os.environ.get('RUNNER_TEMP', os.environ['EXTRACT_DIR'])}/{label}.sqfs"
+              sqfs_path = f"{_runner_temp}/{label}.sqfs"
               with open(sqfs_path, 'wb') as f:
                   f.write(data[offset:offset + size])
-              rootfs = f"{os.environ.get('RUNNER_TEMP', os.environ['EXTRACT_DIR'])}/rootfs_{i}"
+              rootfs = f"{_runner_temp}/rootfs_{i}"
               os.makedirs(rootfs, exist_ok=True)
               subprocess.run(["sudo", "unsquashfs", "-f", "-d", rootfs,
                               "-no-xattrs", "-ignore-errors", sqfs_path], check=False)

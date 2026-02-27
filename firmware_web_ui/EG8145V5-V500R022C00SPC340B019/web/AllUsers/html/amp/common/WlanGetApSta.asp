@@ -1,1 +1,0 @@
-<%HW_WEB_GetApSta();%>

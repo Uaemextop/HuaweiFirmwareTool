@@ -1,3 +1,0 @@
-function() {
-  return <%HW_WEB_GetParaArryByDomain(InternetGatewayDevice.X_HW_UserInfo, Result|Status, stResultInfo);%>;
-}

@@ -1,9 +1,0 @@
-<InternetGatewayDevice>
-  <Services>
-    <VoiceService setconfig = "0x00000002">
-      <VoiceProfile setconfig = "0x00000002">
-        <SignalingProtocol setconfig = "0x00000002" />
-      </VoiceProfile>
-    </VoiceService>
-  </Services>
-</InternetGatewayDevice>

@@ -1,1 +1,0 @@
-<%HW_WEB_GetParaByDomainName(InternetGatewayDevice.X_HW_DEBUG.WAP_AMP.DEBUG.OmciReceive.status);%>

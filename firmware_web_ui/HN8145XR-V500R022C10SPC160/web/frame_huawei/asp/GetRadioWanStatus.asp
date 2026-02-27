@@ -1,1 +1,0 @@
-﻿<%HW_WEB_GetParaByDomainName(InternetGatewayDevice.WANDevice.5.WANConnectionDevice.1.WANIPConnection.1.ConnectionStatus);%>

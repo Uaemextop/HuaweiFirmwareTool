@@ -1,8 +1,0 @@
-WAP:appmcmd show type 1
-WAP:appmcmd show type 2
-WAP:appmcmd show type 3
-WAP:osgicmd show bundlestate
-SHELL:cat /var/osgi/OSGi1.log
-SHELL:cat /var/osgi/OSGi0.log
-SHELL:cat /mnt/jffs2/app/osgi/java_error.log
-SHELL:cat /mnt/jffs2/app/osgi/java_error_bk.log

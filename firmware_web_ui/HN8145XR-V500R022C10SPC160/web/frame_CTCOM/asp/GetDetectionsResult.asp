@@ -1,1 +1,0 @@
-<%HW_WEB_GetParaByDomainName(InternetGatewayDevice.DeviceInfo.X_HW_Framedetection.DetectionsState);%>

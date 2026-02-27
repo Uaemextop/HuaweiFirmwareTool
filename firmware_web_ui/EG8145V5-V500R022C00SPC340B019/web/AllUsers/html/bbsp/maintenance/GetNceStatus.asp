@@ -1,1 +1,0 @@
-﻿<%WLAN_SetNceRemoteStatus();%>;

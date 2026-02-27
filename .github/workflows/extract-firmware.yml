@@ -1,57 +1,541 @@
-name: Extract Firmware Web UI & Configs
+name: Extract Firmware Content
 
 on:
   workflow_dispatch:
     inputs:
-      firmware:
-        description: 'Firmware to extract (all, HG8145V5, EG8145V5, HN8145XR, HG8245C)'
+      extraction_mode:
+        description: 'What to extract from firmwares'
         required: true
-        default: 'all'
         type: choice
         options:
-          - all
-          - HG8145V5
-          - EG8145V5
-          - HN8145XR
-          - HG8245C
+          - web_only
+          - full_extract
+        default: 'web_only'
+      create_repos:
+        description: 'Create a separate repository for each extracted firmware?'
+        required: true
+        type: boolean
+        default: false
+      target_owner:
+        description: 'GitHub user/org where repos will be created (required if create_repos=true)'
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: write
 
+env:
+  FIRMWARES_DIR: /tmp/firmwares
+  EXTRACT_DIR: /tmp/firmware_extract
+
 jobs:
-  extract:
+  # ─── Step 1: Download all firmware images ───────────────────────────
+  download:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq squashfs-tools qemu-user-static unrar-free
+      - name: Install dependencies
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq squashfs-tools unrar-free
 
       - name: Download firmwares
-        run: python tools/download_firmwares.py --output-dir /tmp/firmwares
+        run: python tools/download_firmwares.py --output-dir $FIRMWARES_DIR
 
-      - name: Extract firmware rootfs and web UI
-        run: python tools/extract_web_ui.py --firmware-dir /tmp/firmwares --output-dir firmware_web_ui
-
-      - name: Upload web UI artifact
+      - name: Upload firmware cache
         uses: actions/upload-artifact@v4
         with:
-          name: firmware-web-ui
-          path: firmware_web_ui/
+          name: firmwares-raw
+          path: ${{ env.FIRMWARES_DIR }}/
+          retention-days: 1
+
+  # ─── Step 2: Extract each firmware in parallel ──────────────────────
+  extract:
+    needs: download
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        firmware:
+          - name: HG8145V5-V500R020C10SPC212
+            file: 5611_HG8145V5V500R020C10SPC212.bin
+            source: bin
+          - name: EG8145V5-V500R022C00SPC340B019
+            file: EG8145V5-V500R022C00SPC340B019.bin
+            source: bin
+          - name: HN8145XR-V500R022C10SPC160
+            file: HN8145XRV500R022C10SPC160.1.bin
+            source: bin
+          - name: HG8145C-V5R019C00S105
+            file: 8145C-V5R019C00S105-EN-BLUE.bin
+            source: rar
+          - name: HG8245C-8145C-BLUE-R019-xpon
+            file: 8245c-8145c-BLUE-R019-EN-xpon.bin
+            source: rar
+          - name: HG8145C_17120_ENG
+            file: HG8145C_17120_ENG.bin
+            source: rar
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq squashfs-tools unrar-free
+
+      - name: Download firmware cache
+        uses: actions/download-artifact@v4
+        with:
+          name: firmwares-raw
+          path: ${{ env.FIRMWARES_DIR }}
+
+      - name: Extract RAR contents (if needed)
+        if: matrix.firmware.source == 'rar'
+        run: |
+          cd $FIRMWARES_DIR
+          if [ -f HG8245C.rar ]; then
+            unrar x -o+ HG8245C.rar .
+          fi
+
+      - name: Extract firmware rootfs
+        run: |
+          set -e
+          FW_FILE="${FIRMWARES_DIR}/${{ matrix.firmware.file }}"
+          NAME="${{ matrix.firmware.name }}"
+          MODE="${{ inputs.extraction_mode }}"
+          OUT="${EXTRACT_DIR}/${NAME}"
+          mkdir -p "$OUT"
+
+          python3 << 'PYEOF'
+          import struct, os, shutil, subprocess, sys
+
+          def find_squashfs(data):
+              results = []
+              for magic in [b'hsqs', b'sqsh']:
+                  pos = 0
+                  while True:
+                      idx = data.find(magic, pos)
+                      if idx == -1:
+                          break
+                      if idx + 96 <= len(data):
+                          inode_count = struct.unpack_from('<I', data, idx + 4)[0]
+                          bytes_used = struct.unpack_from('<Q', data, idx + 40)[0]
+                          if inode_count > 10 and bytes_used > 100000 and bytes_used < len(data):
+                              results.append((idx, bytes_used, inode_count))
+                      pos = idx + 4
+              return results
+
+          fw_file = os.environ["FIRMWARES_DIR"] + "/" + "${{ matrix.firmware.file }}"
+          name = "${{ matrix.firmware.name }}"
+          mode = "${{ inputs.extraction_mode }}"
+          out_dir = os.environ["EXTRACT_DIR"] + "/" + name
+
+          print(f"Processing {name} (mode={mode})")
+          with open(fw_file, 'rb') as f:
+              data = f.read()
+
+          sqfs_list = find_squashfs(data)
+          if not sqfs_list:
+              print("No SquashFS found!")
+              sys.exit(1)
+
+          sqfs_list.sort(key=lambda x: x[1], reverse=True)
+          offset, size, inodes = sqfs_list[0]
+          print(f"SquashFS at 0x{offset:08x}, {size:,} bytes, {inodes} inodes")
+
+          sqfs_path = "/tmp/rootfs.sqfs"
+          with open(sqfs_path, 'wb') as f:
+              f.write(data[offset:offset + size])
+
+          rootfs = "/tmp/rootfs"
+          os.makedirs(rootfs, exist_ok=True)
+          subprocess.run(["sudo", "unsquashfs", "-f", "-d", rootfs,
+                          "-no-xattrs", "-ignore-errors", sqfs_path], check=False)
+          subprocess.run(["sudo", "chmod", "-R", "a+rX", rootfs])
+
+          os.makedirs(out_dir, exist_ok=True)
+
+          # Always extract web UI and configs
+          dirs_to_copy = {"web": "html", "configs": "etc/wap"}
+          if mode == "full_extract":
+              dirs_to_copy.update({"bin": "bin", "sbin": "sbin", "lib": "lib", "etc": "etc"})
+
+          total = 0
+          for dest_name, src_rel in dirs_to_copy.items():
+              src = os.path.join(rootfs, src_rel)
+              if os.path.isdir(src):
+                  dst = os.path.join(out_dir, dest_name)
+                  subprocess.run(["sudo", "cp", "-ra", src, dst], check=False)
+                  subprocess.run(["sudo", "chown", "-R",
+                                  f"{os.getuid()}:{os.getgid()}", dst], check=False)
+                  n = sum(1 for _, _, fs in os.walk(dst) for _ in fs)
+                  print(f"  {dest_name}: {n} files")
+                  total += n
+
+          print(f"Total: {total} files extracted")
+          PYEOF
+
+      - name: Create ZIP for release
+        run: |
+          cd $EXTRACT_DIR
+          zip -r /tmp/${{ matrix.firmware.name }}.zip ${{ matrix.firmware.name }}/
+
+      - name: Upload extracted content as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.firmware.name }}
+          path: ${{ env.EXTRACT_DIR }}/${{ matrix.firmware.name }}/
           retention-days: 90
 
-      - name: Commit extracted content
+      - name: Upload ZIP as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.firmware.name }}-zip
+          path: /tmp/${{ matrix.firmware.name }}.zip
+          retention-days: 90
+
+  # ─── Step 3: Create release with all ZIPs ───────────────────────────
+  release:
+    needs: extract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all ZIP artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/artifacts
+          pattern: '*-zip'
+
+      - name: Collect ZIPs
         run: |
+          mkdir -p /tmp/release_assets
+          find /tmp/artifacts -name '*.zip' -exec cp {} /tmp/release_assets/ \;
+          echo "Release assets:"
+          ls -lh /tmp/release_assets/
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: firmware-extract-${{ github.run_number }}
+          name: "Firmware Extract #${{ github.run_number }} (${{ inputs.extraction_mode }})"
+          body: |
+            ## Extracted Firmware Content
+
+            **Mode:** `${{ inputs.extraction_mode }}`
+
+            Each ZIP contains the extracted content from one firmware image:
+            - `web/` — Router web interface (HTML/JS/CSS/ASP pages)
+            - `configs/` — Device configurations from `/etc/wap/`
+            ${{ inputs.extraction_mode == 'full_extract' && '- `bin/` `sbin/` `lib/` `etc/` — Full rootfs content' || '' }}
+
+            ### Firmwares
+            | Firmware | Model | Version |
+            |----------|-------|---------|
+            | HG8145V5-V500R020C10SPC212 | HG8145V5 | V500R020C10SPC212 |
+            | EG8145V5-V500R022C00SPC340B019 | EG8145V5 | V500R022C00SPC340 |
+            | HN8145XR-V500R022C10SPC160 | HN8145XR | V500R022C10SPC160 |
+            | HG8145C-V5R019C00S105 | HG8145C | V5R019C00S105 |
+            | HG8245C-8145C-BLUE-R019-xpon | HG8245C | R019 |
+            | HG8145C_17120_ENG | HG8145C | 17120 |
+          files: /tmp/release_assets/*.zip
+          draft: false
+          prerelease: false
+
+  # ─── Step 4: Create repos for each firmware (optional) ──────────────
+  create-repos:
+    if: inputs.create_repos == true && inputs.target_owner != ''
+    needs: extract
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        firmware:
+          - HG8145V5-V500R020C10SPC212
+          - EG8145V5-V500R022C00SPC340B019
+          - HN8145XR-V500R022C10SPC160
+          - HG8145C-V5R019C00S105
+          - HG8245C-8145C-BLUE-R019-xpon
+          - HG8145C_17120_ENG
+    steps:
+      - name: Download firmware artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.firmware }}
+          path: /tmp/content/${{ matrix.firmware }}
+
+      - name: Create repo and push content
+        env:
+          GH_TOKEN: ${{ secrets.ONT }}
+          TARGET_OWNER: ${{ inputs.target_owner }}
+          FW_NAME: ${{ matrix.firmware }}
+        run: |
+          set -e
+
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::Secret 'ONT' is not configured. Add a GitHub PAT with repo scope."
+            exit 1
+          fi
+
+          REPO_NAME="firmware-${FW_NAME}"
+          echo "=== Creating ${TARGET_OWNER}/${REPO_NAME} ==="
+
+          # Check if repo exists
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: token ${GH_TOKEN}" \
+            "https://api.github.com/repos/${TARGET_OWNER}/${REPO_NAME}")
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "Repository already exists, will push to it"
+          else
+            # Detect if target is org or user
+            OWNER_TYPE=$(curl -s \
+              -H "Authorization: token ${GH_TOKEN}" \
+              "https://api.github.com/users/${TARGET_OWNER}" \
+              | python3 -c "import json,sys; print(json.load(sys.stdin).get('type','User'))")
+
+            if [ "$OWNER_TYPE" = "Organization" ]; then
+              API_URL="https://api.github.com/orgs/${TARGET_OWNER}/repos"
+            else
+              API_URL="https://api.github.com/user/repos"
+            fi
+
+            curl -s -X POST \
+              -H "Authorization: token ${GH_TOKEN}" \
+              -H "Content-Type: application/json" \
+              "$API_URL" \
+              -d "{
+                \"name\": \"${REPO_NAME}\",
+                \"description\": \"Extracted content from Huawei ${FW_NAME} firmware\",
+                \"private\": false,
+                \"auto_init\": true
+              }"
+            echo "Waiting for repo to be ready..."
+            sleep 5
+          fi
+
+          # Clone and push
+          cd /tmp
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/${TARGET_OWNER}/${REPO_NAME}.git" repo_work || {
+            mkdir repo_work && cd repo_work && git init && \
+            git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${TARGET_OWNER}/${REPO_NAME}.git"
+          }
+          cd /tmp/repo_work
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add firmware_web_ui/
-          git diff --cached --quiet || git commit -m "Extract firmware web UI and configs"
-          git push
+
+          # Copy content
+          cp -r /tmp/content/${FW_NAME}/* . 2>/dev/null || true
+
+          # ── Create README.md ──
+          cat > README.md << 'README_EOF'
+          # $FW_NAME_PLACEHOLDER
+
+          Extracted firmware content from Huawei **$FW_NAME_PLACEHOLDER**.
+
+          ## Contents
+
+          | Directory | Description |
+          |-----------|-------------|
+          | `web/` | Router web interface (HTML/JS/CSS/ASP pages) |
+          | `configs/` | Device configurations from `/etc/wap/` |
+          | `bin/` | System binaries (if full extraction) |
+          | `lib/` | Shared libraries (if full extraction) |
+          | `etc/` | System configuration (if full extraction) |
+
+          ## Source
+
+          Extracted using [HuaweiFirmwareTool](https://github.com/Uaemextop/HuaweiFirmwareTool).
+
+          ## Firmware Analysis
+
+          This repository includes a Copilot agent that understands how to:
+          - Decrypt `hw_ctree.xml` configuration files
+          - Extract SquashFS rootfs from HWNP firmware images
+          - Analyze AES-256-CBC encrypted private keys
+          - Parse firmware partition structures
+
+          See `.github/copilot-instructions.md` for details.
+          README_EOF
+          sed -i "s/\$FW_NAME_PLACEHOLDER/${FW_NAME}/g" README.md
+
+          # ── Create .github/copilot-instructions.md ──
+          mkdir -p .github
+          cat > .github/copilot-instructions.md << 'INSTRUCTIONS_EOF'
+          # Copilot Instructions for Huawei Firmware Repository
+
+          ## Repository Context
+
+          This repository contains extracted content from a Huawei ONT (Optical Network Terminal) firmware image. The firmware uses the HWNP (Huawei Network Package) format with `whwh`-wrapped partitions containing U-Boot, Linux kernel, and SquashFS rootfs.
+
+          ## Key Architecture
+
+          - **SoC**: HiSilicon ARM Cortex-A9
+          - **libc**: musl (V500 firmwares) or uClibc (V300)
+          - **Filesystem**: SquashFS with LZMA/XZ compression
+          - **Web Server**: Embedded ASP-based web interface in `/html/`
+          - **Config Storage**: AES-256-CBC encrypted XML in `/etc/wap/hw_ctree.xml`
+
+          ## hw_ctree.xml Decryption
+
+          The main configuration file `hw_ctree.xml` is encrypted with AES-256-CBC using the mbedTLS `aescrypt2` format:
+          - **Format**: `AEST` magic (4 bytes) + original size (4 bytes) + IV (16 bytes) + AES-256-CBC ciphertext + HMAC-SHA-256 (32 bytes)
+          - **Key derivation**: Device-specific, derived from hardware e-fuse → work key (flash keyfile partition) → AES key via PBKDF2
+          - **Decryption tool**: The firmware's own `/bin/aescrypt2` can decrypt it via `qemu-arm-static` chroot
+          - **V500 firmwares**: Use `kmc_store_A`/`kmc_store_B` from `/etc/wap/` for key material
+          - **V300 firmwares**: Use `prvt.key` and `EquipKey` for key derivation
+          - **HN8145XR special case**: Has no `kmc_store` (generated from e-fuse at first boot). Can decrypt by creating empty `kmc_store_A`/`kmc_store_B` in `/mnt/jffs2/` which triggers fallback to default key derivation
+
+          ### Decryption Commands
+
+          ```bash
+          # For V500 firmwares (HG8145V5, EG8145V5):
+          sudo chroot rootfs qemu-arm-static /bin/aescrypt2 1 /tmp/hw_ctree.xml /tmp/decrypted.xml
+          # Output is gzip-compressed XML, decompress with:
+          gunzip decrypted.xml.gz
+
+          # For HN8145XR (no kmc_store):
+          mkdir -p rootfs/mnt/jffs2/
+          touch rootfs/mnt/jffs2/kmc_store_A rootfs/mnt/jffs2/kmc_store_B
+          sudo chroot rootfs qemu-arm-static /bin/aescrypt2 1 /tmp/hw_ctree.xml /tmp/decrypted.xml
+          ```
+
+          ## Firmware Extraction
+
+          To extract SquashFS rootfs from an HWNP firmware image:
+          1. Find SquashFS magic bytes (`hsqs` at offset with >10 inodes)
+          2. Read `bytes_used` from superblock offset +40 (u64 LE)
+          3. Extract with: `unsquashfs -f -d rootfs -no-xattrs -ignore-errors firmware.sqfs`
+
+          Flags `-no-xattrs -ignore-errors` are required for V300 firmwares that contain device nodes.
+
+          ## Private Keys
+
+          All V500 firmwares share an identical `prvt.key` (AES-256-CBC PEM-encrypted RSA key):
+          - **MD5**: `0de20c81fc6cf1d0d3607a1bd600f935`
+          - **Cipher**: AES-256-CBC with IV `7EC546FB34CA7CD5599763D8D9AE6AC9`
+          - **Passphrase**: NOT a simple string — derived via `KMC_GetAppointKey` → `PBKDF2` from `kmc_store` material
+          - Located at `/etc/wap/prvt.key` in the rootfs
+
+          ## Configuration Files
+
+          Key configuration files in `/etc/wap/`:
+          | File | Description |
+          |------|-------------|
+          | `hw_ctree.xml` | Main config tree (AES-encrypted) |
+          | `hw_default_ctree.xml` | Factory default config (same encryption) |
+          | `hw_aes_tree.xml` | Schema defining which XML paths have encrypted values |
+          | `hw_flashcfg.xml` | Flash/NAND partition layout |
+          | `hw_boardinfo` | Device identity (board ID, MACs, product info) |
+          | `prvt.key` | AES-256-CBC encrypted RSA private key |
+          | `kmc_store_A`/`kmc_store_B` | Key management center material (V500 only) |
+          | `passwd` | System users (root password hash) |
+
+          ## Web Interface
+
+          The web UI in `/html/` uses ASP pages with JavaScript. Key entry points:
+          - `frame_huawei/login.asp` — Login page
+          - `frame_huawei/index.asp` — Main dashboard
+          - `menu/` — XML menu definitions for different ISP customizations
+
+          ## Firmware Signing
+
+          Firmware images are signed with a certificate chain:
+          - e-fuse root key → `app_cert.crt` (4096-bit RSA) → Code Signing CA 2 → Code Signing Cert 3
+          - No private signing key exists in any binary
+          - Verification uses `SWM_Sig_VerifySignature` → `CmscbbVerify` → `HW_DM_GetRootPubKeyInfo` (reads from e-fuse)
+          INSTRUCTIONS_EOF
+
+          # ── Create .github/agents/firmware-analyst.md ──
+          mkdir -p .github/agents
+          cat > .github/agents/firmware-analyst.md << 'AGENT_EOF'
+          ---
+          name: firmware-analyst
+          description: Expert agent for analyzing Huawei ONT firmware content, decrypting configurations, and understanding router internals.
+          ---
+
+          # Firmware Analyst Agent
+
+          You are an expert in Huawei ONT (Optical Network Terminal) firmware analysis. You have deep knowledge of:
+
+          ## Your Capabilities
+
+          1. **Firmware Structure**: You understand the HWNP (Huawei Network Package) format with `whwh`-wrapped partitions containing U-Boot, Linux kernel (uImage + LZMA), and SquashFS rootfs.
+
+          2. **Configuration Decryption**: You know how to decrypt `hw_ctree.xml` using the firmware's own `aescrypt2` binary via `qemu-arm-static` chroot. The file uses AES-256-CBC with the mbedTLS aescrypt2 format (AEST magic + size + IV + ciphertext + HMAC-SHA-256).
+
+          3. **Key Management**: You understand that:
+             - AES keys are derived from hardware e-fuse → work key → PBKDF2
+             - V500 firmwares use `kmc_store_A`/`kmc_store_B` for key material
+             - V300 firmwares use `prvt.key` and `EquipKey`
+             - HN8145XR has no `kmc_store` (generated from e-fuse at first boot) — create empty files to trigger fallback decryption
+             - All V500 firmwares share the same `prvt.key` (MD5: `0de20c81fc6cf1d0d3607a1bd600f935`)
+
+          4. **Web Interface Analysis**: You can analyze the ASP-based web interface in `/html/`, understand menu XML structures for different ISP customizations, and identify configuration endpoints.
+
+          5. **Binary Analysis**: You can analyze ARM ELF binaries from the firmware using Capstone disassembly, understand PLT/GOT resolution, and identify key functions like `HW_XML_CFGFileSecurity`, `cfgtool`, and `aescrypt2`.
+
+          ## When Asked About Decryption
+
+          Provide the exact commands needed:
+          ```bash
+          # Extract SquashFS from firmware
+          unsquashfs -f -d rootfs -no-xattrs -ignore-errors firmware.sqfs
+
+          # Set up qemu chroot
+          sudo cp /usr/bin/qemu-arm-static rootfs/usr/bin/
+
+          # For V500 with kmc_store:
+          sudo chroot rootfs qemu-arm-static /bin/aescrypt2 1 /etc/wap/hw_ctree.xml /tmp/out.xml
+          # Output is gzip: gunzip /tmp/out.xml.gz
+
+          # For HN8145XR (no kmc_store):
+          mkdir -p rootfs/mnt/jffs2/
+          touch rootfs/mnt/jffs2/kmc_store_A rootfs/mnt/jffs2/kmc_store_B
+          sudo chroot rootfs qemu-arm-static /bin/aescrypt2 1 /etc/wap/hw_ctree.xml /tmp/out.xml
+          ```
+
+          ## When Asked About Configuration
+
+          Explain that `hw_ctree.xml` contains 1,021+ XML elements with 3,208+ attributes. Only 17 parameters differ between firmware versions. The config flow is:
+          - **Build**: gzip + AES-256-CBC encryption
+          - **Boot**: decrypt → parse XML → DBInit
+          - **Save**: SetPara → DBSave → gzip + AES → flash
+
+          Key API functions: `HW_CFGTOOL_Get/Set/Add/Del/CloneXMLValByPath`
+
+          ## Important Files in This Repository
+
+          - `web/` — Complete router web interface
+          - `configs/` — Configuration files from `/etc/wap/`
+          - `configs/hw_ctree.xml` — Encrypted main configuration (if present)
+          - `configs/hw_aes_tree.xml` — Schema for encrypted fields
+          - `configs/hw_flashcfg.xml` — Flash partition layout
+          - `configs/passwd` — System user accounts
+          AGENT_EOF
+
+          # ── Create .github/copilot-setup-steps.yml ──
+          cat > .github/copilot-setup-steps.yml << 'SETUP_EOF'
+          steps:
+            - name: Install firmware analysis tools
+              run: |
+                sudo apt-get update -qq
+                sudo apt-get install -y -qq squashfs-tools qemu-user-static binutils file xxd
+                pip install capstone
+          SETUP_EOF
+
+          # Commit and push
+          git add -A
+          git diff --cached --quiet && echo "No changes" || {
+            git commit -m "Add extracted ${FW_NAME} content with Copilot agent and instructions"
+            git push origin main || git push origin master || echo "Push completed"
+          }
+
+          echo "✓ ${TARGET_OWNER}/${REPO_NAME} ready"
+          rm -rf /tmp/repo_work

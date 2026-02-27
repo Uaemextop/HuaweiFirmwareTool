@@ -1,1 +1,0 @@
-<%HW_WEB_GetParaArryByDomain(InternetGatewayDevice.LANDevice.1.WiFi.Radio.{i}.X_HW_WLANSTABoost.{i},ChipIndex|MACAddress|Duration|DurationTime,stWlanStaBoost);%>;

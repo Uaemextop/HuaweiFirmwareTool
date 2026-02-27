@@ -21,11 +21,6 @@ on:
         required: false
         type: string
         default: ''
-      user_token:
-        description: 'GitHub PAT with repo scope (overrides the ONT secret when provided)'
-        required: false
-        type: string
-        default: ''
 
 permissions:
   contents: write
@@ -116,10 +111,10 @@ jobs:
           mkdir -p "$OUT"
 
           python3 << 'PYEOF'
-          import struct, os, shutil, subprocess, sys
+          import struct, os, shutil, subprocess, sys, gzip, io, tarfile
 
           def find_squashfs(data):
-              results = []
+              results = {}
               for magic in [b'hsqs', b'sqsh']:
                   pos = 0
                   while True:
@@ -129,10 +124,85 @@ jobs:
                       if idx + 96 <= len(data):
                           inode_count = struct.unpack_from('<I', data, idx + 4)[0]
                           bytes_used = struct.unpack_from('<Q', data, idx + 40)[0]
-                          if inode_count > 10 and bytes_used > 100000 and bytes_used < len(data):
-                              results.append((idx, bytes_used, inode_count))
+                          if inode_count > 10 and bytes_used > 100000 and bytes_used <= len(data) - idx:
+                              if idx not in results:
+                                  results[idx] = (idx, bytes_used, inode_count)
                       pos = idx + 4
-              return results
+              return sorted(results.values(), key=lambda x: x[1], reverse=True)
+
+          def extract_tar_gz_archives(data, out_dir):
+              archives_dir = os.path.join(out_dir, "archives")
+              found = 0
+              gz_idx = 0
+              pos = 0
+              checked_ends = []
+              while True:
+                  idx = data.find(b'\x1f\x8b\x08', pos)
+                  if idx == -1:
+                      break
+                  if not any(s <= idx < e for s, e in checked_ends):
+                      is_tar = False
+                      try:
+                          quick = io.BytesIO(data[idx:idx + 1048576])
+                          with gzip.GzipFile(fileobj=quick) as gz:
+                              hdr = gz.read(512)
+                          is_tar = (len(hdr) >= 262 and
+                                    hdr[257:262] in (b'ustar', b'ustar\x00', b'ustar '))
+                      except Exception:
+                          pass
+                      if is_tar:
+                          try:
+                              win = min(64 * 1024 * 1024, len(data) - idx)
+                              buf = io.BytesIO(data[idx:idx + win])
+                              with tarfile.open(fileobj=buf, mode='r:gz') as tf:
+                                  members = tf.getmembers()
+                                  if members:
+                                      os.makedirs(archives_dir, exist_ok=True)
+                                      label = f"tgz_{gz_idx:02d}_0x{idx:08x}"
+                                      dest = os.path.join(archives_dir, label)
+                                      os.makedirs(dest, exist_ok=True)
+                                      tf.extractall(dest, members=members, filter='data')
+                                      gz_size = buf.tell()
+                                      checked_ends.append((idx, idx + gz_size))
+                                      print(f"  tar.gz 0x{idx:08x}: {len(members)} files -> archives/{label}/")
+                                      gz_idx += 1
+                                      found += 1
+                          except Exception:
+                              pass
+                  pos = idx + 3
+              return found
+
+          def extract_raw_tar_archives(data, out_dir):
+              archives_dir = os.path.join(out_dir, "archives")
+              found = 0
+              tar_idx = 0
+              seen = set()
+              pos = 0
+              while True:
+                  idx = data.find(b'ustar', pos)
+                  if idx == -1:
+                      break
+                  bs = idx - 257
+                  if bs >= 0 and bs % 512 == 0 and bs not in seen:
+                      if data[bs + 257:bs + 262] in (b'ustar', b'ustar\x00', b'ustar '):
+                          try:
+                              buf = io.BytesIO(data[bs:bs + 32 * 1024 * 1024])
+                              with tarfile.open(fileobj=buf, mode='r:') as tf:
+                                  members = tf.getmembers()
+                                  if len(members) > 2:
+                                      os.makedirs(archives_dir, exist_ok=True)
+                                      label = f"tar_{tar_idx:02d}_0x{bs:08x}"
+                                      dest = os.path.join(archives_dir, label)
+                                      os.makedirs(dest, exist_ok=True)
+                                      tf.extractall(dest, members=members, filter='data')
+                                      print(f"  tar 0x{bs:08x}: {len(members)} files -> archives/{label}/")
+                                      seen.add(bs)
+                                      tar_idx += 1
+                                      found += 1
+                          except Exception:
+                              pass
+                  pos = idx + 5
+              return found
 
           fw_file = os.environ["FIRMWARES_DIR"] + "/" + "${{ matrix.firmware.file }}"
           name = "${{ matrix.firmware.name }}"
@@ -148,30 +218,38 @@ jobs:
               print("No SquashFS found!")
               sys.exit(1)
 
-          sqfs_list.sort(key=lambda x: x[1], reverse=True)
-          offset, size, inodes = sqfs_list[0]
-          print(f"SquashFS at 0x{offset:08x}, {size:,} bytes, {inodes} inodes")
-
-          sqfs_path = "/tmp/rootfs.sqfs"
-          with open(sqfs_path, 'wb') as f:
-              f.write(data[offset:offset + size])
-
-          rootfs = "/tmp/rootfs"
-          os.makedirs(rootfs, exist_ok=True)
-          subprocess.run(["sudo", "unsquashfs", "-f", "-d", rootfs,
-                          "-no-xattrs", "-ignore-errors", sqfs_path], check=False)
-          subprocess.run(["sudo", "chmod", "-R", "a+rX", rootfs])
-
+          print(f"Found {len(sqfs_list)} SquashFS image(s)")
           os.makedirs(out_dir, exist_ok=True)
 
-          # Always extract web UI and configs
+          rootfs_dir = None
+          for i, (offset, size, inodes) in enumerate(sqfs_list):
+              label = f"sqfs_{i:02d}_0x{offset:08x}"
+              print(f"  [{i}] SquashFS at 0x{offset:08x}, {size:,} bytes, {inodes} inodes")
+              sqfs_path = f"/tmp/{label}.sqfs"
+              with open(sqfs_path, 'wb') as f:
+                  f.write(data[offset:offset + size])
+              rootfs = f"/tmp/rootfs_{i}"
+              os.makedirs(rootfs, exist_ok=True)
+              subprocess.run(["sudo", "unsquashfs", "-f", "-d", rootfs,
+                              "-no-xattrs", "-ignore-errors", sqfs_path], check=False)
+              subprocess.run(["sudo", "chmod", "-R", "a+rX", rootfs], check=False)
+              if i == 0:
+                  rootfs_dir = rootfs
+              else:
+                  extra_out = os.path.join(out_dir, f"rootfs_{i}")
+                  subprocess.run(["sudo", "cp", "-ra", rootfs, extra_out], check=False)
+                  subprocess.run(["sudo", "chown", "-R",
+                                  f"{os.getuid()}:{os.getgid()}", extra_out], check=False)
+                  n = sum(1 for _, _, fs in os.walk(extra_out) for _ in fs)
+                  print(f"    -> rootfs_{i}/: {n} files")
+
           dirs_to_copy = {"web": "html", "configs": "etc/wap"}
           if mode == "full_extract":
               dirs_to_copy.update({"bin": "bin", "sbin": "sbin", "lib": "lib", "etc": "etc"})
 
           total = 0
           for dest_name, src_rel in dirs_to_copy.items():
-              src = os.path.join(rootfs, src_rel)
+              src = os.path.join(rootfs_dir, src_rel)
               if os.path.isdir(src):
                   dst = os.path.join(out_dir, dest_name)
                   subprocess.run(["sudo", "cp", "-ra", src, dst], check=False)
@@ -181,7 +259,10 @@ jobs:
                   print(f"  {dest_name}: {n} files")
                   total += n
 
-          print(f"Total: {total} files extracted")
+          gz_count = extract_tar_gz_archives(data, out_dir)
+          tar_count = extract_raw_tar_archives(data, out_dir)
+          print(f"  archives: {gz_count} tar.gz + {tar_count} raw tar extracted")
+          print(f"Total: {total} rootfs files + {gz_count + tar_count} archive(s) extracted")
           PYEOF
 
       - name: Create ZIP for release
@@ -282,14 +363,14 @@ jobs:
 
       - name: Create repo and push content
         env:
-          GH_TOKEN: ${{ inputs.user_token != '' && inputs.user_token || secrets.ONT }}
+          GH_TOKEN: ${{ secrets.ONT }}
           TARGET_OWNER: ${{ inputs.target_owner }}
           FW_NAME: ${{ matrix.firmware }}
         run: |
           set -e
 
           if [ -z "$GH_TOKEN" ]; then
-            echo "::error::No token available. Provide 'user_token' input or configure the 'ONT' secret with a GitHub PAT (repo scope)."
+            echo "::error::Secret 'ONT' is not configured. Add a GitHub PAT with repo scope."
             exit 1
           fi
 
@@ -386,12 +467,13 @@ jobs:
           See \`.github/copilot-instructions.md\` for details.
           READMEEOF
 
-          # Copy .github files from source repo
+          # Copy .github files and tools from source repo
           mkdir -p .github/agents .github/workflows
           SOURCE_REPO="${GITHUB_WORKSPACE}/source_repo"
           cp "${SOURCE_REPO}/.github/copilot-instructions.md" .github/copilot-instructions.md
           cp "${SOURCE_REPO}/.github/agents/firmware-analyst.agent.md" .github/agents/firmware-analyst.agent.md
           cp "${SOURCE_REPO}/.github/workflows/copilot-setup-steps.yml" .github/workflows/copilot-setup-steps.yml
+          cp -r "${SOURCE_REPO}/tools" ./tools
 
           # Commit and push
           git add -A

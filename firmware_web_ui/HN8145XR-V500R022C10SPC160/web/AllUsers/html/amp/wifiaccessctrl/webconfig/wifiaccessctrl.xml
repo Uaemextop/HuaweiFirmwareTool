@@ -1,0 +1,8 @@
+<InternetGatewayDevice>
+    <X_HW_WIFIInfo>
+        <WIFIAccessControl getconfig="0x00000003" setconfig="0x00000003">
+            <AccessEnable getconfig="0x00000003" setconfig="0x00000003" />
+            <WhiteStaMacList getconfig="0x00000003" setconfig="0x00000003" addconfig="0x00000003" delconfig="0x00000003"/>
+        </WIFIAccessControl>
+    </X_HW_WIFIInfo>
+</InternetGatewayDevice> 

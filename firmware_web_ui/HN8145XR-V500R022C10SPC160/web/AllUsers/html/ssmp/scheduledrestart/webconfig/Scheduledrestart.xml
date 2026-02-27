@@ -1,0 +1,11 @@
+<InternetGatewayDevice>
+    <LANDevice>
+        <AutoResetConfig setconfig = "0x00000003" getconfig = "0x00000003">
+            <Enable setconfig = "0x00000003" getconfig = "0x00000003"/>
+            <ForceActive setconfig = "0x00000003" getconfig = "0x00000003"/>
+            <Time setconfig = "0x00000003" getconfig = "0x00000003"/>
+            <Day setconfig = "0x00000003" getconfig = "0x00000003"/>
+            <ForceFlow setconfig = "0x00000003" getconfig = "0x00000003"/>
+        </AutoResetConfig>
+    </LANDevice>
+</InternetGatewayDevice>

@@ -1,0 +1,316 @@
+#! /bin/sh
+
+# 写入一个SSID的recover脚本，该脚本通过读取 /var/customizepara.txt 
+# 文件中的定制信息，来将定制信息写入ctree中
+
+# 定制脚本信息文件，该文件名固定，不能更改
+var_customize_file=/var/customizepara.txt
+var_pack_temp_dir=/bin/
+
+# 定制信息写入文件，该文件通过tar包解压后复制产生,
+# recover脚本的写入操作都是在这个临时文件中进行
+var_default_ctree=/var/hw_default_ctree.xml
+var_jffs2_customize_txt_file="/mnt/jffs2/customize.txt"
+var_batch_file=/tmp/batch_file
+var_boardinfo_dup="/var/dup_boardinfo"
+var_cteicode_id=`cat $var_boardinfo_dup |grep "0x00000064"`
+var_cmspecsn_id=`cat $var_boardinfo_dup |grep "0x00000065"`
+
+var_ssid=""
+var_wpa=""
+var_userPwd=""
+var_OperatorId="CTC"
+var_cteicode=""
+var_specsn=""
+var_key=""
+
+# check the customize file
+HW_Script_CheckFileExist()
+{
+    if [ ! -f "$var_customize_file" ] ;then
+        echo "ERROR::customize file is not existed."
+            return 1
+    fi
+    return 0
+}
+
+#若boardinfo文件里不存在移动CTEI的ID，则向boardinfo文件新增
+if [ -z "$var_cteicode_id" ]
+then
+	echo "obj.id = \"0x00000064\" ; obj.value = \"\";" >> $var_boardinfo_dup
+fi
+if [ -z "$var_cmspecsn_id" ]
+then
+	echo "obj.id = \"0x00000065\" ; obj.value = \"\";" >> $var_boardinfo_dup
+fi
+# read data from customize file
+HW_Script_ReadDataFromFile()
+{
+    read -r var_ssid var_wpa var_userPwd var_ssid2 var_wpa2 var_cteicode var_specsn var_key< $var_customize_file
+    if [ 0 -ne $? ]
+    then
+        echo "Failed to read spec info!"
+        return 1
+    fi
+	
+	#存在/mnt/jffs2/V5_TypeWord_FLAG 文件,校验WEB密码长度为8位且包含了数字(0-9)、字母（a-z,A-Z）和特殊字符（`~!@#$%^&*()-_=+\|[{}];:'",<.>/?）
+ 	if [ -f /mnt/jffs2/V5_TypeWord_FLAG ]
+ 	then
+		if [ ${#var_userPwd} -ne 8 ]
+		then
+			echo "The length of web password is not eight!"
+			return 1
+		fi
+		
+		echo $var_userPwd |grep [0-9]|grep [a-zA-Z]> /dev/null
+		if [ $? -ne 0 ]
+		then
+		    echo "The web password strength is too weak!"
+		    return 1
+		fi
+		return 0
+	fi
+	
+	if [ ${#var_userPwd} -ne 5 ]
+	then
+        echo "The length of web password is not five!"
+        return 1
+    fi
+	
+    return
+}
+
+#0x00000064是移动ctei，0x00000065是移动的sn 
+HW_Script_SetSpecSn_Cmei()
+{	
+	echo $var_boardinfo_dup | xargs sed 's/obj.id = \"0x00000065\" ; obj.value = \"[a-zA-Z0-9_-]*\"/obj.id = \"0x00000065\" ; obj.value = \"'$var_specsn'\"/g' -i
+	echo $var_boardinfo_dup | xargs sed 's/obj.id = \"0x00000064\" ; obj.value = \"[a-zA-Z0-9_-]*\"/obj.id = \"0x00000064\" ; obj.value = \"'$var_cteicode'\"/g' -i
+}
+HW_Script_GetOperatorIdByBinCfgKey()
+{
+	var_g_Binword=""
+	var_g_Cfgword=""
+	var_jffs2_customize_key_file="/mnt/jffs2/customize.txt"
+	#如果不存在"/mnt/jffs2/customize.txt"文件则直接返回
+    if [ ! -f "$var_jffs2_customize_key_file" ]
+    then
+		var_OperatorId="CTC"
+        return
+    fi
+    read var_g_Binword var_g_Cfgword < $var_jffs2_customize_key_file
+    if [ 0 -ne $? ]
+    then
+		var_OperatorId="CTC"
+        return
+    fi
+	
+	binkey_upcase=$(echo $var_g_Binword | tr '[a-z]' '[A-Z]')
+	cfgkey_upcase=$(echo $var_g_Cfgword | tr '[a-z]' '[A-Z]')
+	var_CTkeycfg=$(expr match "$cfgkey_upcase" '.*\(SHTELECOM\).*')
+	var_CMCCkeycfg=$(expr match "$cfgkey_upcase" '.*\(CMCC\).*')
+	var_CUkeycfg=$(expr match "$cfgkey_upcase" '.*\(CU\).*')
+	var_UNICOMkeycfg=$(expr match "$cfgkey_upcase" '.*\(UNICOM\).*')
+	
+	if [ "E8C" == "$binkey_upcase" ] || [ "E8C" == "$cfgkey_upcase" ] || [ "SHTELECOM" == "$var_CTkeycfg" ];then
+		var_OperatorId="CTC"
+	elif [ "CMCC" == "$binkey_upcase" ] || [ "CMCC" == "$var_CMCCkeycfg" ];then
+		var_OperatorId="CMCC"
+	elif [ "UNICOM" == "$binkey_upcase" ] || [ "$var_UNICOMkeycfg" == "UNICOM" ] || [ "$var_CUkeycfg" == "CU" ];then
+		var_OperatorId="CUC"
+	else
+		var_OperatorId="CTC"
+	fi
+	
+	return
+}
+
+
+HW_Script_SetVoiceDatToFile()
+{
+	var_nod_ssmppdt=InternetGatewayDevice.X_HW_SSMPPDT
+	var_nod_deviceinfo=InternetGatewayDevice.X_HW_SSMPPDT.Deviceinfo
+
+	var_voice_type="0"
+	
+	#如果不存在"/mnt/jffs2/customize.txt"文件则直接返回
+    if [ ! -f "$var_jffs2_customize_txt_file" ]
+    then
+        return 0
+    fi
+    
+    read var_bin_ft_word var_cfg_ft_word1 < $var_jffs2_customize_txt_file
+    if [ 0 -ne $? ]
+    then
+        return 1
+    fi
+    
+    var_cfg_ft_word=$(echo $var_cfg_ft_word1 | tr a-z A-Z)
+    
+    #如果配置特征字中没有_SIP则直接返回，重定向到/dev/null作用是不显示echo内容
+    echo $var_cfg_ft_word | grep -iE "_SIP" > /dev/null	
+	if [ $? == 0 ]
+    then 
+        var_voice_type="1"
+	fi 
+    #如果配置特征字中没有_H248则直接返回，重定向到/dev/null作用是不显示echo内容
+    echo $var_cfg_ft_word | grep -iE "_H248" > /dev/null	
+	if [ $? == 0 ]
+    then
+        var_voice_type="2"
+	fi 
+	
+	if [ "0" = $var_voice_type ]
+	then
+	    return 0
+    fi
+    
+    #如果没有对象InternetGatewayDevice.X_HW_SSMPPDT，需先添加
+    cfgtool find $var_default_ctree $var_nod_ssmppdt
+    if [ 0 -ne $? ]
+	then
+	    cfgtool add $var_default_ctree $var_nod_ssmppdt NULL 
+	    if [ 0 -ne $? ]
+	    then
+		echo "Failed to set voice ssmppdt!"
+		return 1
+	    fi 	
+    fi
+	#如果没有对象InternetGatewayDevice.X_HW_SSMPPDT.Deviceinfo，需先添加
+    cfgtool find $var_default_ctree $var_nod_deviceinfo
+    if [ 0 -ne $? ]
+    then
+    	cfgtool add $var_default_ctree $var_nod_deviceinfo NULL
+	if [ 0 -ne $? ]
+	then
+		echo "Failed to set voice deviceinfo!"
+		return 1
+	fi	
+	
+	cfgtool add $var_default_ctree $var_nod_deviceinfo X_HW_VOICE_MODE $var_voice_type
+	if [ 0 -ne $? ]
+	then
+		echo "Failed to add voice Type!"
+		return 1
+	fi	
+    else
+		#如果没有对象InternetGatewayDevice.X_HW_SSMPPDT.Deviceinfo.X_HW_VOICE_MODE，需先添加	
+		cfgtool gettofile $var_default_ctree $var_nod_deviceinfo X_HW_VOICE_MODE
+	if [ 0 -ne $? ]
+	then
+		cfgtool add $var_default_ctree $var_nod_deviceinfo X_HW_VOICE_MODE $var_voice_type
+		if [ 0 -ne $? ]
+		then
+			echo "Failed to add voice Type!"
+			return 1
+		fi		
+		else
+			cfgtool set $var_default_ctree $var_nod_deviceinfo X_HW_VOICE_MODE $var_voice_type
+			if [ 0 -ne $? ]
+			then
+				echo "Failed to set voice Type!"
+				return 1
+			fi		
+		fi
+    fi   	
+}
+
+HW_Script_Cfgtool_Set()
+{      
+	echo "set $2 $3 $4" >> $var_batch_file   
+}
+
+HW_Script_SetDatToFile()
+{
+
+	#set cteicode
+	if [ ${#var_cteicode} -ne 15 ]
+	then
+	    echo "cmeicode length is incorrect!"
+	    return 1
+	fi
+	#set var_specsn
+	if [ ${#var_specsn} -ne 15 ]
+	then
+	    echo "sn length is incorrect!"
+	    return 1
+	fi
+	#设置SpecSn的值到boardinfo
+	HW_Script_SetSpecSn_Cmei
+    var_node_ssid1=InternetGatewayDevice.LANDevice.LANDeviceInstance.1.WLANConfiguration.WLANConfigurationInstance.1
+    var_node_wpa_pwd1=InternetGatewayDevice.LANDevice.LANDeviceInstance.1.WLANConfiguration.WLANConfigurationInstance.1.PreSharedKey.PreSharedKeyInstance.1
+    var_node_userpassword=InternetGatewayDevice.UserInterface.X_HW_WebUserInfo.X_HW_WebUserInfoInstance.1
+    var_node_ssid2=InternetGatewayDevice.LANDevice.LANDeviceInstance.1.WLANConfiguration.WLANConfigurationInstance.5
+    var_node_wpa_pwd2=InternetGatewayDevice.LANDevice.LANDeviceInstance.1.WLANConfiguration.WLANConfigurationInstance.5.PreSharedKey.PreSharedKeyInstance.1
+    var_para=${var_ssid##*-}
+    var_OperatorId_node=InternetGatewayDevice.DeviceInfo
+    var_node_devKey=InternetGatewayDevice.DeviceInfo.X_HW_DevInfo
+
+    #get OperatorId
+    HW_Script_GetOperatorIdByBinCfgKey
+
+    # decrypt var_default_ctree
+    
+    
+     
+     
+
+    rm -rf $var_batch_file
+    HW_Script_Cfgtool_Set $var_default_ctree $var_node_ssid1 "SSID" $var_ssid
+    HW_Script_Cfgtool_Set $var_default_ctree $var_node_ssid2 "SSID" $var_ssid2
+    HW_Script_Cfgtool_Set $var_default_ctree $var_node_wpa_pwd1 "PreSharedKey" $var_wpa
+    HW_Script_Cfgtool_Set $var_default_ctree $var_node_wpa_pwd2 "PreSharedKey" $var_wpa2
+    HW_Script_Cfgtool_Set $var_default_ctree $var_node_userpassword "Password" $var_userPwd
+
+   	cfgtool set $var_default_ctree $var_OperatorId_node X_HW_OperatorID $var_OperatorId
+    if [ 0 -ne $? ]
+    then
+        echo "add $var_OperatorId_node X_HW_OperatorID $var_OperatorId" >> $var_batch_file
+    fi
+
+    if [ "$var_key" != "" ]
+    then
+        cfgtool set $var_default_ctree $var_node_devKey Key $var_key
+        if [ 0 -ne $? ]
+        then
+            echo "Failed to set common dev key!"
+            return 1
+        fi
+    fi
+
+    #新增SIP H248预埋特性
+    HW_Script_SetVoiceDatToFile
+    if [ 0 -ne $? ]
+    then
+        echo "Failed to set voice type!"
+        return 1
+    fi
+
+    cfgtool batch $var_default_ctree $var_batch_file
+	if [ 0 -ne $? ]
+	then
+		echo "Failed to set parameters!"
+		rm -rf $var_batch_file
+		return 1
+	fi
+	rm -rf $var_batch_file
+    
+    #encrypt var_default_ctree
+     
+     
+
+    return
+}
+
+HW_Script_CheckFileExist
+[ ! $? == 0 ] && exit 1
+
+HW_Script_ReadDataFromFile
+[ ! $? == 0 ] && exit 1
+
+HW_Script_SetDatToFile
+[ ! $? == 0 ] && exit 1
+
+echo "set spec info OK!"
+
+exit 0
+

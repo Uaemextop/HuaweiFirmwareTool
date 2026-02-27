@@ -1,0 +1,17 @@
+<InternetGatewayDevice>
+    <X_HW_VPN setconfig="0x00000003" getconfig = "0x00000003" addconfig = "0x00000003" delconfig = "0x00000003">
+        <PPTPLAC setconfig="0x00000003" getconfig = "0x00000003" addconfig = "0x00000003" delconfig = "0x00000003">
+            <Enable setconfig="0x00000003" getconfig = "0x00000003" addconfig = "0x00000003" delconfig = "0x00000003"/>
+            <PNSAddress setconfig="0x00000003" getconfig = "0x00000003" addconfig = "0x00000003" delconfig = "0x00000003"/>
+            <PNSPort setconfig="0x00000003" getconfig = "0x00000003" addconfig = "0x00000003" delconfig = "0x00000003"/>
+            <LocalHostName setconfig="0x00000003" getconfig = "0x00000003" addconfig = "0x00000003" delconfig = "0x00000003"/>
+            <WANInterface setconfig="0x00000003" getconfig = "0x00000003" addconfig = "0x00000003" delconfig = "0x00000003"/>
+            <PPPCONFIG setconfig="0x00000003" getconfig = "0x00000003" addconfig = "0x00000003" delconfig = "0x00000003">
+                <NatEnable setconfig="0x00000003" getconfig = "0x00000003" addconfig = "0x00000003" delconfig = "0x00000003"/>
+                <AuthenticationProtocol setconfig="0x00000003" getconfig = "0x00000003" addconfig = "0x00000003" delconfig = "0x00000003"/>
+                <UserName setconfig="0x00000003" getconfig = "0x00000003" addconfig = "0x00000003" delconfig = "0x00000003"/>
+                <Password setconfig="0x00000003" addconfig = "0x00000003" delconfig = "0x00000003"/>
+            </PPPCONFIG>
+        </PPTPLAC>
+    </X_HW_VPN>
+</InternetGatewayDevice>

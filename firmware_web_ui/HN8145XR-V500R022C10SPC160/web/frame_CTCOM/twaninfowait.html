@@ -1,0 +1,38 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<meta HTTP-EQUIV = 'Pragma' CONTENT = 'no-cache'>
+<title>Waiting</title>
+<link rel="stylesheet" href="../../../resource/common/<%HW_WEB_CleanCache_Resource(style.css);%>" type="text/css"/>
+<link rel="stylesheet"  href='../../../Cuscss/<%HW_WEB_GetCusSource(frame.css);%>' type='text/css'>
+<script language="JavaScript" src="../../../resource/<%HW_WEB_Resource(bbspdes.html);%>"></script>
+<script language="JavaScript" src="../../../html/bbsp/common/managemode.asp"></script>
+</head>
+<body  style="width:808px; margin:0 auto;" class="mainbody">
+<img height="137" src="/images/register_banner.jpg" width="808" style="display:block;"/>
+<div style="width:100%">
+	    <div style="width:77px;height:388px;background:url(/images/bg.gif);float:left;"></div>
+		<div style="width:4px;height:388px;float:left;"></div>
+		<div style="width:650px;float:left;"> 
+		    <div style="height:12px;width:100%;"></div>
+			<div align='center' style="margin-top:80px;">
+				<script type ="text/javascript">
+						document.write(waninfo_language['waninfowait']);
+				</script>
+			</div>
+		 </div>
+		 <div style="width:77px;height:388px;background:url(/images/bg.gif);float:left;"></div>
+</div>
+<script>
+	function AfterTime()
+	{
+		if(IsE8cFrame())
+		{
+			document.location.href = "twaninfo.asp";
+		}
+	}
+	window.setTimeout(AfterTime, 3000);
+</script>
+</body>
+</html>

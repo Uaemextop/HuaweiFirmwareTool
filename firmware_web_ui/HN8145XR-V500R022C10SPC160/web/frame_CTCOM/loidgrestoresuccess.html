@@ -1,0 +1,123 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge;chrome=1">
+<meta http-equiv="Pragma" CONTENT="no-cache">
+<link rel="stylesheet" href="Cuscss/<%HW_WEB_CleanCache_Resource(frame.css);%>" type='text/css'>
+<title>Success</title>
+</head>
+<style type="text/css">
+.cqctprompt {
+	background-color: #D3D3D3;
+	border: 1px solid #C5D8E6;
+	font-family: "Tohama","Arial","";
+	font-size: 20px;
+	height: 35px;
+	padding: 10px;
+}
+</style>
+<script language="javascript">
+var CfgMode ='<%HW_WEB_GetCfgMode();%>';
+var ontPonMode = '<%HW_WEB_GetParaByDomainName(InternetGatewayDevice.X_HW_DEBUG.AMP.AccessModeDisp.AccessMode);%>';
+var IsRhGateway = '<%HW_WEB_GetFeatureSupport(RH_WEB_INFO_DISPLAY);%>'
+var IsLAN = '<%HW_WEB_GetFeatureSupport(HW_SSMP_FT_LAN_UPPORT);%>';
+var textTip=ontPonMode.toUpperCase() + "路由器恢复";
+var textTip1= ontPonMode.toUpperCase() + "路由器配置已经恢复到默认设置，路由器正在重启。";
+var textTip2= "关闭" + ontPonMode.toUpperCase() + "路由器配置窗口，并在重新打开Web浏览器之前等待2分钟。如果需要，重新配置您PC机的IP地址来匹配新的配置。";
+
+function LoadFrame()
+{
+	//解决恢复出厂成功页面反复刷新时导致ONT反复重启问题，在URL中去掉cgi
+	//这里修改为避免重置后页面跳转到登陆页面
+	if ('CQCT' == CfgMode.toUpperCase())
+	{
+		document.getElementById('cqctrestoretable').style.display="";
+		document.getElementById('cqctTip1').innerHTML=textTip1;
+		document.getElementById('cqctTip2').innerHTML=textTip2;
+	}
+	else
+	{
+		document.getElementById('restoretable').style.display="";
+		document.getElementById('cfgsucc').style.display="";
+	}
+}
+</script>
+<body class="mainbody" onload="LoadFrame();">
+<div>
+<table id="restoretable" width="100%" height="10%" border="0" cellspacing="0" cellpadding="0" style="display:none;">
+	<tr id="cfgsucc" name="cfgsucc" style="display:none;">
+		<td class="prompt"><table width="100%" border="0" cellspacing="0" cellpadding="0">
+		  <tr>
+			<td width="13%" align="center"><img src="/images/ok.gif" width="48" height="48" /></td>
+			<td width="87%">
+			<script language="JavaScript" type="text/javascript">
+				var MngtFjct = '<%HW_WEB_GetFeatureSupport(HW_SSMP_FEATURE_MNGT_FJCT);%>';
+				if (1 == MngtFjct)
+				{
+					if (1 == IsRhGateway)
+					{
+						document.write('<font face="Arial">融合智能终端已经恢复到默认的出厂配置，设备正在重启，请勿下电。</font>');
+					}
+					else
+					{
+					document.write('<font face="Arial">e8-c终端已经恢复到默认的出厂配置，设备正在重启，请勿下电。</font>');
+					}
+				}
+				else
+				{
+					document.write('<font face="Arial">恢复配置成功，系统正在重启，请稍候....</font>');
+				}
+			</script>
+			</td>
+		  </tr>
+		</table>
+		</td>
+	  </tr>
+ </table>
+
+ <table id="cqctrestoretable" width="100%" height="50%" border="0" cellspacing="0" cellpadding="0" style="display:none;">
+	  <tr id="cqctcfgsucc" name="cqctcfgsucc" >
+		<td width="15%"></td>
+		<td width="70%">
+			 <table width="100%" border="0" cellspacing="0" cellpadding="0">
+			  <tr>
+				 <td>
+				 <table width="100%" height="50">
+					<tr> <td></td> </tr>
+				 </table>
+				 <td>
+			  </tr>
+			  <tr>
+
+				<td class="cqctprompt">
+				<script language="JavaScript" type="text/javascript">
+				document.write(textTip);
+				</script>
+
+				</td>
+			  </tr>
+				<tr>
+				<td>
+				<table width="100%" height="50">
+					<tr><td></td> </tr>
+			   </table>
+			   </td>
+			  <tr>
+				 <td style="padding: 10px;">
+				 <ul style="list-style-type:square">
+				 <li id="cqctTip1"></li>
+				 <li id="cqctTip2"></li>
+				 </ul>
+				 </td>
+			  <tr>
+			</table>
+
+		</td>
+		<td width="15%"> </td>
+	  </tr>
+
+ </table>
+</div>
+</body>
+</html>

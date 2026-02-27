@@ -1,0 +1,12 @@
+<InternetGatewayDevice>
+    <X_HW_InternetDiagnose setconfig = "0x00000003" addconfig = "0x00000003" delconfig = "0x00000003" getconfig = "0x00000003">
+        <DiagnosticsState setconfig = "0x00000003" getconfig = "0x00000003"/>
+        <Interface setconfig = "0x00000003" getconfig = "0x00000003"/>
+        <DomainList setconfig = "0x00000003" getconfig = "0x00000003"/>
+        <AutoDiagTime setconfig = "0x00000003" getconfig = "0x00000003"/>
+        <AutoDiagInterval setconfig = "0x00000003" getconfig = "0x00000003"/>
+        <Protocol setconfig = "0x00000003" getconfig = "0x00000003"/>
+        <Port setconfig = "0x00000003" getconfig = "0x00000003"/>
+        <Timeout setconfig = "0x00000003" getconfig = "0x00000003"/>
+    </X_HW_InternetDiagnose>
+</InternetGatewayDevice>

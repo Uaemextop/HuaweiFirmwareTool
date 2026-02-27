@@ -1,0 +1,7 @@
+<InternetGatewayDevice>
+<WANDevice setconfig="0x00000002" getconfig="0x00000002">
+<X_HW_E8C_MACRouteCfg setconfig="0x00000002" getconfig="0x00000002">
+<Enable setconfig="0x00000002" getconfig="0x00000002"/>
+</X_HW_E8C_MACRouteCfg>
+</WANDevice>
+</InternetGatewayDevice>

@@ -1,0 +1,1571 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+  <head>
+  <meta http-equiv='Content-Type' content='text/html; charset=utf-8'/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta HTTP-EQUIV="pragma" CONTENT="no-cache">
+    <meta HTTP-EQUIV="Cache-Control" CONTENT="no-store, must-revalidate">
+    <meta HTTP-EQUIV="expires" CONTENT="0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>中国电信智能网关</title>
+  <script language="JavaScript" src="../../resource/common/<%HW_WEB_CleanCache_Resource(md5.js);%>"></script>
+  <script language="JavaScript" src="../../resource/common/<%HW_WEB_CleanCache_Resource(RndSecurityFormat.js);%>"></script>
+  <script language="JavaScript" src="../../resource/common/<%HW_WEB_CleanCache_Resource(jquery.min.js);%>"></script>
+  <script language="JavaScript" src="/resource/common/<%HW_WEB_CleanCache_Resource(safelogin.js);%>"></script>
+  <style type="text/css" media="screen">
+    body{
+      padding: 0 auto;
+      margin: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    ::-ms-clear,::-ms-reveal{
+      display: none;
+    }
+
+    .container-login {
+      padding-right: 15px;
+      padding-left: 15px;
+      margin-right: auto;
+      margin-left: auto;
+    }
+
+    .container-login:before,
+    .container-login:after{
+      display: table;
+        content: " ";
+    }
+    .row {
+        margin-left: -15px;
+        margin-right: -15px;
+    }
+
+    .content-left {
+        /* width: 50%; */
+        width:445px;
+        float: left;
+        position: relative;
+        left: 760px;
+        /* display: table; */
+        display: inline-block;
+    }
+    .content-offset {
+        /*margin-left: 8.33333%;*/
+        margin-left: 35px;
+    }
+    .content-right {
+        /* width: 41.6667%; */
+        width: 371px;
+        /* display: table; */
+        display: inline-block;
+        position: relative;
+    }
+
+    *::before, *::after {
+        /* box-sizing: border-box; */
+    }
+
+    .login_bg{
+      min-width: 1366px;
+      width:100%;
+      /*height: 800px;*/
+      height:100%;
+      min-height:700px;
+      margin-left: auto;
+      margin-right: auto;
+      background-image: url(images/main_bg.jpg);
+      background-repeat: no-repeat;
+      background-size: cover;
+      position: absolute;
+      filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(
+      src='images/main_bg.jpg',
+      sizingMethod='scale');
+    }
+
+    .logo{
+        width: 220px;
+        margin-left: 175px;
+        margin-top: 33px;
+        width: 220px;
+        position: absolute;
+      }
+    .line {
+        margin-top: 9%;
+        overflow: hidden;
+        *position: absolute;
+    }
+
+    .line table{
+      border-collapse: collapse;
+      border-spacing: 0;
+    }
+
+    .login_block{
+      width: 860px;
+      height: 280px;
+      /*padding-top: 9%;*/
+      padding-top:140px;
+      color: white;
+      margin-left: 340px;
+    }
+	.contaier-button {
+		padding: 15px 10px;
+	}
+	.contaier-button button {
+		padding: 7px 80px;
+		border-radius: 5px;
+		background-color: #559bdb;
+		font-size: 21px;
+		color: #fff;
+		border: none;
+		cursor: pointer;
+		box-shadow: 4px 5px 15px #6b6b6b;
+		-webkit-box-shadow: 4px 5px 15px #6b6b6b;
+		-moz-box-shadow: 4px 5px 15px #6b6b6b;		
+	}
+	.contaier-button button:hover {
+		background-color: #4489c8;
+		box-shadow: 4px 5px 15px #6b6b6b;
+		-webkit-box-shadow: 4px 5px 15px #6b6b6b;
+		-moz-box-shadow: 4px 5px 15px #6b6b6b;
+	}
+	.submit_tianyi{
+		padding: 5px 10px;
+		border-radius: 5px;
+		background-color: #559bdb;
+		font-size: 14px;
+		color: #fff;
+		border: none;
+		cursor: pointer;
+		box-shadow: 4px 5px 15px #6b6b6b;
+		-webkit-box-shadow: 4px 5px 15px #6b6b6b;
+		-moz-box-shadow: 4px 5px 15px #6b6b6b;		
+	}
+	.submit_tianyi:hover{
+		background-color: #4489c8;
+		box-shadow: 4px 5px 15px #6b6b6b;
+		-webkit-box-shadow: 4px 5px 15px #6b6b6b;
+		-moz-box-shadow: 4px 5px 15px #6b6b6b;
+	}
+    #copyright_div{
+      color: white;
+        font-size: 12px;
+        font-weight: bold;
+        left: 55%;
+        position: absolute;
+        bottom: 60px;
+      width: 450px;
+      margin-left: -225px;
+    }
+
+    #copyright_div a, #copyright_div a:visited{
+      text-decoration: none;
+      color: #FFFFFF;
+    }
+	.register-input {
+}
+.guangdong {width:430px;font-size: 14px; }
+.qita {width:400px;}
+.register-input tr{width:100%;}
+.guangdong .register-input-title {
+	width:170px;
+}
+.guangdong .register-input-content {
+	width: 260px;
+}
+.qita .register-input-title {
+	width:130px;
+}
+.qita .register-input-content {
+	width:270px;
+}
+.register-input-title { text-align:right;}
+.register-input-content .input {}
+.input_time {border:0px; }
+#ChooseAreaModule .header { font-weight:bold;line-height:18px;margin:0px;padding:0px;margin-bottom:5px;text-align:center;}
+.submit_area{
+	font: 12px Arial, ËÎÌå;
+	color:#0000FF;
+    height: 25px;
+	width:60px;
+	margin-left: 2px;
+	margin-bottom:4px;
+	background-color:#E1E1E1;
+	display:inline-block;
+}
+.disabled { color: gray;}
+.goback { 
+	display:inline-block;
+	padding-left:4px;
+	margin:0px;
+	height: 25px;
+	color: red;
+}
+.content { width:653px;height:323px;position:absolute;}
+.content .prompt { position:absolute; top:0px;left:0px;width:96%;height:40px;;border:0px; }
+.content .module { position:absolute; top: 55px;left: 110px;width:430px; }
+#SelectedArea {color: Red;font-weight: bold; }
+.progress { position:relative;left:10px; background-color:white; width:380px; height:20px;  }
+.progress .progressbar { position:absolute; top:1px; left:1px; width:0%; height:18px; background-color:orange;  }
+.progress .progress-text { position:absolute;top:1px;left:1px; width:378px;height:16px;color:Black;text-align:center;font-size:12px; }
+img{
+	border:0 none;
+	padding:0;
+	margin:0;
+	vertical-align:top;
+}
+table,th,td,p{
+	margin:0;
+	padding:0;
+}
+  </style>
+<script language="JavaScript" type="text/javascript">
+var br0Ip = '<%HW_WEB_GetBr0IPString();%>';
+var httpport = '<%HW_WEB_GetParaByDomainName(InternetGatewayDevice.Services.X_HW_WebServerConfig.ListenInnerPort);%>';
+var E8CRONGHEFlag = '<%HW_WEB_GetFeatureSupport(FT_SHMP_RONGHE);%>';
+
+function JumpToPing()
+{
+	window.location="/tping.asp";
+}
+
+function JumpToNetInfo()
+{
+	window.location="/twaninfo.asp";
+}
+	var CfgMode ='<%HW_WEB_GetCfgMode();%>';
+	function stResultInfo(domain, Result, Status)
+	{
+		this.domain = domain;
+		this.Result = Result;
+		this.Status = Status;
+	}            
+	function AreaRelationInfo(ChineseDes, E8CArea)
+	{
+		this.ChineseDes = ChineseDes;
+		this.E8CArea = E8CArea;
+	}
+	var DestChooseArea = "undefined";
+	var userEthInfos = new Array(new AreaRelationInfo("重庆","023"),
+								 new AreaRelationInfo("四川","028"),
+								 new AreaRelationInfo("云南","0871"),
+								 new AreaRelationInfo("贵州","0851"),			 
+								 new AreaRelationInfo("北京","010"),
+								 new AreaRelationInfo("上海","021"),
+								 new AreaRelationInfo("天津","022"),	 
+								 new AreaRelationInfo("安徽","0551"),
+								 new AreaRelationInfo("福建","0591"),
+								 new AreaRelationInfo("甘肃","0931"),
+								 new AreaRelationInfo("广东","020"),
+								 new AreaRelationInfo("广西","0771"),			 
+								 new AreaRelationInfo("海南","0898"),
+								 new AreaRelationInfo("河北","0311"),
+								 new AreaRelationInfo("河南","0371"),
+								 new AreaRelationInfo("湖北","027"),
+								 new AreaRelationInfo("湖南","0731"),
+								 new AreaRelationInfo("吉林","0431"),
+								 new AreaRelationInfo("江苏","025"),
+								 new AreaRelationInfo("江西","0791"),
+								 new AreaRelationInfo("辽宁","024"),
+								 new AreaRelationInfo("宁夏","0951"),
+								 new AreaRelationInfo("青海","0971"),
+								 new AreaRelationInfo("山东","0531"),
+								 new AreaRelationInfo("山西","0351"),
+								 new AreaRelationInfo("陕西","029"),	 
+								 new AreaRelationInfo("西藏","0891"),
+								 new AreaRelationInfo("新疆","0991"),				 
+								 new AreaRelationInfo("浙江","0571"),
+								 new AreaRelationInfo("黑龙江","0451"),
+								 new AreaRelationInfo("内蒙古","0471"),
+								 null);
+
+	function GetE8CAreaByName(userEthInfos,name)
+	{
+		var length = userEthInfos.length;
+		for( var i = 0; i <  length - 1; i++)
+		{
+			if(name == userEthInfos[i].ChineseDes)
+			{
+				return userEthInfos[i].E8CArea;
+			}
+		}
+		return null;
+	}
+	function GetE8CAreaByCfgFtWord(userEthInfos,name)
+	{
+		var length = userEthInfos.length;
+		for( var i = 0; i <  length - 1; i++)
+		{
+			if(name == userEthInfos[i].E8CArea)
+			{
+				return userEthInfos[i].ChineseDes;
+			}
+		}
+		return null;
+	}
+	var stResultInfos = <%HW_WEB_GetParaArryByDomain(InternetGatewayDevice.X_HW_UserInfo, Result|Status, stResultInfo);%>;
+	if(null != stResultInfos && null != stResultInfos[0])
+	{
+		var Infos = stResultInfos[0];
+	}
+	else
+	{
+		var stResultInfos = new Array(new stResultInfo("InternetGatewayDevice.X_HW_UserInfo","99","99"),null);
+		var Infos = stResultInfos[0];
+	}
+	var ontPonMode = '<%HW_WEB_GetParaByDomainName(InternetGatewayDevice.X_HW_DEBUG.AMP.AccessModeDisp.AccessMode);%>';
+	var CfgFtWordArea = '<%GetConfigAreaInfo();%>';
+	var ProvinceArray = '<%GetChoiceProvinceInfo();%>';
+	var manageFlag = '<%HW_WEB_GetFeatureSupport(HW_SSMP_FEATURE_CWMP_JSCT);%>';
+	var webLoidreg = '<%HW_WEB_GetFeatureSupport(HW_SSMP_FEATURE_WEB_LOIDREG);%>';
+	var MngtGdct = '<%HW_WEB_GetFeatureSupport(HW_SSMP_FEATURE_MNGT_GDCT);%>';
+	var MngtFjct = '<%HW_WEB_GetFeatureSupport(HW_SSMP_FEATURE_MNGT_FJCT);%>';
+	var MngtYnct = '<%HW_WEB_GetFeatureSupport(HW_SSMP_FEATURE_MNGT_YNCT);%>';
+	var MngtScct = '<%HW_WEB_GetFeatureSupport(HW_SSMP_FEATURE_MNGT_SCCT);%>';
+	var MngtCqct = '<%HW_WEB_GetFeatureSupport(HW_SSMP_FEATURE_MNGT_CQCT);%>';
+	var Mngtct = '<%HW_WEB_GetFeatureSupport(HW_SSMP_FEATURE_MNGT_CT);%>';
+	var MngtSdct = '<%HW_WEB_GetFeatureSupport(HW_SSMP_FEATURE_MNGT_SDCT);%>';
+	var MngtHljct = '<%HW_WEB_GetFeatureSupport(HW_SSMP_FEATURE_MNGT_HLJCT);%>';
+	var Mngtct = '<%HW_WEB_GetFeatureSupport(HW_SSMP_FEATURE_MNGT_CT);%>';
+	var MngtOnlineJS = '<%HW_WEB_GetFeatureSupport(HW_SSMP_PONONLINE_DISABLEREG);%>';
+	var IsRhGateway = '<%HW_WEB_GetFeatureSupport(RH_WEB_INFO_DISPLAY);%>'
+	var IsLAN = '<%HW_WEB_GetFeatureSupport(HW_SSMP_FT_LAN_UPPORT);%>';
+	var IsCTRG = '<%HW_WEB_GetFeatureSupport(HW_SSMP_FEATURE_CTRG);%>';
+	var br0Ip = '<%HW_WEB_GetBr0IPString();%>';
+	var httpport = '<%HW_WEB_GetParaByDomainName(InternetGatewayDevice.Services.X_HW_WebServerConfig.ListenInnerPort);%>';
+	var CfgFtWord = '<%HW_WEB_GetCfgFtWord();%>';
+	if (window.location.href.indexOf(br0Ip) == -1)
+	{
+		window.location = 'http://' + br0Ip +':'+ httpport +'/loidreg.asp';
+	}
+	if( (manageFlag == 1) && (webLoidreg == 0) )
+	{			
+		window.location="/login.asp";
+	}
+	if (1 == MngtSdct)
+	{
+		Mngtct = 1;
+	}
+	function isValidAscii(val)
+	{
+		for ( var i = 0 ; i < val.length ; i++ )
+		{
+			var ch = val.charAt(i);
+			if ( ch < ' ' || ch > '~' )
+			{
+				return ch;
+			}
+		}
+		return '';
+	}
+	function getElementById(sId)
+	{
+		if (document.getElementById)
+		{
+			return document.getElementById(sId);	
+		}
+		else if (document.all)
+		{
+			return document.all(sId);
+		}
+		else if (document.layers)
+		{
+			return document.layers[sId];
+		}
+		else
+		{
+			return null;
+		}
+	}
+	function getTtemByName(id)
+	{
+		var item = document.getElementsByName(id);
+		if (item.length == 0)
+		{
+			return null;
+		}
+		else if (item.length == 1)
+		{
+			return 	item[0];
+		}
+		return item;
+	}
+	function getElement(id)
+	{
+		 var item = getTtemByName(id); 
+		 if (item == null)
+		 {
+			 return getElementById(id);
+		 }
+		 return item;
+	}
+	function getValue(id)
+	{
+		var itemId;
+		if (null == (itemId = getElement(id))){
+			return -1;
+		}
+		return itemId.value;
+	}
+	function setText(sId, sValue)
+	{
+		var item;
+		if (null == (item = getElement(sId)))
+		{
+			debug(sId + " is not existed" );
+			return false;
+		}
+	  if(null != sValue)
+		{
+			sValue = sValue.toString().replace(/&nbsp;/g," ");
+			sValue = sValue.toString().replace(/&quot;/g,"\"");
+			sValue = sValue.toString().replace(/&gt;/g,">");
+			sValue = sValue.toString().replace(/&lt;/g,"<");
+			sValue = sValue.toString().replace(/&#39;/g, "\'");
+			sValue = sValue.toString().replace(/&#40;/g, "\(");
+			sValue = sValue.toString().replace(/&#41;/g, "\)");
+			sValue = sValue.toString().replace(/&amp;/g,"&");
+		}
+		item.value = sValue;
+		return true;
+	}
+	function getDivInnerId(divID)
+	{
+		var nameStartPos = -1;
+		var nameEndPos = -1;
+		var ele;
+		divHTML = getElement(divID).innerHTML;
+		nameStartPos = divHTML.indexOf("name=");
+		nameEndPos   = divHTML.indexOf(' ', nameStartPos);
+		if(nameEndPos <= 0)
+		{
+			nameEndPos = divHTML.indexOf(">", nameStartPos);
+		}
+		try
+		{
+			ele = dealDataWithStr(divHTML.substring(nameStartPos+3, nameEndPos));
+		}
+		catch (e)
+		{
+			ele = divHTML.substring(nameStartPos+3, nameEndPos);
+		}
+		return ele;
+	}
+	function IsCTRGAreaInformBind2()
+	{
+		var x;
+		var CfgKey ='<%HW_WEB_GetCfgMode();%>';
+		var Customs = ["NMGCT", "SDCT"];
+		var IsCtrg = '<%HW_WEB_GetFeatureSupport(HW_SSMP_FEATURE_CTRG);%>';
+		if (IsCtrg == '1')
+		{
+			for (x in Customs)
+			{
+				if (Customs[x] == CfgKey.toUpperCase())
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	function setDisable(id, flag)
+	{
+		var item;
+		if ((item = getElement(id)) == null)
+		{
+			return false;
+		}
+		if ( typeof(item.disabled) == 'undefined' )
+		{
+			if ( item.tagName == "DIV" || item.tagName == "div" )
+			{
+				var ele = getDivInnerId(id);            
+				setDisable(ele, flag);
+			}
+		}
+		else
+		{
+			if ( flag == 1 || flag == '1' ) 
+			{
+				 item.disabled = true;
+			}
+			else
+			{
+				 item.disabled = false;
+			}     
+		}
+		return true;
+	}
+	function debug(info)
+	{
+	}
+	function stDevInfo(domain,loid, eponpwd)
+	{
+		this.domain = domain;
+		this.loid       = loid;
+		this.eponpwd = eponpwd;
+	}
+	function stOperateInfo(domain,Result,Status)
+	{
+		this.domain = domain;
+		this.Result = Result;
+		this.Status = Status;
+	}
+	var stDevInfos = <%HW_WEB_GetParaArryByDomain(InternetGatewayDevice.DeviceInfo, X_HW_Loid|X_HW_EponPwd, stDevInfo);%>;
+	var stDevinfo = stDevInfos[0];
+	var stOperateInfos = <%HW_WEB_GetParaArryByDomain(InternetGatewayDevice.X_HW_UserInfo, Result|Status, stOperateInfo);%>;
+	if(null != stOperateInfos && null != stOperateInfos[0])
+	{
+		var stOperateInfo = stOperateInfos[0];
+	}
+	else
+	{
+		var stResultInfos = new Array(new stOperateInfo("InternetGatewayDevice.X_HW_UserInfo","99","99"),null);
+		var stOperateInfo = stResultInfos[0];
+	}
+	function CheckForm()
+	{
+		var loid = getValue('LOIDValue');
+		var eponpwd = getValue('PwdValue');
+		var inLen = 0;
+		var iPwdLen = 12;
+		if(1 == MngtFjct)
+		{
+			iPwdLen = 24;
+		}
+		var string=(1 == MngtGdct)?"LOID":"宽带识别码（LOID）";
+		if ((null == loid) || ('' == loid))
+		{
+			alert(string + "不能为空，请输入正确的"+ string +"。");
+			return false;
+		}
+		/*云南电信需要判断密码是否为空，要求密码不为空才能注册，注册前通过特性开关判断，注册后通过DestChooseArea判断*/
+		if(("undefined" == DestChooseArea && 1 == MngtYnct) || "0871" == DestChooseArea)
+		{
+			if ((null == eponpwd) || ('' == eponpwd))
+			{
+				alert("密码不能为空，请输入正确的密码。");
+				return false;
+			}
+		}
+		if (isValidAscii(loid) != '')
+		{
+			alert(string + "包含非ASCII字符，请输入正确的" + string + "。");
+			return false;
+		}
+		if (loid.length > 24)
+		{
+			alert(string + "不能超过24个字符。");
+			return false;
+		}
+		inLen =  loid.length;
+		if( inLen != 0)
+		{
+			if ( ( loid.charAt(0) == ' ' ) || (loid.charAt(inLen -1) == ' ') )
+			{
+				if(false == confirm('您输入的' + string + '开始或结尾有空格，是否确认？'))
+				{			
+					return false;
+				}
+			}
+		}	
+		if ((null != eponpwd) && ('' != eponpwd))
+		{
+			if (isValidAscii(eponpwd) != '')
+			{
+				alert("PASSWORD包含非ASCII字符，请输入正确的PASSWORD。");
+				return false;
+			}
+			if (eponpwd.length > iPwdLen)
+			{
+				alert("PASSWORD不能超过"+ iPwdLen + "个字符。");
+				return false;
+			}
+			inLen =  eponpwd.length;
+			if( inLen != 0)
+			{
+				if ( ( eponpwd.charAt(0) == ' ' ) || (eponpwd.charAt(inLen -1) == ' ') )
+				{
+					if(false == confirm('您输入的Password开始或结尾有空格，是否确认？'))
+					{			
+						return false;
+					}
+				}
+			}		
+		}
+		if( CfgFtWordArea.toUpperCase() == 'CHOOSE' )
+		{
+			if(getValue('SelectedAreaValue')=="")
+			 {
+				alert("请选择地区。");
+				return false ;
+			 }
+		}
+		return true;
+	}
+	function SetCookie(cookiename, cookievalue)
+	{
+		var expires = (SetCookie.arguments.length > 2) ? SetCookie.arguments[2] : null;
+		var domain = (SetCookie.arguments.length > 4) ? SetCookie.arguments[4] : null;
+		var secure = (SetCookie.arguments.length > 5) ? SetCookie.arguments[5] : false;
+
+		var cookiepath = "/";
+		if (expires != null) {
+			var expdate = new Date();
+			expdate.setTime(expdate.getTime() + (expires * 1000));
+		}
+		document.cookie = cookiename + "=" + escape (cookievalue) +((expires == null) ? "" : ("; expires="+ expdate.toGMTString()))
+		+((cookiepath == null) ? "" : ("; cookiepath=" + cookiepath)) +((domain == null) ? "" : ("; domain=" + domain))
+		+((secure == true) ? "; secure" : "");
+	}
+	function LoadFrame()
+	{ 
+	}
+	var opticInfo = -20;
+	/* 光功率不在合法范围则认为异常，正常的控制范围，GPON:(-31, -8)  EPON(-31, -3) */
+	function IsOpticPowerEorrorForGDCheck()
+	{
+		if (ontPonMode.toUpperCase() == 'GPON')
+		{ 
+			if(parseInt(opticInfo) > -31 && parseInt(opticInfo) < -8)
+			{
+				return false;
+			}
+			return true;
+		}
+		else if (ontPonMode.toUpperCase() == 'EPON') /* EPON */	
+		{ 
+			if(parseInt(opticInfo) > -31 && parseInt(opticInfo) < -3)
+			{
+				return false;
+			}
+			return true;
+		}
+		return true;
+	}
+	function IsOpticalNomal()
+	{
+		if(1 == IsLAN)
+		{
+			return true;
+		}
+		else
+		{
+			return opticInfo != "--";
+		}
+	}
+
+function LoidRegSubmit(SubmitUrl)
+{
+	setDisable('btnApply',1);
+	setDisable('resetValue',1);
+	setDisable('selfCheck',1);
+	setDisable('restoreCfg',1);
+	
+    var loidValue = getValue('LOIDValue');
+	var pwdValue = getValue('PwdValue');
+	var paralist = "";
+		paralist += "x.UserName=" + loidValue;
+		paralist += "&x.UserId=" + pwdValue;
+	
+	$.ajax({
+		type : "POST",
+		async : false,
+		cache : false,
+		data: getDataWithToken(paralist),
+		url : "loid.cgi?x=InternetGatewayDevice.X_HW_UserInfo&RequestFile=" + SubmitUrl,
+		success : function(data) {
+		}
+	});
+
+    window.location = "/" + SubmitUrl;
+}	
+
+	function AddSubmitParam1()
+	{
+		if ('SHXCNCATV' == CfgMode.toUpperCase())
+		{
+			if(parseInt(Infos.Status) == 97)
+			{
+				window.location="/loidgregsuccess.asp";
+			}
+		}
+		else if (parseInt(Infos.Result) == 1)
+		{
+			if ((1 == MngtGdct) || (0 == parseInt(Infos.Status)))
+			{
+				if (!IsCTRGAreaInformBind2())
+				{
+					window.location="/loidgregsuccess.asp";
+					return;
+				}
+			}
+		}
+		if ((parseInt(Infos.Status) == 5) && (MngtGdct == 1))
+		{
+			window.location="/loidgregsuccess.asp";
+			return;
+		}
+		if (CheckForm() == true)
+		{
+			if(MngtFjct == 1 || MngtScct == 1 || 1 == MngtCqct || Mngtct == 1 || MngtGdct == 1)
+			{
+				var PrevTime = new Date();
+				SetCookie("lStartTime",PrevTime);
+				SetCookie("StepStatus","0");
+				SetCookie("CheckOnline","0");
+				SetCookie("lastPercent","0");
+				SetCookie("GdTR069WanStatus","0");
+				SetCookie("GdDispStatus","0");
+				SetCookie("GdTR096WanIp","0");
+				SetCookie("RegisterStep","RPON");
+				SetCookie("SRStepInfo","0;99;99");
+			}
+			if((IsCTRG == 1) && ("0991" == DestChooseArea))
+			{
+				MngtOnlineJS = 0;
+			}
+			else if(0 == MngtOnlineJS && ( "025" == DestChooseArea || "0991" == DestChooseArea))
+			{
+				MngtOnlineJS = 1;
+			}
+			else if(1 == MngtOnlineJS && ( "025" != DestChooseArea && "0991" != DestChooseArea && "undefined" != DestChooseArea) )
+			{
+				MngtOnlineJS = 0;
+			}
+			else
+			{
+				;
+			}
+			if (1 == MngtOnlineJS) {
+				LoidRegSubmit("loidgregsuccess.asp");
+			}
+			else
+			{
+				if ('SHXCNCATV' == CfgMode.toUpperCase()) {
+					LoidRegSubmit("shxloidresult.asp");
+				}
+				else if (1 == MngtGdct) 
+				{
+					if (1 !=IsLAN)
+					{
+						$.ajax({
+							type : "POST",
+							async : false,
+							cache : false,
+							timeout : 4000,
+							url : "/asp/GetOpticRxPower.asp",
+							success : function(data) {
+                                opticInfo = hexDecode(data);
+								GetGDCTOpticAbnormal = IsOpticPowerEorrorForGDCheck();
+							}
+						});		
+						if (('1' == GetGDCTOpticAbnormal) || (!IsOpticalNomal()))
+						{
+							window.location="/loidresult_tianyi.asp";
+							setDisable('btnApply',1);
+							setDisable('resetValue',1);
+							setDisable('selfCheck',1);
+							setDisable('restoreCfg',1);
+						}
+						else
+						{
+							LoidRegSubmit("loidresult_tianyi.asp");
+						}	
+					}
+					else
+					{
+						LoidRegSubmit("loidresult_tianyi.asp");
+					}	
+				}
+				else {
+					LoidRegSubmit("loidresult_tianyi.asp");
+				}
+				if (1 != MngtGdct)
+				{
+					LoidRegSubmit("loidresult_tianyi.asp");
+				}
+			}
+		}
+	}
+	function AddSubmitParam2()
+	{
+		setText('LOIDValue','');
+		setText('PwdValue','');
+	}
+	function CheckPwdCancel()
+	{
+	  window.location.reload(true);
+	}
+	function RestoreDefaultCfgAll()
+	{
+		window.location="/loidgrestore.asp";
+	}
+	function  SelfChecking()
+	{
+		$.ajax({
+			type : "POST",
+			async : false,
+			cache : false,
+			url : "/selfCheck.cgi?&RequestFile=selfChecking.asp",
+            data: getDataWithToken(),
+			success : function(data) { 
+			}
+		});	
+		window.location="/selfChecking.asp";
+	}
+</script>
+  </head>
+  <body>
+  <div class="login_bg">
+    <div class="logo"><img src="images/logo_tianyi.jpg" alt="logo"></div>
+	<div style="position: absolute;top: 36px; right: 175px;">
+	    <script>
+		    document.write('<a href="http://' + br0Ip +':'+ httpport +'/login.asp"><font style="font-size: 18px; color:#fff">返回登录页面</FONT></a>');
+ 	    </script>
+	</div>
+    <div class="line" id="line" name="line">
+      <table align=left cellpadding=0 cellspace=0 border=0>
+        <tr>
+          <td id="line1" name="line1" valign="top">
+          <img src="images/Line.jpg" style="opacity:0.2;">
+        </td>
+        <td id="line2" name="line2" valign="top">
+          <img src="images/Line.jpg" style="margin-left:-3px;opacity:0.2;">
+        </td>
+        </tr>
+      </table>
+    </div>
+    <script>
+        var speed=6;
+        function Marquee(){
+          if(document.getElementById("line2").offsetWidth-document.getElementById("line").scrollLeft<=0)
+            document.getElementById("line").scrollLeft-=document.getElementById("line1").offsetWidth;
+          else{
+            document.getElementById("line").scrollLeft++;
+          }
+        }
+        setInterval(Marquee,speed);
+    </script>
+    <div id='copyright_div'>
+      Copyright (C) 2015 中国电信 All rights reserved.&nbsp;&nbsp;
+    </div>
+  </div>
+
+  <div class="container-login login_block">
+    <div class="row" id="login_setup_div" >
+      <div class="content-left" id="login_tip" style="left:0">
+        <img src="images/login-tip.jpg" width="430" height="293" alt=""/>
+      </div>
+      <div class="content-right content-offset">
+        <br/>
+        <br/>
+	<div id="ApplyAreaModule" class="module" style="display:none;padding-top:50px">
+	<div class="progress">
+	<div class="progressbar">
+	<div class="progress-text">0%</div>
+        </div>
+	</div>
+	<p id="RedirectText" style="text-align:center; height:220px"></p>
+	<script type="text/javascript">
+	$('#ApplyAreaModule').children('table')
+	.addClass('register-input')
+	.addClass((MngtGdct == 1 ? 'guangdong' : 'qita'));
+	</script>
+	</div>
+	<div id="CheckPwdModule" class="module" style="display:none;font-size: 16px;">
+	<p  align="center" font style="font-size: 16px;">输入管理员密码后可选择省份</p>
+	<p  align="center" font style="font-size: 16px;">验证密码：<input type="password" autocomplete="off" class="input" name="CheckPwdValue" style="font-size: 13px;" id="CheckPwdValue" size="15" maxlength="127"/><strong style="color:#FF0033">*</strong></p>
+	<font id="CheckPwdPrompt" style="margin-left:20px;display:none;font-size: 13px;" size="2" >提示：输入的验证密码不正确，请找支撑经理从ITMS平台获取。</font>                      
+	<p style="text-align:center;">
+	<br>
+	<input name="btnCheckPwdApply" class="submitApply" id="btnCheckPwdApply" style="font-size: 13px;" type="button" value="&nbsp;确&nbsp;认&nbsp;">
+	<input style="margin-left:20px;font-size: 13px;"　name="btnCheckPwdCancel" class="submitCancel" id="btnCheckPwdCancel" onClick="CheckPwdCancel();" type="button" value="&nbsp;取&nbsp;消&nbsp;">
+	</p>
+	</div>  
+	<div id="RegisterModule" class="module" style="display:none;padding-top:48px">
+	<TABLE id="shxgd" cellSpacing="0" cellPadding="0" width="600" border="0" height="80%" font style="font-size: 16px;">
+	<tr id="tr_pon_type" style="display:none;">
+	  <td colspan="2" height="18" align="left" id="pon_type"></td>
+	</tr>
+	<tr>
+	  <td colspan="2" align="center" id="ont_sn_des" style="padding-left:80px; line-height:100%;"></td>
+	</tr>
+	<tr id="space_line" style="height:10px;">
+	</tr>
+	<tr id="tr_loid_input" style="display:none;height:30px;font-size: 16px; text-align:left;">
+	  <td width="45%" class="register-input-title" id="ont_loid_value"></td>
+	  <td class="register-input-content" ><input name="LOIDValue" class="input" id="LOIDValue" type="text" size="15" style="font-size: 14px;" maxlength="63"><strong style="color:#FF0033">*</strong></td>
+	</tr>
+	<tr id="tr_pwd_input" style="display:none;height:24px;font-size: 14px; text-align:left;">
+	  <td class="register-input-title" id="passpwd_value"></td>
+	  <td class="register-input-content">
+		<script>
+		if ((CfgMode.toUpperCase() == 'SCCT') || (CfgMode.toUpperCase() == 'SCSCHOOL'))
+		{
+			document.write('<input type="password" autocomplete="off" class="input" name="PwdValue" id="PwdValue" size="15" style="font-size: 14px;" maxlength="63" />');
+		}
+		else
+		{
+			document.write('<input type="text" class="input" name="PwdValue" id="PwdValue" size="15" style="font-size: 14px;" maxlength="63" />');
+		}	
+		</script>
+		<strong style="display:none;color:#FF0033" id="tr_pwd_star_show">*</strong>
+		<script>
+		if (1 == MngtYnct)	
+		{
+			document.getElementById('tr_pwd_star_show').style.display="";
+		}
+		</script>
+	  </td>
+	</tr>
+	<tr id="space_line2" style="height:15px;">
+	</tr>
+	<script language="javascript">
+	if (MngtGdct == 1)
+	{
+		document.getElementById('tr_pon_type').style.display="";
+		document.getElementById('tr_loid_input').style.display="";
+		document.getElementById('tr_pwd_input').style.display="";
+		document.write('<TR>');
+		if (1 != IsLAN)
+		{
+			if (ontPonMode == 'gpon' || ontPonMode == 'GPON')
+			{
+				if (1 == IsRhGateway)
+				{
+					if (1 == E8CRONGHEFlag)
+					{
+						document.getElementById('pon_type').innerHTML = "<p size='2' style='text-align:center;color:#FF0033;font-size: 18px;'><strong>GPON宽带融合终端</strong></p>";
+					}
+					else
+					{
+						document.getElementById('pon_type').innerHTML = "<p size='2' style='text-align:center;color:#FF0033;font-size: 18px;'><strong>GPON上行融合智能终端</strong></p>"; 
+					}
+				}
+				else if(1 == IsCTRG)
+				{
+					document.getElementById('pon_type').innerHTML = "<p size='2' style='text-align:center;color:#FF0033;font-size: 18px;'><strong>GPON上行天翼网关</strong></p>"; 
+				}
+				else
+				{
+					document.getElementById('pon_type').innerHTML = "<p size='2' style='text-align:center;color:#FF0033;font-size: 18px;'><strong>GPON上行E8-C终端</strong></p>";        
+				}
+			}
+			else 
+			{
+				if (1 == IsRhGateway)
+				{
+					if (1 == E8CRONGHEFlag)
+					{
+						document.getElementById('pon_type').innerHTML = "<p size='2' style='text-align:center;color:#FF0033;font-size: 18px;'><strong>EPON宽带融合终端</strong></p>";
+					}
+					else
+					{
+						document.getElementById('pon_type').innerHTML = "<p size='2' style='text-align:center;color:#FF0033;font-size: 18px;'><strong>EPON上行融合智能终端</strong></p>";   
+					}
+				}
+				else if(1 == IsCTRG)
+				{
+					document.getElementById('pon_type').innerHTML = "<p size='2' style='text-align:center;color:#FF0033;font-size: 18px;'><strong>EPON上行天翼网关</strong></p>"; 
+				}			
+				else
+				{
+					document.getElementById('pon_type').innerHTML = "<p size='2' style='text-align:center;color:#FF0033;font-size: 18px;'><strong>EPON上行E8-C终端</strong></p>";   
+				}
+			}
+			document.write('</TR>');
+		}
+		else
+		{
+			if (1 == IsRhGateway)
+			{
+				document.getElementById('pon_type').innerHTML = "<p size='2' style='text-align:center;color:#FF0033;font-size: 18px;'><strong>以太上行融合智能终端</strong></p>";   
+			}
+			else
+			{
+				document.getElementById('pon_type').innerHTML = "<p size='2' style='text-align:center;color:#FF0033;font-size: 18px;'><strong>以太上行E8-C终端</strong></p>";   
+			} 
+		}
+		document.getElementById('otherinfo').style.display="";
+		if(1 == IsCTRG)
+		{
+			document.getElementById('ont_sn_des').innerHTML = "<font style='font-size: 14px;'>请输入申请业务时所提供的天翼网关LOID（宽带识别码）：</font>";
+		}
+		else
+		{
+			document.getElementById('ont_sn_des').innerHTML = "<font style='font-size: 14px;'>请输入申请业务时所提供的LOID：</font>";
+		}
+		if(1 == IsCTRG)
+		{
+			document.getElementById('ont_loid_value').innerHTML = "<font style='font-size: 14px;'>ONU LOID（天翼网关 LOID）：</font>";
+		}
+		else
+		{
+			document.getElementById('ont_loid_value').innerHTML = "<font style='font-size: 14px;'>LOID：</font>";
+		}
+		document.getElementById('passpwd_value').innerHTML = "<font style='font-size: 14px;'>Password：</font>";
+		if (1 == IsRhGateway)
+		{
+			document.getElementById('otherinfo_des').innerHTML = "<font style='font-size: 14px;'>提示：融合智能终端该密码为空，不能填写。</font>";
+		}
+		else if(1 == IsCTRG)
+		{
+			document.getElementById('otherinfo_des').innerHTML = "<font style='color:#FF0033;font-size: 14px;'>（天翼网关密码为空，不需填写）</font>";
+		}
+		else
+		{
+			document.getElementById('otherinfo_des').innerHTML = "<font style='font-size: 14px;'>提示：E8-C终端该密码为空，不能填写。</font>";
+		}
+	}
+	else if(MngtFjct == 1 )
+	{
+		document.getElementById('otherinfo').style.display="";
+		document.getElementById('tr_loid_input').style.display="";
+		document.getElementById('tr_pwd_input').style.display="";
+		document.getElementById('ont_loid_value').innerHTML = "<font style='font-size: 14px;'>宽带识别码（LOID）：</font>";
+		document.getElementById('passpwd_value').innerHTML = "<font style='font-size: 14px;'>Password：</font>";
+		if (1 != IsLAN)
+		{
+			if (1 == IsCTRG)
+			{
+				document.getElementById('ont_sn_des').innerHTML = "<font style='font-size: 14px;'> 按要求插紧光纤后再确认终端光信号（红色）熄灭</font>";
+				document.getElementById('otherinfo_des').innerHTML = "<font style='font-size: 13px;'> 提示：光信号（红色）熄灭后输入宽带识别码（LOID）和PASSWORD（密码）进行注册。</br>密码可为宽带帐号（不带@后缀）、电话号码（不加区号）</br>或宽带识别码（LOID）（纯ITV接入）</font>";
+			}
+			else{
+				document.getElementById('ont_sn_des').innerHTML = "<font style='font-size: 14px;'> 按要求插紧光纤后再确认终端光信号熄灭</font>";
+				document.getElementById('otherinfo_des').innerHTML = "<font style='font-size: 13px;'> 提示：光信号熄灭后输入宽带识别码（LOID）和PASSWORD（密码）进行注册。</br>密码可为宽带帐号（不带@后缀）、电话号码（不加区号）</br>或宽带识别码（LOID）（纯ITV接入）</font>";
+			}
+		}	
+		else
+		{
+			document.getElementById('ont_sn_des').innerHTML = "<font style='font-size: 14px;'> 按要求插紧网线</font>";
+			document.getElementById('otherinfo_des').innerHTML = "<font style='font-size: 13px;'> 提示：输入宽带识别码（LOID）和PASSWORD（密码）进行注册。</br>密码可为宽带帐号（不带@后缀）、电话号码（不加区号）</br>或宽带识别码（LOID）（纯ITV接入）</font>";
+		}
+	}
+	else if(Mngtct == 1)
+	{
+		document.getElementById('tr_loid_input').style.display="";
+		document.getElementById('tr_pwd_input').style.display="";
+		document.getElementById('ont_sn_des').align = "left";
+		document.getElementById('ont_loid_value').innerHTML =  "<font style='font-size: 15px;'>宽带识别码（LOID）：</font>";
+		document.getElementById('passpwd_value').innerHTML = "<font style='font-size: 15px;'>密码：</font>";
+		if (1 != IsLAN)
+		{
+			if (1 == IsRhGateway)
+			{
+				if (1 == E8CRONGHEFlag)
+				{
+					document.getElementById('ont_sn_des').innerHTML = "<font style='font-size: 13px; font-family: 宋体;line-height:100%;'>PON上行融合智能终端业务注册提示：<br>请插紧光纤，检查并确认光信号灯（红色）已处于熄灭状态<br>准确输入“宽带识别码（LOID）”和“密码”。点击“确定”进行注册 <br>在注册及业务下发过程中（10分钟）请不要断电、不要拔光纤<br>本注册功能仅用于新设备的认证及业务下发，已正常在用设备请勿重新注册</font>";
+				}
+				else
+				{
+					document.getElementById('ont_sn_des').innerHTML = "<font style='font-size: 13px; font-family: 宋体;line-height:100%;'>PON上行融合智能终端业务注册提示：<br>请插紧光纤，检查并确认光信号灯已处于熄灭状态<br>准确输入“宽带识别码（LOID）”和“密码”。点击“确定”进行注册 <br>在注册及业务下发过程中（10分钟）请不要断电、不要拔光纤<br>本注册功能仅用于新设备的认证及业务下发，已正常在用设备请勿重新注册</font>";
+				}
+			}
+			else if (1 == IsCTRG)
+			{
+				document.getElementById('ont_sn_des').innerHTML = "<font style='font-size: 14px; font-family: 宋体;line-height:1.8;'>PON上行天翼网关业务注册提示：<br>请插紧光纤，检查并确认光信号灯（红色）已处于熄灭状态<br>准确输入“宽带识别码（LOID）”和“密码”。点击“确定”进行注册 <br>在注册及业务下发过程中（10分钟）请不要断电、不要拔光纤<br>本注册功能仅用于新设备的认证及业务下发，已正常在用设备请勿重新注册</font>";
+			}
+			else if ('SHXCNCATV' == CfgMode.toUpperCase())
+			{
+				document.getElementById('ont_sn_des').innerHTML = "<font style='font-size: 15px; font-family: 微软雅黑;line-height:22px;'>PON上行终端业务注册提示：<br>请插紧光纤，检查并确认光信号灯已处于熄灭状态<br>准确输入“宽带识别码（LOID）”和“密码”。点击“确定”进行注册 <br>在注册及业务下发过程中（10分钟）请不要断电、不要拔光纤<br>本注册功能仅用于新设备的认证及业务下发，已正常在用设备请勿重新注册<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font>";
+				document.getElementById('shxgd').style.width = "520px";
+			}		
+			else
+			{	
+				document.getElementById('ont_sn_des').innerHTML = "<font style='font-size: 13px; font-family: 宋体;line-height:100%;'>PON上行E8-C终端业务注册提示：<br>请插紧光纤，检查并确认光信号灯已处于熄灭状态<br>准确输入“宽带识别码（LOID）”和“密码”。点击“确定”进行注册 <br>在注册及业务下发过程中（10分钟）请不要断电、不要拔光纤<br>本注册功能仅用于新设备的认证及业务下发，已正常在用设备请勿重新注册</font>";
+			}
+		}
+		else
+		{
+			if (1 == IsRhGateway)
+			{
+				document.getElementById('ont_sn_des').innerHTML = "<font style='font-size: 13px; font-family: 宋体;line-height:100%;'>以太上行融合智能终端业务注册提示：<br>请插紧网线<br>准确输入“宽带识别码（LOID）”和“密码”。点击“确定”进行注册 <br>在注册及业务下发过程中（10分钟）请不要断电、不要拔网线<br>本注册功能仅用于新设备的认证及业务下发，已正常在用设备请勿重新注册</font>";
+			}
+			else
+			{
+				document.getElementById('ont_sn_des').innerHTML = "<font style='font-size: 13px; font-family: 宋体;line-height:100%;'>以太上行E8-C终端业务注册提示：<br>请插紧网线<br>准确输入“宽带识别码（LOID）”和“密码”。点击“确定”进行注册 <br>在注册及业务下发过程中（10分钟）请不要断电、不要拔网线<br>本注册功能仅用于新设备的认证及业务下发，已正常在用设备请勿重新注册</font>";
+			}
+		}
+	}
+	else if( MngtScct == 1 )
+	{
+		document.getElementById('ChooseAreaModule').style.top = '335px';
+		document.getElementById('tr_pon_type').style.display="";
+		document.getElementById('tr_loid_input').style.display="";
+		document.getElementById('tr_pwd_input').style.display="";
+		if (1 != IsLAN)
+		{
+			if (1 == IsRhGateway)
+			{
+				if (1 == E8CRONGHEFlag)
+				{
+					if (ontPonMode == 'gpon' || ontPonMode == 'GPON')
+					{
+						document.getElementById('pon_type').innerHTML = "<p size='2' style='text-align:center;'><font style='font-size: 16px;'>GPON宽带融合终端注册</font</p>";        
+					}
+					else
+					{
+						document.getElementById('pon_type').innerHTML = "<p size='2' style='text-align:center;'><font style='font-size: 16px;'>EPON宽带融合终端注册</font</p>";    										
+					}
+				}
+				else
+				{
+					if (ontPonMode == 'gpon' || ontPonMode == 'GPON')
+					{
+						document.getElementById('pon_type').innerHTML = "<p size='2' style='text-align:center;'><font style='font-size: 16px;'>GPON上行融合智能终端注册</font</p>";        
+					}
+					else
+					{
+						document.getElementById('pon_type').innerHTML = "<p size='2' style='text-align:center;'><font style='font-size: 16px;'>EPON上行融合智能终端注册</font</p>";    										
+					}
+				}
+			}
+			else if (1 == IsCTRG)
+			{
+				if (ontPonMode == 'gpon' || ontPonMode == 'GPON')
+				{
+					document.getElementById('pon_type').innerHTML = "<p size='2' style='text-align:center;'><font style='font-size: 16px;'>GPON上行天翼网关终端注册</font</p>";        
+				}
+				else
+				{
+					document.getElementById('pon_type').innerHTML = "<p size='2' style='text-align:center;'><font style='font-size: 16px;'>EPON上行天翼网关终端注册</font</p>";    										
+				}			
+			}
+			else
+			{
+				if (ontPonMode == 'gpon' || ontPonMode == 'GPON')
+				{
+					document.getElementById('pon_type').innerHTML = "<p size='2' style='text-align:center;'><font style='font-size: 16px;'>GPON的E8-C终端注册</font</p>";        
+				}
+				else
+				{
+					document.getElementById('pon_type').innerHTML = "<p size='2' style='text-align:center;'><font style='font-size: 16px;'>EPON的E8-C终端注册</font</p>";    										
+				}
+			}
+			if (1 == IsCTRG)
+			{
+				document.getElementById('ont_sn_des').innerHTML = "<font style='font-size: 13px;'> 注：按要求插紧光纤，确认终端光信号（红色）熄灭后，请输入宽带识别码（LOID）和Password进行注册，在注册过程中不要随意拔插光纤<br>（10分钟内）</font>";
+			}
+			else
+			{
+				document.getElementById('ont_sn_des').innerHTML = "<font style='font-size: 13px;'> 注：按要求插紧光纤，确认终端光信号熄灭后，请输入宽带识别码（LOID）和Password进行注册，在注册过程中不要随意拔插光纤<br>（10分钟内）</font>";
+			}
+		}	
+		else
+		{
+			if (1 == IsRhGateway)
+			{
+				document.getElementById('pon_type').innerHTML = "<p size='2' style='text-align:center;'><font style='font-size: 16px;'>以太上行融合智能终端注册</font</p>";        
+			}
+			else
+			{
+				document.getElementById('pon_type').innerHTML = "<p size='2' style='text-align:center;'><font style='font-size: 16px;'>以太上行的E8-C终端注册</font</p>";        
+			}
+			document.getElementById('ont_sn_des').innerHTML = "<font style='font-size: 13px;'> 注：按要求插紧网线，请输入宽带识别码（LOID）和Password进行注册，在注册过程中不要随意拔插网线<br>（10分钟内）</font>";
+		}
+		document.getElementById('ont_loid_value').innerHTML = "<font style='font-size: 14px;'>宽带识别码（LOID）：</font>";
+		document.getElementById('passpwd_value').innerHTML = "<font style='font-size: 14px;'>Password：</font>";
+	}
+	else if(1 == MngtCqct)
+	{
+		document.getElementById('ChooseAreaModule').style.top = '275px';
+		document.getElementById('otherinfo').style.display="";
+		document.getElementById('tr_loid_input').style.display="";
+		document.getElementById('tr_pwd_input').style.display="";
+		document.getElementById('ont_loid_value').innerHTML = "<font style='font-size: 14px;'>宽带识别码（LOID）：</font>";
+		document.getElementById('passpwd_value').innerHTML = "<font style='font-size: 14px;'>Password：</font>";
+		if (1 != IsLAN)
+		{
+			if (1 == IsCTRG)
+			{
+				document.getElementById('ont_sn_des').innerHTML = "<font style='font-size: 14px;'> 按要求插紧光纤后再确认终端光信号（红色）熄灭</font>";
+				document.getElementById('otherinfo_des').innerHTML = "<font style='font-size: 13px;'> 提示：光信号（红色）熄灭后输入宽带识别码（LOID）和PASSWORD（密码）进行注册。</br>密码可为宽带帐号（不带@后缀）、电话号码（不加区号）</br>或宽带识别码（LOID）（纯ITV接入）</font>";
+			}
+			else
+			{
+				document.getElementById('ont_sn_des').innerHTML = "<font style='font-size: 14px;'> 按要求插紧光纤后再确认终端光信号熄灭</font>";
+				document.getElementById('otherinfo_des').innerHTML = "<font style='font-size: 13px;'> 提示：光信号熄灭后输入宽带识别码（LOID）和PASSWORD（密码）进行注册。</br>密码可为宽带帐号（不带@后缀）、电话号码（不加区号）</br>或宽带识别码（LOID）（纯ITV接入）</font>";
+			}
+		}	
+		else
+		{
+			document.getElementById('ont_sn_des').innerHTML = "<font style='font-size: 14px;'> 按要求插紧网线</font>";
+			document.getElementById('otherinfo_des').innerHTML = "<font style='font-size: 13px;'> 提示：输入宽带识别码（LOID）和PASSWORD（密码）进行注册。</br>密码可为宽带帐号（不带@后缀）、电话号码（不加区号）</br>或宽带识别码（LOID）（纯ITV接入）</font>";
+		}
+	}
+	else if((manageFlag == 1) && (webLoidreg == 0))
+	{
+		;
+	}		
+	else
+	{
+		document.getElementById('tr_loid_input').style.display="";
+		document.getElementById('tr_pwd_input').style.display="";
+		document.getElementById('ont_sn_des').innerHTML = "<br><font style='font-size: 14px;'> 请您输入申请业务时所提供的宽带识别码（LOID）和Password：</font>";
+		document.getElementById('ont_loid_value').innerHTML = "<font style='font-size: 14px;'>宽带识别码（LOID）：</font>";
+		document.getElementById('passpwd_value').innerHTML = "<font style='font-size: 14px;'>Password：</font>";
+	}						
+	</script> 
+	<script language="javascript">
+	if (MngtGdct == 1)
+	{
+		document.getElementById('ChooseAreaModule').style.top = '305px';
+		document.getElementById('SelectedAreaValue').style.width = '80px';
+		document.write('<TR>');
+		document.write('<TD align="middle" colSpan="2" height="35"> <input name="btnApply" class="submit" id="setReg" style="font-size: 13px; onClick="AddSubmitParam1()" type="button" value="&nbsp;注&nbsp;册&nbsp;">');
+		document.write('<input name="resetValue" id="resetValue" type="button" class="submit"  onClick="AddSubmitParam2();" style="font-size: 13px;margin-left:40px;" value="&nbsp;取&nbsp;消&nbsp;"> </TD>');
+		document.write('</TR>');
+	}
+	else if((manageFlag == 1) && (webLoidreg == 0))
+	{
+		;
+	}
+	else
+	{
+		document.write('<TR>');
+		document.write('<TD align="middle" colSpan="2" height="25"> <input name="btnApply" class="submit_tianyi" id="setReg" style="font-size: 14px;  margin-left:-45px"" onClick="AddSubmitParam1()" type="button" value="&nbsp;确&nbsp;定&nbsp;">');
+		if ((CfgMode.toUpperCase() == 'SCCT') || (CfgMode.toUpperCase() == 'SCSCHOOL'))
+		{
+			document.write('<input name="resetValue" id="resetValue"  style="font-size: 13px;margin-left:10px;" type="button" class="submit"  onClick="AddSubmitParam2();" value="&nbsp;重&nbsp;置&nbsp;">');
+			if (1 != IsLAN) 
+			{
+				document.write('<input name="selfCheck" id="selfCheck"  style="font-size: 13px;margin-left:10px;" type="button" class="submit"  onClick="SelfChecking();" value="&nbsp;自&nbsp;检&nbsp;">');
+			}	
+			document.write('<input name="restoreCfg" id="restoreCfg"  style="font-size: 13px;margin-left:10px;" type="button" class="submit"  onClick="RestoreDefaultCfgAll();" value="&nbsp;恢复出厂配置&nbsp;">');	
+		}
+		else if('BJCT' == CfgMode.toUpperCase())
+		{
+			document.write('<input name="resetValue" id="resetValue"  style="font-size: 13px;margin-left:10px;" type="button" class="submit"  onClick="AddSubmitParam2();" value="&nbsp;重&nbsp;置&nbsp;">');
+			if (1 != IsLAN) 
+			{
+				document.write('<input name="selfCheck" id="selfCheck"  style="font-size: 13px;margin-left:10px;" type="button" class="submit"  onClick="SelfChecking();" value="&nbsp;自&nbsp;检&nbsp;">');
+			}
+		}
+		if('TJCT' == CfgMode.toUpperCase())
+		{
+		    document.write('<input name="resetValue" id="resetValue"  style="font-size: 14px;margin-left:40px;" type="button" class="submit_tianyi"  onClick="AddSubmitParam2();" value="&nbsp;重&nbsp;置&nbsp;">');
+		}
+		else if('TJCT' != CfgMode.toUpperCase())
+		{
+			document.write('<input name="resetValue" id="resetValue"  style="font-size: 14px;margin-left:40px;" type="button" class="submit_tianyi"  onClick="AddSubmitParam2();" value="&nbsp;重&nbsp;置&nbsp;">');
+			document.write('<input name="resetValue" id="resetValue"  style="font-size: 14px;margin-left:40px;" type="button" class="submit_tianyi"  onClick="JumpToPing();" value="ping测试">');
+			document.write('<input name="resetValue" id="resetValue"  style="font-size: 14px;margin-left:40px;" type="button" class="submit_tianyi"  onClick="JumpToNetInfo();" value="网关信息">');
+		}
+		
+		document.write('</TD>');
+		document.write('</TR>');
+		
+		if('TJCT' == CfgMode.toUpperCase())
+		{
+		    document.write('<TR>');
+			document.write('<TD align="middle" colSpan="2" height="60"> <input name="resetValue" id="resetValue"  style="font-size: 14px;margin-left:-40px;" type="button" class="submit_tianyi"  onClick="JumpToPing();" value="ping测试">');
+			document.write('<input name="resetValue" id="resetValue"  style="font-size: 14px;margin-left:40px;" type="button" class="submit_tianyi"  onClick="JumpToNetInfo();" value="网关信息">');
+			document.write('<input name="selfCheck" id="selfCheck"  style="font-size: 14px;margin-left:40px;" type="button" class="submit_tianyi"  onClick="SelfChecking();" value="&nbsp;自&nbsp;检&nbsp;">');
+			document.write('</TD>');
+		    document.write('</TR>');
+		}
+	}
+	</script>
+	</TR> 
+	</TABLE> 
+        </div>
+	<div id="shxContainer" align="center" style="margin-top:-340px; width:650px; ">
+	<table class="prompt">
+	<TR>
+	<script language="JavaScript" type="text/javascript">
+		if ('SHXCNCATV' == CfgMode.toUpperCase())
+		{	
+			document.getElementById('shxContainer').style.position = "absolute";
+			document.getElementById('shxContainer').style.left = "50%";
+			document.getElementById('shxContainer').style.top = "85px";
+			document.getElementById('shxContainer').style.marginTop = "";
+			document.getElementById('shxContainer').style.marginLeft = "-330px";
+			document.getElementById('shxContainer').style.width = "560px";
+			document.write('<TD width="6%"></TD>');
+		}
+		else{
+			document.write('<TD width="0%"></TD>');
+		}
+	</script>
+	<TD align="center" width="7%"><img height="40" src="/images/icon_01.gif" width="40"></TD>
+	<TD valign="middle" width="79%"><font style="font-size: 16px;">
+	<script language="JavaScript" type="text/javascript">
+			if ( ('CMCC' == CfgMode.toUpperCase())||('JSCMCC' == CfgMode.toUpperCase()))	
+			{
+				document.write('<b><font style="font-size: 18px;">此功能仅限移动专业人员使用，普通用户请勿操作</font></b>');
+			}
+			else if ('SHXCNCATV' == CfgMode.toUpperCase())
+			{
+				document.write('<b><font style="font-size: 18px;">此功能仅限广电专业人员使用，普通用户请勿操作</font></b>');
+			}
+			else
+			{
+				document.write('<b><font style="font-size: 18px;">此功能仅限电信专业人员使用，普通用户请勿操作</font></b>');
+			}	
+	</script>	
+	</TD> 
+	<TD align="right" width="18%">
+	</TD> 
+	</TR> 
+	</TABLE> 
+        </div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var viewModel = {
+            selectedArea: null,
+            $ChooseAreaModule: $('#ChooseAreaModule'),
+            $ApplyAreaModule: $('#ApplyAreaModule'),
+            $CheckPwdModule: $('#CheckPwdModule'),
+            $RegisterModule: $('#RegisterModule')
+        };
+		var enabledBtns = ProvinceArray;
+		$('.submit_area').filter('[type="button"]').each(function(index) {
+			var element = this;
+			var name = element.name;
+			if(enabledBtns.indexOf) {
+				if(enabledBtns.indexOf(name) == -1) {
+					$(this).attr('disabled', 'disabled').addClass('disabled');						
+				}
+			} else {
+				var included = false;
+				$.each(enabledBtns,function(index, item){
+					if(item == name)
+					{	
+						included = true;
+						return false;
+					}
+				});
+				if(!included) {
+					$(element).attr('disabled', 'disabled').addClass('disabled');
+				}
+			}
+		});
+        viewModel.$ChooseAreaModule.delegate(':button', 'click', function () {
+            var area = this.value;
+			if(this.disabled) return false;
+            viewModel.$ApplyAreaModule.trigger('start', area);
+        }).bind({
+            start: function (event, backable) {
+                viewModel.$ApplyAreaModule.hide();
+                viewModel.$RegisterModule.hide();
+                viewModel.$ChooseAreaModule.show();
+            }	
+        }).delegate('a.goback', 'click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+			viewModel.$ChooseAreaModule.hide();
+        });
+        viewModel.$ApplyAreaModule.bind({
+            start: function (event, area) {
+                var e8cArea;
+                if (!area) {
+                    alert("您未选择任何区域!");
+                    return;
+                }
+				if ((parseInt(Infos.Result) == 1) && ((parseInt(Infos.Status) == 0) || (1 == MngtGdct)))
+				{
+					alert("已注册成功，请恢复出厂后重新选择所在地区！");
+					return;
+				}
+                e8cArea = GetE8CAreaByName(userEthInfos, area);
+                if (confirm("您当前选择的区域为" + area + "，是否进行配置?")) {
+					setText('SelectedAreaValue',area);
+					DestChooseArea = e8cArea;
+	                CfgFtWordArea = e8cArea;
+					/*云南电信密码为空要显示*号*/
+					if("0871" == DestChooseArea)
+					{
+						document.getElementById('tr_pwd_star_show').style.display="";		
+					}
+					else
+					{
+						document.getElementById('tr_pwd_star_show').style.display="none";	
+					}
+					$.post('ConfigE8cArea.cgi?&RequestFile=loidreg.asp', { "AreaInfo": e8cArea });
+					viewModel.$ChooseAreaModule.hide();					
+                }
+            },
+            beginProgress: function () {
+                var completeSeconds = 10;
+                var startSeconds = 0;
+                var startTime = new Date();
+                var endTime = new Date();
+				viewModel.$ApplyAreaModule.find('#RedirectText').text("请稍候，正在配置"+GetE8CAreaByCfgFtWord(userEthInfos, CfgFtWordArea)+"，请勿断电...");
+				viewModel.$ApplyAreaModule.trigger('setProgress', parseInt((startSeconds / completeSeconds) * 100));
+                var interval = setInterval(function () {
+                    if (startSeconds != completeSeconds) {
+                        var configstatus = '';
+                        $.ajax({
+													type : "POST",
+													async : true,
+													cache : false,
+													url : "/asp/GetConfigStatusInfo.asp",
+													success : function(data) {
+													configstatus = data;
+													},
+													error: function() {
+         										configstatus = '';
+         								},
+         								complete: function()
+         								{
+         									  if(configstatus == '')
+		                        {   		
+		                        		if(parseInt((endTime.getTime()-startTime.getTime())/1000) > 40)
+			                    			{
+			                    				viewModel.$ApplyAreaModule.find('#RedirectText').text("设备网络连接可能已断开，请检查你的网络连接状态。");
+			                    			}
+		                        }
+		                        else if(configstatus == "DONE")
+		                    		{
+		                    			  viewModel.$ApplyAreaModule.find('#RedirectText').text("请稍候，正在配置"+GetE8CAreaByCfgFtWord(userEthInfos, CfgFtWordArea)+"，请勿断电...");
+		                    				startSeconds = completeSeconds;
+		                    		}
+								else if(configstatus == "DONEHW")
+		                    		{
+		                    			  viewModel.$ApplyAreaModule.find('#RedirectText').text("请稍候，正在配置"+GetE8CAreaByCfgFtWord(userEthInfos, CfgFtWordArea)+"，请勿断电...");
+		                    				startSeconds = completeSeconds;
+		                    		}
+		                      	else if(parseInt((startSeconds / completeSeconds) * 100) >90)
+		                    		{
+		                    			viewModel.$ApplyAreaModule.find('#RedirectText').text("请稍候，正在配置"+GetE8CAreaByCfgFtWord(userEthInfos, CfgFtWordArea)+"，请勿断电...");  			
+		                    			viewModel.$ApplyAreaModule.trigger('setProgress', 100);
+		                    			startSeconds = completeSeconds;  			
+		                    		}
+		                    		else if(configstatus == "DOING")
+		                  			{
+		                  					viewModel.$ApplyAreaModule.trigger('setProgress', parseInt((startSeconds / completeSeconds) * 100));
+		                    		    startSeconds += 1;
+		                  			}
+		                  			endTime = new Date();
+         								}
+													});
+                    } else {
+                        viewModel.$ApplyAreaModule.trigger('setProgress', 100);
+                        viewModel.$ApplyAreaModule.trigger('endProgress');
+                        clearInterval(interval);
+                    };
+                }, 1000);
+            },
+            setProgress: function (event, percent) {
+                viewModel.$ApplyAreaModule.find('.progressbar').css('width', percent + '%');
+                viewModel.$ApplyAreaModule.find('.progress-text').text(percent + '%');
+            },
+            endProgress: function () {
+                redirectSeconds = 1;
+                var tempInterval = setInterval(function () {
+                    if (redirectSeconds !== 0) {
+                        redirectSeconds -= 1;
+                    } 
+					else 
+					{
+						clearInterval(tempInterval);
+						if((IsCTRG == 1) && ("0991" == DestChooseArea))
+						{
+							window.location="/loidresult_tianyi.asp";
+						}
+						else if((DestChooseArea == "0531") || (DestChooseArea =="0451") || (DestChooseArea =="0991"))
+						{
+							window.location="/loidresult_tianyi.asp";
+						}
+						else
+						{
+							window.location="/loidresult_tianyi.asp";
+						}
+                    }
+                }, 1000);
+            }
+        });
+        viewModel.$CheckPwdModule.bind({
+            start: function () {
+            viewModel.$ChooseAreaModule.hide();
+						viewModel.$ApplyAreaModule.hide();
+						viewModel.$RegisterModule.hide();
+						viewModel.$CheckPwdModule.show();
+            }
+        }).delegate('.submitApply', 'click', function (event) {
+            var CheckPassword = document.getElementById("CheckPwdValue").value;
+            if(CheckPassword == '')
+            {
+            	 alert("输入的密码不能为空！");
+            	return false;
+            }
+			var CheckInfo = FormatUrlEncode(CheckPassword);
+            var CheckResult =0;
+            $.ajax({
+            type : "POST",
+            async : false,
+            cache : false,
+            url : '/asp/CheckModifyInfo.asp?&1=1',
+            data :'CheckInfo='+CheckInfo,
+            success : function(data) {
+                CheckResult = data;
+            }
+        });
+            if(1 == CheckResult) 
+            {
+            	viewModel.$CheckPwdModule.hide();
+				document.getElementById('CheckPwdPrompt').style.display="none";
+               viewModel.$RegisterModule.trigger('start');
+			   viewModel.$ChooseAreaModule.show();
+            }
+            else
+          	{
+          		document.getElementById('CheckPwdPrompt').style.display="";
+          		viewModel.$CheckPwdModule.show();
+          	}
+        });  
+        viewModel.$RegisterModule.bind({
+            start: function () {
+                viewModel.$ChooseAreaModule.show();
+                viewModel.$ApplyAreaModule.hide();
+                viewModel.$RegisterModule.show();
+				 var AreaCfgFtWord = GetE8CAreaByCfgFtWord(userEthInfos, CfgFtWordArea);
+                 if( null == AreaCfgFtWord)
+				 {
+					setText('SelectedAreaValue',"");
+				 }
+				 else
+				 {
+					setText('SelectedAreaValue',AreaCfgFtWord);
+				 }
+            }
+        }).delegate('.showChooseAreaModule', 'click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            if(CfgFtWordArea.toUpperCase() != 'NOCHOOSE' && CfgFtWordArea.toUpperCase() != 'CHOOSE' )
+            {
+            	setText('CheckPwdValue','');
+            	viewModel.$CheckPwdModule.trigger('start');
+            }
+            else
+          	{
+          		viewModel.$ChooseAreaModule.trigger('start');
+          	}
+        });
+	   if(CfgFtWordArea.toUpperCase() != 'NOCHOOSE' && CfgFtWordArea.toUpperCase() != 'CHOOSE' ) 
+	    {
+			  viewModel.$RegisterModule.trigger('start');
+			  viewModel.$ChooseAreaModule.hide();				  
+        }
+        else if(CfgFtWordArea.toUpperCase() == 'NOCHOOSE')
+      	{
+      		  viewModel.$RegisterModule.trigger('start');
+      	}
+        else 
+		{
+            viewModel.$RegisterModule.trigger('start');
+			  viewModel.$ChooseAreaModule.show();	 
+        }
+    });
+</script> 		
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+<InternetGatewayDevice>
+<X_HW_SmartRemoteManage setconfig = "0x00000002" getconfig = "0x00000002">
+<Enable setconfig = "0x00000002" getconfig = "0x00000002"/>
+<PlatAddress setconfig = "0x00000002" getconfig = "0x00000002"/>
+<PlatExportType setconfig = "0x00000002" getconfig = "0x00000002"/>
+</X_HW_SmartRemoteManage>
+</InternetGatewayDevice>

@@ -1,0 +1,280 @@
+﻿div#main {
+	width: 833px;
+	margin: 0px auto;
+}
+
+div#main div#header {
+	height: 100px;
+}
+div#main div#header div#headerLogoImg {
+	float: left;
+	height: 70px;
+	width: 144px;
+	background: url('../images/banner_logo.gif') no-repeat center;
+}
+div#main div#header div#headerContent {
+	clear:both
+	float: left;
+	height: 100px;
+	width: 833px;
+	background: url('../images/bgtop.jpg') no-repeat center;
+}
+div#main div#header div#headerContent div#headerInfo {
+	height: 30px;
+}
+
+div#main div#header div#headerContent div#headerLogout {
+	float: right;
+	margin-top: 28px;
+	font-size: 14px;
+}
+div#main div#header div#headerContent div#headerLogout span {
+	float: right;
+	margin-right: 65px;
+	cursor: pointer;
+	color: #FFFFFF;
+	font-weight: bold;
+}
+div#main div#header div#headerContent div#headerTab {
+	float: left;
+	margin-top: 26px;
+	margin-left: 80px;
+	height: 33px;
+	
+	line-height: 20px;
+}
+div#main div#header div#headerContent div#headerTab ul {
+	padding: 0px;
+	margin: 0px;
+	list-style-type: none;
+}
+div#main div#header div#headerContent div#headerTab ul li {
+	height: 33px;
+	width: 52px;
+	float: left;
+	cursor: pointer;
+	font-weight: bold;
+	margin: 0px 10px;
+}
+div#main div#header div#headerContent div#headerTab ul li div {
+	float: left;
+}
+div#main div#header div#headerContent div#headerTab ul li div.tabBtnCenter {
+	height: 31px;
+	width: 84px;
+	color: #FFFFFF;
+	text-align: center;
+}
+div#main div#header div#headerContent div#headerTab ul li.hover div.tabBtnCenter {
+	height: 31px;
+	width: 84px;
+	color: #9C4500;
+	text-align: center;
+	background-image: url(../images/menuBg.gif);
+	background-repeat: no-repeat;
+}
+div#main div#center {
+	height: 422px;
+}
+div#main div#center div#nav {
+	width: 169px;
+	height: 422px;
+	background-image: url(../images/bgleft.jpg);
+	background-repeat: no-repeat;
+	float: left;
+}
+div#main div#center div#nav ul {
+	height:340px;
+	overflow:auto;
+	padding: 0px;
+	margin: 0px;
+	padding-left: 20px;
+	margin-top: 60px;
+	list-style-type: none;
+}
+div#main div#center div#nav ul li div {
+	width: 110px;
+	height: 32px;
+	vertical-align: top;
+	margin-top:10px;
+	margin-left: auto;
+	margin-right: auto;
+	color: #000000;
+	cursor: pointer;
+	line-height: 32px;
+	font-weight: bold;
+	text-align: center;
+	background-image: url(../images/status0.gif);
+	background-repeat: no-repeat;
+}
+div#main div#center div#nav ul li.hover div {
+	color: #FFFFFF;
+	font-weight: bold;
+	cursor: pointer;
+	background-image: url(../images/status1.gif);
+	background-repeat: no-repeat;
+}
+div#main div#center div#content {
+	float: left;
+	width: 664px;
+	height: 422px;
+}
+div#main div#center div#topNavContent{
+	width: 664px;
+	height: 58px;
+	color: #000000;
+	background-image: url(../images/bgright_top.jpg);
+	background-repeat: no-repeat;
+	float: left;
+}
+div#main div#center div#content div#topNavContent div#topNav {
+	width: 650px;
+	height: 26px;
+	vertical-align: top;
+	margin-top:20px;
+	color: #000000;
+}
+div#main div#center div#content div#topNavContent div#topNav ul {
+	margin-left: 0px;
+	padding-left: 0px;
+	list-style-type: none;
+}
+div#main div#center div#content div#topNavContent div#topNav ul li {
+	height: 26px;
+	float: left;
+	text-align: center;
+	cursor: pointer;
+	font-weight: bold;
+	margin: 0px 0px;
+	line-height: 26px;
+}
+div#main div#center div#content div#topNavContent div#topNav ul li div {
+	float: left;
+}
+div#main div#center div#content div#topNavContent div#topNav ul li div.tabBtnLeft {
+	width: 20px;
+	height: 26px;
+	clear: both;
+	text-align: center;
+	background-image: url(../images/inittableft.gif);
+	background-repeat: no-repeat;
+}
+div#main div#center div#content div#topNavContent div#topNav ul li div.tabBtnCenter {
+	height: 26px;
+	color: #9C4500;
+	text-align: center;
+	background-image: url(../images/inittabmid.gif);
+	background-repeat: repeat-x;
+}
+div#main div#center div#content div#topNavContent div#topNav ul li div.tabBtnRight {
+	width: 12px;
+	height: 26px;
+	text-align: center;
+	background-image: url(../images/inittabright.gif);
+	background-repeat: no-repeat;
+}
+div#main div#center div#content div#topNavContent div#topNav ul li.hover div {
+	float: left;
+}
+div#main div#center div#content div#topNavContent div#topNav ul li.hover div.tabBtnLeft {
+	width: 20px;
+	height: 26px;
+	clear: both;
+	background-image: url(../images/clicktableft.gif);
+	background-repeat: no-repeat;
+}
+div#main div#center div#content div#topNavContent div#topNav ul li.hover div.tabBtnCenter {
+	height: 26px;
+	color: #9C4500;
+	text-align: center;
+	background-image: url(../images/clicktabmid.gif);
+	background-repeat: repeat-x;
+}
+div#main div#center div#content div#topNavContent div#topNav ul li.hover div.tabBtnRight {
+	width: 12px; 
+	height: 26px;
+	background-image: url(../images/clicktabright.gif);
+	background-repeat: no-repeat;
+}
+
+div#main div#center div#content div#topNavContent div#topNavLine{
+	float: left;
+	margin-top: 0px;
+	margin-left: 0px;
+	position:absolute;
+	width: 600px;
+	height: 2px;
+	background-image: url(../images/line_01.gif);
+	background-repeat: no-repeat;
+}
+div#main div#center div#content div#frameWarp{
+	float: left;
+	width: 664px;
+	height: 364px;
+	background-image: url(../images/bgright_con.jpg);
+	background-repeat: no-repeat;
+	position:relative;
+}
+
+div#main div#center div#content div#frameWarp div#frameWarpContent {
+	float: left;
+	width: 600px;
+	height: 340px;
+	position:relative;
+}
+
+div#main div#footer {
+	clear: both;
+	width: 833px;
+	height: 75px;
+	vertical-align: left;
+	background-repeat: no-repeat;
+
+}
+div#main table {
+	height: 100%;
+	margin: 0px auto;
+}
+div#main div#footer #footer_netAddr {
+	border:0;
+	background-image: url(../images/netAddr.gif);
+	height: 14px;
+	width: 124px;	
+	float: left;
+	background-repeat: no-repeat;
+}
+div#main div#footer #footer_phone {
+	border:0;
+	background-image: url(../images/phone.gif);
+	height: 14px;
+	width: 59px;	
+	float: right;
+	background-repeat: no-repeat;
+}
+
+div#main div#fresh {
+	display: none;
+}
+
+* {
+	font-family: 微软雅黑;
+	font-size: 12px;
+	color: #000000;
+}
+body {
+	margin: 0px;
+	padding: 0px;
+}
+input.inputText {
+	height: 21px;
+	width: 180px;
+	border: 0px;
+	font-size: 12px;
+	font-family: 微软雅黑;
+	background: url('../images/login_inupt.gif') transparent no-repeat center;
+}
+input.button {
+	height: 21px;
+	border: 1px solid #C8C8C8;
+	background: url('../images/button_bg.gif') transparent repeat-x center;
+}

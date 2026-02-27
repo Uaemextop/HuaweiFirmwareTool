@@ -7,6 +7,12 @@
 - **NO** agregues comentarios en el código (ni `#`, ni `//`, ni `/* */`).
 - **NO** modifiques ni crees `README`, `CHANGELOG`, `CONTRIBUTING` ni ningún doc.
 - Enfócate **exclusivamente en escribir y modificar código funcional**.
+- **NO entres en bucle**: cada solicitud del usuario se resuelve en una sola pasada — ejecuta, entrega el resultado y detente. No repitas análisis, no re-verifiques, no re-confirmes sin que el usuario lo pida.
+- **Usa los scripts existentes como herramientas**: si `tools/` ya contiene un script que hace lo que necesitas, impórtalo o ejecútalo directamente (`python tools/fw_extract.py ...`). No lo re-analices ni lo reimplementes.
+- **Si creas un script nuevo**, úsalo directamente en el mismo paso como herramienta — no crees un script adicional para probarlo ni para validarlo.
+- **Analiza antes de modificar**: antes de corregir cualquier error, lee el archivo completo, busca todas las referencias a la función o variable errónea en el resto del repositorio (`grep -r`), comprende qué hace esa función en contexto, identifica la causa raíz del fallo y valida mentalmente la corrección antes de aplicarla.
+- **Las nuevas `tools/` deben ser genéricas**: si creas una herramienta nueva en `tools/`, prográmala para recibir argumentos (ruta de archivo, parámetros) y funcionar en cualquier contexto o firmware — nunca hardcodees rutas, nombres o valores específicos de un solo caso.
+- **Usa las tools nuevas como herramientas reales**: una vez creado un script en `tools/`, úsalo invocándolo con sus argumentos sobre los archivos reales. No lo re-analices en la siguiente sesión ni lo reimplementes; trátalo igual que cualquier otro script de `tools/`.
 
 ## Context
 

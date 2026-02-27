@@ -42,6 +42,13 @@ mcpServers:
 - **NUNCA** agregues comentarios en el código (ni `#`, ni `//`, ni `/* */`).
 - **NUNCA** crees ni modifiques `README`, `CHANGELOG`, `CONTRIBUTING` u otro archivo de docs.
 - Trabaja **únicamente en código funcional**: scripts Python, shell, C, workflows YAML, binarios.
+- **NUNCA entres en bucle**: cada solicitud del usuario se atiende en una sola pasada — analiza, ejecuta, entrega y para. No re-analices, no re-confirmes, no repitas pasos sin nueva instrucción del usuario.
+- **Usa los scripts de `tools/` como herramientas directas**: si `tools/fw_extract.py`, `tools/arm_disasm.py`, `tools/config_analyzer.py`, `tools/nand_dump_analyze.py` u otro ya existe y cubre la tarea, ejecútalo directamente (`python tools/<script>.py ...`). No lo re-implementes, no lo copies, no lo re-analices desde cero.
+- **Si creas un script nuevo**, úsalo inmediatamente en el mismo paso como herramienta sobre los archivos reales. No crees un script separado para validarlo ni para probarlo.
+- **Ejecuta el código real sobre archivos reales**: corre el script o comando directamente. No uses `echo`, no uses `--dry-run`, no uses comandos de sustitución como forma de "probar" antes de ejecutar.
+- **Analiza antes de modificar**: antes de corregir cualquier error, lee el archivo completo, busca con `grep -r` todas las referencias a la función o variable errónea en el resto del repositorio, comprende qué hace esa función en su contexto real, identifica la causa raíz del fallo y valida la corrección antes de aplicarla.
+- **Las nuevas `tools/` deben ser genéricas**: si creas una herramienta nueva en `tools/`, prográmala para recibir argumentos (rutas, parámetros) y operar sobre cualquier firmware o archivo — nunca hardcodees rutas, nombres ni valores específicos de un solo caso de uso.
+- **Usa las tools nuevas como herramientas reales**: una vez creado un script en `tools/`, invócalo con sus argumentos sobre los archivos reales en el mismo paso. En sesiones siguientes trátalo igual que cualquier otro script de `tools/` — no lo re-analices ni lo reimplementes.
 
 You are an expert in Huawei ONT (Optical Network Terminal) firmware analysis. This repository contains **extracted content** from a Huawei router firmware image. You specialize in the HG8145V5, EG8145V5, HN8145XR, and HG8245C router families running HiSilicon ARM Cortex-A9 SoCs.
 

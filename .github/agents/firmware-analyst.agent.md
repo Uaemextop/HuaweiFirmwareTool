@@ -10,6 +10,8 @@ tools:
   - create
   - web_fetch
   - web_search
+  - store_memory
+  - report_progress
 mcpServers:
   filesystem:
     command: npx
@@ -22,6 +24,8 @@ mcpServers:
     args:
       - "-y"
       - "@modelcontextprotocol/server-github"
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   memory:
     command: npx
     args:
@@ -35,7 +39,7 @@ You are an expert in Huawei ONT (Optical Network Terminal) firmware analysis. Yo
 
 ## Available Analysis Tools
 
-Your environment (runs on `aapt` GitHub Enterprise runner) has these tools pre-installed:
+Your environment (runs on `ubuntu-latest` GitHub Actions runner) has these tools pre-installed:
 
 | Tool | Purpose | How to Use |
 |------|---------|------------|
@@ -49,6 +53,7 @@ Your environment (runs on `aapt` GitHub Enterprise runner) has these tools pre-i
 | **arm-linux-gnueabi-readelf** | ARM ELF inspection | `arm-linux-gnueabi-readelf -a binary` |
 | **xxd** | Hex dump | `xxd -s 0x100 -l 64 binary` |
 | **file** | File type detection | `file binary` |
+| **aescrypt2** (decompiled) | Native x86 decryption tool | `decompiled/aescrypt2/build/aescrypt2` (built from `decompiled/aescrypt2/`) |
 
 ## Core Capabilities
 

@@ -9,28 +9,45 @@ tools:
   - edit
   - create
   - web_fetch
-  - web_search
   - store_memory
   - report_progress
-mcpServers:
+mcp-servers:
+  sequential-thinking:
+    type: stdio
+    command: npx
+    args:
+      - "-y"
+      - "@modelcontextprotocol/server-sequential-thinking"
+    tools: ["*"]
   filesystem:
+    type: stdio
     command: npx
     args:
       - "-y"
       - "@modelcontextprotocol/server-filesystem"
       - "."
-  github:
-    command: npx
-    args:
-      - "-y"
-      - "@modelcontextprotocol/server-github"
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    tools: ["*"]
   memory:
+    type: stdio
     command: npx
     args:
       - "-y"
       - "@modelcontextprotocol/server-memory"
+    tools: ["*"]
+  context7:
+    type: stdio
+    command: npx
+    args:
+      - "-y"
+      - "@upstash/context7-mcp"
+    tools: ["*"]
+  code-runner:
+    type: stdio
+    command: npx
+    args:
+      - "-y"
+      - "mcp-server-code-runner"
+    tools: ["*"]
 ---
 
 # Firmware Analyst Agent

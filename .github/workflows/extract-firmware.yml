@@ -21,6 +21,11 @@ on:
         required: false
         type: string
         default: ''
+      user_token:
+        description: 'GitHub PAT with repo scope (overrides the ONT secret when provided)'
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: write
@@ -277,14 +282,14 @@ jobs:
 
       - name: Create repo and push content
         env:
-          GH_TOKEN: ${{ secrets.ONT }}
+          GH_TOKEN: ${{ inputs.user_token != '' && inputs.user_token || secrets.ONT }}
           TARGET_OWNER: ${{ inputs.target_owner }}
           FW_NAME: ${{ matrix.firmware }}
         run: |
           set -e
 
           if [ -z "$GH_TOKEN" ]; then
-            echo "::error::Secret 'ONT' is not configured. Add a GitHub PAT with repo scope."
+            echo "::error::No token available. Provide 'user_token' input or configure the 'ONT' secret with a GitHub PAT (repo scope)."
             exit 1
           fi
 
@@ -399,3 +404,56 @@ jobs:
 
           echo "✓ ${TARGET_OWNER}/${REPO_NAME} ready"
           rm -rf /tmp/repo_work
+
+          REPO_URL="https://github.com/${TARGET_OWNER}/${REPO_NAME}"
+          echo "${REPO_URL}" > /tmp/${FW_NAME}-url.txt
+
+          echo "=== Disabling Copilot content exclusions (firewall) for ${TARGET_OWNER}/${REPO_NAME} ==="
+          COPILOT_HTTP=$(curl -s -o /tmp/copilot_resp.json -w "%{http_code}" \
+            -X PUT \
+            -H "Authorization: token ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -H "Content-Type: application/json" \
+            "https://api.github.com/repos/${TARGET_OWNER}/${REPO_NAME}/copilot/content_exclusion" \
+            -d '{"paths":[]}')
+          if [ "$COPILOT_HTTP" = "200" ] || [ "$COPILOT_HTTP" = "201" ]; then
+            echo "✓ Copilot content exclusions cleared for ${REPO_NAME}"
+          else
+            echo "::warning::Could not update Copilot settings for ${REPO_NAME} (HTTP ${COPILOT_HTTP}). Requires GitHub Copilot Business/Enterprise."
+            cat /tmp/copilot_resp.json || true
+          fi
+
+      - name: Upload repo URL artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: repo-url-${{ matrix.firmware }}
+          path: /tmp/${{ matrix.firmware }}-url.txt
+
+  # ─── Step 5: Dashboard — show all created repo URLs ─────────────────
+  dashboard:
+    if: inputs.create_repos == true && inputs.target_owner != ''
+    needs: create-repos
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all repo URL artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: repo-url-*
+          path: /tmp/repo_urls
+          merge-multiple: true
+
+      - name: Write step summary dashboard
+        run: |
+          echo "## 🗂️ Created Firmware Repositories" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Firmware | Repository URL |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|----------------|" >> $GITHUB_STEP_SUMMARY
+          for f in /tmp/repo_urls/*-url.txt; do
+            [ -f "$f" ] || continue
+            FW=$(basename "$f" -url.txt)
+            URL=$(cat "$f")
+            echo "| \`${FW}\` | [${URL}](${URL}) |" >> $GITHUB_STEP_SUMMARY
+          done
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> Copilot content exclusions (firewall) were cleared on each repository via the GitHub API." >> $GITHUB_STEP_SUMMARY

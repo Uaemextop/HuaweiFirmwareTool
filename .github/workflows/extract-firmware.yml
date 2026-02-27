@@ -1,0 +1,392 @@
+name: Extract Firmware Content
+
+on:
+  workflow_dispatch:
+    inputs:
+      extraction_mode:
+        description: 'What to extract from firmwares'
+        required: true
+        type: choice
+        options:
+          - web_only
+          - full_extract
+        default: 'web_only'
+      create_repos:
+        description: 'Create a separate repository for each extracted firmware?'
+        required: true
+        type: boolean
+        default: false
+      target_owner:
+        description: 'GitHub user/org where repos will be created (required if create_repos=true)'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: write
+
+env:
+  FIRMWARES_DIR: /tmp/firmwares
+  EXTRACT_DIR: /tmp/firmware_extract
+
+jobs:
+  # ─── Step 1: Download all firmware images ───────────────────────────
+  download:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq squashfs-tools unrar-free
+
+      - name: Download firmwares
+        run: python tools/download_firmwares.py --output-dir $FIRMWARES_DIR
+
+      - name: Upload firmware cache
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmwares-raw
+          path: ${{ env.FIRMWARES_DIR }}/
+          retention-days: 1
+
+  # ─── Step 2: Extract each firmware in parallel ──────────────────────
+  extract:
+    needs: download
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        firmware:
+          - name: HG8145V5-V500R020C10SPC212
+            file: 5611_HG8145V5V500R020C10SPC212.bin
+            source: bin
+          - name: EG8145V5-V500R022C00SPC340B019
+            file: EG8145V5-V500R022C00SPC340B019.bin
+            source: bin
+          - name: HN8145XR-V500R022C10SPC160
+            file: HN8145XRV500R022C10SPC160.1.bin
+            source: bin
+          - name: HG8145C-V5R019C00S105
+            file: 8145C-V5R019C00S105-EN-BLUE.bin
+            source: rar
+          - name: HG8245C-8145C-BLUE-R019-xpon
+            file: 8245c-8145c-BLUE-R019-EN-xpon.bin
+            source: rar
+          - name: HG8145C_17120_ENG
+            file: HG8145C_17120_ENG.bin
+            source: rar
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq squashfs-tools unrar-free
+
+      - name: Download firmware cache
+        uses: actions/download-artifact@v4
+        with:
+          name: firmwares-raw
+          path: ${{ env.FIRMWARES_DIR }}
+
+      - name: Extract RAR contents (if needed)
+        if: matrix.firmware.source == 'rar'
+        run: |
+          cd $FIRMWARES_DIR
+          if [ -f HG8245C.rar ]; then
+            unrar x -o+ HG8245C.rar .
+          fi
+
+      - name: Extract firmware rootfs
+        run: |
+          set -e
+          FW_FILE="${FIRMWARES_DIR}/${{ matrix.firmware.file }}"
+          NAME="${{ matrix.firmware.name }}"
+          MODE="${{ inputs.extraction_mode }}"
+          OUT="${EXTRACT_DIR}/${NAME}"
+          mkdir -p "$OUT"
+
+          python3 << 'PYEOF'
+          import struct, os, shutil, subprocess, sys
+
+          def find_squashfs(data):
+              results = []
+              for magic in [b'hsqs', b'sqsh']:
+                  pos = 0
+                  while True:
+                      idx = data.find(magic, pos)
+                      if idx == -1:
+                          break
+                      if idx + 96 <= len(data):
+                          inode_count = struct.unpack_from('<I', data, idx + 4)[0]
+                          bytes_used = struct.unpack_from('<Q', data, idx + 40)[0]
+                          if inode_count > 10 and bytes_used > 100000 and bytes_used < len(data):
+                              results.append((idx, bytes_used, inode_count))
+                      pos = idx + 4
+              return results
+
+          fw_file = os.environ["FIRMWARES_DIR"] + "/" + "${{ matrix.firmware.file }}"
+          name = "${{ matrix.firmware.name }}"
+          mode = "${{ inputs.extraction_mode }}"
+          out_dir = os.environ["EXTRACT_DIR"] + "/" + name
+
+          print(f"Processing {name} (mode={mode})")
+          with open(fw_file, 'rb') as f:
+              data = f.read()
+
+          sqfs_list = find_squashfs(data)
+          if not sqfs_list:
+              print("No SquashFS found!")
+              sys.exit(1)
+
+          sqfs_list.sort(key=lambda x: x[1], reverse=True)
+          offset, size, inodes = sqfs_list[0]
+          print(f"SquashFS at 0x{offset:08x}, {size:,} bytes, {inodes} inodes")
+
+          sqfs_path = "/tmp/rootfs.sqfs"
+          with open(sqfs_path, 'wb') as f:
+              f.write(data[offset:offset + size])
+
+          rootfs = "/tmp/rootfs"
+          os.makedirs(rootfs, exist_ok=True)
+          subprocess.run(["sudo", "unsquashfs", "-f", "-d", rootfs,
+                          "-no-xattrs", "-ignore-errors", sqfs_path], check=False)
+          subprocess.run(["sudo", "chmod", "-R", "a+rX", rootfs])
+
+          os.makedirs(out_dir, exist_ok=True)
+
+          # Always extract web UI and configs
+          dirs_to_copy = {"web": "html", "configs": "etc/wap"}
+          if mode == "full_extract":
+              dirs_to_copy.update({"bin": "bin", "sbin": "sbin", "lib": "lib", "etc": "etc"})
+
+          total = 0
+          for dest_name, src_rel in dirs_to_copy.items():
+              src = os.path.join(rootfs, src_rel)
+              if os.path.isdir(src):
+                  dst = os.path.join(out_dir, dest_name)
+                  subprocess.run(["sudo", "cp", "-ra", src, dst], check=False)
+                  subprocess.run(["sudo", "chown", "-R",
+                                  f"{os.getuid()}:{os.getgid()}", dst], check=False)
+                  n = sum(1 for _, _, fs in os.walk(dst) for _ in fs)
+                  print(f"  {dest_name}: {n} files")
+                  total += n
+
+          print(f"Total: {total} files extracted")
+          PYEOF
+
+      - name: Create ZIP for release
+        run: |
+          cd $EXTRACT_DIR
+          zip -r /tmp/${{ matrix.firmware.name }}.zip ${{ matrix.firmware.name }}/
+
+      - name: Upload extracted content as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.firmware.name }}
+          path: ${{ env.EXTRACT_DIR }}/${{ matrix.firmware.name }}/
+          retention-days: 90
+
+      - name: Upload ZIP as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.firmware.name }}-zip
+          path: /tmp/${{ matrix.firmware.name }}.zip
+          retention-days: 90
+
+  # ─── Step 3: Create release with all ZIPs ───────────────────────────
+  release:
+    needs: extract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all ZIP artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/artifacts
+          pattern: '*-zip'
+
+      - name: Collect ZIPs
+        run: |
+          mkdir -p /tmp/release_assets
+          find /tmp/artifacts -name '*.zip' -exec cp {} /tmp/release_assets/ \;
+          echo "Release assets:"
+          ls -lh /tmp/release_assets/
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: firmware-extract-${{ github.run_number }}
+          name: "Firmware Extract #${{ github.run_number }} (${{ inputs.extraction_mode }})"
+          body: |
+            ## Extracted Firmware Content
+
+            **Mode:** `${{ inputs.extraction_mode }}`
+
+            Each ZIP contains the extracted content from one firmware image:
+            - `web/` — Router web interface (HTML/JS/CSS/ASP pages)
+            - `configs/` — Device configurations from `/etc/wap/`
+            ${{ inputs.extraction_mode == 'full_extract' && '- `bin/` `sbin/` `lib/` `etc/` — Full rootfs content' || '' }}
+
+            ### Firmwares
+            | Firmware | Model | Version |
+            |----------|-------|---------|
+            | HG8145V5-V500R020C10SPC212 | HG8145V5 | V500R020C10SPC212 |
+            | EG8145V5-V500R022C00SPC340B019 | EG8145V5 | V500R022C00SPC340 |
+            | HN8145XR-V500R022C10SPC160 | HN8145XR | V500R022C10SPC160 |
+            | HG8145C-V5R019C00S105 | HG8145C | V5R019C00S105 |
+            | HG8245C-8145C-BLUE-R019-xpon | HG8245C | R019 |
+            | HG8145C_17120_ENG | HG8145C | 17120 |
+          files: /tmp/release_assets/*.zip
+          draft: false
+          prerelease: false
+
+  # ─── Step 4: Create repos for each firmware (optional) ──────────────
+  create-repos:
+    if: inputs.create_repos == true && inputs.target_owner != ''
+    needs: extract
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        firmware:
+          - HG8145V5-V500R020C10SPC212
+          - EG8145V5-V500R022C00SPC340B019
+          - HN8145XR-V500R022C10SPC160
+          - HG8145C-V5R019C00S105
+          - HG8245C-8145C-BLUE-R019-xpon
+          - HG8145C_17120_ENG
+    steps:
+      - name: Checkout source repo
+        uses: actions/checkout@v4
+        with:
+          path: /tmp/source_repo
+
+      - name: Download firmware artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.firmware }}
+          path: /tmp/content/${{ matrix.firmware }}
+
+      - name: Create repo and push content
+        env:
+          GH_TOKEN: ${{ secrets.ONT }}
+          TARGET_OWNER: ${{ inputs.target_owner }}
+          FW_NAME: ${{ matrix.firmware }}
+        run: |
+          set -e
+
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::Secret 'ONT' is not configured. Add a GitHub PAT with repo scope."
+            exit 1
+          fi
+
+          REPO_NAME="firmware-${FW_NAME}"
+          echo "=== Creating ${TARGET_OWNER}/${REPO_NAME} ==="
+
+          # Check if repo exists
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: token ${GH_TOKEN}" \
+            "https://api.github.com/repos/${TARGET_OWNER}/${REPO_NAME}")
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "Repository already exists, will push to it"
+          else
+            # Detect if target is org or user
+            OWNER_TYPE=$(curl -s \
+              -H "Authorization: token ${GH_TOKEN}" \
+              "https://api.github.com/users/${TARGET_OWNER}" \
+              | python3 -c "import json,sys; print(json.load(sys.stdin).get('type','User'))")
+
+            if [ "$OWNER_TYPE" = "Organization" ]; then
+              API_URL="https://api.github.com/orgs/${TARGET_OWNER}/repos"
+            else
+              API_URL="https://api.github.com/user/repos"
+            fi
+
+            curl -s -X POST \
+              -H "Authorization: token ${GH_TOKEN}" \
+              -H "Content-Type: application/json" \
+              "$API_URL" \
+              -d "{
+                \"name\": \"${REPO_NAME}\",
+                \"description\": \"Extracted content from Huawei ${FW_NAME} firmware\",
+                \"private\": false,
+                \"auto_init\": true
+              }"
+            echo "Waiting for repo to be ready..."
+            sleep 5
+          fi
+
+          # Clone and push
+          cd /tmp
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/${TARGET_OWNER}/${REPO_NAME}.git" repo_work || {
+            mkdir repo_work && cd repo_work && git init && \
+            git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${TARGET_OWNER}/${REPO_NAME}.git"
+          }
+          cd /tmp/repo_work
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Copy extracted firmware content
+          if [ -d "/tmp/content/${FW_NAME}" ]; then
+            cp -r /tmp/content/${FW_NAME}/* .
+          else
+            echo "::warning::No extracted content found for ${FW_NAME}"
+          fi
+
+          # Generate README.md for this firmware repo
+          cat > README.md << READMEEOF
+          # ${FW_NAME}
+
+          Extracted firmware content from Huawei **${FW_NAME}**.
+
+          ## Contents
+
+          | Directory | Description |
+          |-----------|-------------|
+          | \`web/\` | Router web interface (HTML/JS/CSS/ASP pages) |
+          | \`configs/\` | Device configurations from \`/etc/wap/\` |
+          | \`bin/\` | System binaries (if full extraction) |
+          | \`lib/\` | Shared libraries (if full extraction) |
+          | \`etc/\` | System configuration (if full extraction) |
+
+          ## Source
+
+          Extracted using [HuaweiFirmwareTool](https://github.com/Uaemextop/HuaweiFirmwareTool).
+
+          ## Firmware Analysis
+
+          This repository includes a Copilot agent (\`.github/agents/firmware-analyst.agent.md\`) that understands how to:
+          - Decrypt \`hw_ctree.xml\` configuration files
+          - Extract SquashFS rootfs from HWNP firmware images
+          - Analyze AES-256-CBC encrypted private keys
+          - Parse firmware partition structures
+
+          See \`.github/copilot-instructions.md\` for details.
+          READMEEOF
+
+          # Copy .github files from source repo
+          mkdir -p .github/agents .github/workflows
+          cp /tmp/source_repo/.github/copilot-instructions.md .github/copilot-instructions.md
+          cp /tmp/source_repo/.github/agents/firmware-analyst.agent.md .github/agents/firmware-analyst.agent.md
+          cp /tmp/source_repo/.github/workflows/copilot-setup-steps.yml .github/workflows/copilot-setup-steps.yml
+
+          # Commit and push
+          git add -A
+          git diff --cached --quiet && echo "No changes to commit" || {
+            git commit -m "Add extracted ${FW_NAME} content with Copilot agent and instructions"
+            DEFAULT_BRANCH=$(git remote show origin 2>/dev/null | grep 'HEAD branch' | awk '{print $NF}')
+            DEFAULT_BRANCH=${DEFAULT_BRANCH:-main}
+            git push origin "${DEFAULT_BRANCH}" 2>&1 || echo "::warning::Push failed for ${REPO_NAME}"
+          }
+
+          echo "✓ ${TARGET_OWNER}/${REPO_NAME} ready"
+          rm -rf /tmp/repo_work

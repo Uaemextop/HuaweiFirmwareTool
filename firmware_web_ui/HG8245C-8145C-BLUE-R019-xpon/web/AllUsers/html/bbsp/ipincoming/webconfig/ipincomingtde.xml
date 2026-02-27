@@ -1,0 +1,29 @@
+<InternetGatewayDevice> 
+
+<X_HW_TDE_Firewall setconfig = "0x00000003" addconfig = "0x00000003" delconfig = "0x00000003" getconfig = "0x00000003">
+<FirewallNumberOfEntries setconfig = "0x00000003" getconfig = "0x00000003"/>
+<Firewall setconfig = "0x00000003" addconfig = "0x00000003" delconfig = "0x00000003" getconfig = "0x00000003">
+<Name setconfig = "0x00000003" getconfig = "0x00000003"/>
+<Interface setconfig = "0x00000003" getconfig = "0x00000003"/>
+<Type setconfig = "0x00000003" getconfig = "0x00000003"/>
+<IPVersion setconfig = "0x00000003" getconfig = "0x00000003"/>
+<RuleNumberOfEntries setconfig = "0x00000003" getconfig = "0x00000003"/>
+<Rule setconfig = "0x00000003" addconfig = "0x00000003" delconfig = "0x00000003" getconfig = "0x00000003">
+<Enabled setconfig = "0x00000003" getconfig = "0x00000003"/>
+<Protocol setconfig = "0x00000003" getconfig = "0x00000003"/>
+<Action setconfig = "0x00000003" getconfig = "0x00000003"/>
+<RejectType setconfig = "0x00000003" getconfig = "0x00000003"/>
+<IcmpType setconfig = "0x00000003" getconfig = "0x00000003"/>
+<X_HW_PrivateFlag setconfig = "0x00000003" getconfig = "0x00000003"/>
+<X_HW_OrgIPAddress setconfig = "0x00000003" getconfig = "0x00000003"/>
+<X_HW_OrgMask setconfig = "0x00000003" getconfig = "0x00000003"/>
+<X_HW_OrgStartPort setconfig = "0x00000003" getconfig = "0x00000003"/>
+<X_HW_OrgEndPort setconfig = "0x00000003" getconfig = "0x00000003"/>
+<X_HW_DstIPAddress setconfig = "0x00000003" getconfig = "0x00000003"/>
+<X_HW_DstMask setconfig = "0x00000003" getconfig = "0x00000003"/>
+<X_HW_DstStartPort setconfig = "0x00000003" getconfig = "0x00000003"/>
+<X_HW_DstEndPort setconfig = "0x00000003" getconfig = "0x00000003"/>
+</Rule>
+</Firewall>
+</X_HW_TDE_Firewall>
+</InternetGatewayDevice> 

@@ -1,0 +1,17 @@
+<Tmperature>
+<ProductCtrlNode ProductName="HS8245W" MainChipUpperTmp="130" BobChipTmp="100" WifiChipTmp="150"/>
+<ProductCtrlNode ProductName="HG8245Q2" MainChipUpperTmp="130" BobChipTmp="100" WifiChipTmp="150"/>
+<ProductCtrlNode ProductName="HG8245U" MainChipUpperTmp="130" BobChipTmp="100" WifiChipTmp="150"/>
+<ProductCtrlNode ProductName="HS8145V" MainChipUpperTmp="130" BobChipTmp="100" WifiChipTmp="150"/>
+<ProductCtrlNode ProductName="HG8245H" MainChipUpperTmp="130" BobChipTmp="100" WifiChipTmp="150"/>
+<ProductCtrlNode ProductName="HS8546V2" MainChipUpperTmp="130" BobChipTmp="100" WifiChipTmp="150"/>
+<ProductCtrlNode ProductName="HS8546V" MainChipUpperTmp="130" BobChipTmp="100" WifiChipTmp="150"/>
+<ProductCtrlNode ProductName="LS1035V" MainChipUpperTmp="130" BobChipTmp="100" WifiChipTmp="150"/>
+<ProductCtrlNode ProductName="LS2035V" MainChipUpperTmp="130" BobChipTmp="100" WifiChipTmp="150"/>
+<ProductCtrlNode ProductName="HG8240H" MainChipUpperTmp="130" BobChipTmp="100" WifiChipTmp="150"/>
+<ProductCtrlNode ProductName="HG8240T" MainChipUpperTmp="130" BobChipTmp="100" WifiChipTmp="150"/>
+<ProductCtrlNode ProductName="HG8346R" MainChipUpperTmp="120" BobChipTmp="0" WifiChipTmp="0"/>
+<ProductCtrlNode ProductName="HG8045H" MainChipUpperTmp="130" BobChipTmp="100" WifiChipTmp="150"/>
+<ProductCtrlNode ProductName="HG8145V" MainChipUpperTmp="130" BobChipTmp="100" WifiChipTmp="150"/>
+</Tmperature>
+

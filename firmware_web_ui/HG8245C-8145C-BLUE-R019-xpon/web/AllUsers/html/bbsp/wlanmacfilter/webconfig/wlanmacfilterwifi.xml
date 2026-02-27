@@ -1,0 +1,10 @@
+<InternetGatewayDevice>
+<LANDevice setconfig = "0x00000003" addconfig = "0x00000003" delconfig = "0x00000003" getconfig = "0x00000003">
+<WLANConfiguration setconfig = "0x00000003" addconfig = "0x00000003" delconfig = "0x00000003" getconfig = "0x00000003">
+<MACAddressControlEnabled setconfig = "0x00000003" getconfig = "0x00000003"/>
+</WLANConfiguration>
+<LANHostConfigManagement setconfig = "0x00000003" addconfig = "0x00000003" delconfig = "0x00000003" getconfig = "0x00000003">
+<AllowedMACAddresses setconfig = "0x00000003" getconfig = "0x00000003"/>
+</LANHostConfigManagement>
+</LANDevice>
+</InternetGatewayDevice> 

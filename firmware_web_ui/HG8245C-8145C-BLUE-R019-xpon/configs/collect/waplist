@@ -1,0 +1,6 @@
+/etc/wap/collect/ssmp_collect
+/etc/wap/collect/bbsp_collect
+/etc/wap/collect/ldsp_collect
+/etc/wap/collect/voice_collect
+/etc/wap/collect/osgi_collect
+/etc/wap/collect/amp_collect

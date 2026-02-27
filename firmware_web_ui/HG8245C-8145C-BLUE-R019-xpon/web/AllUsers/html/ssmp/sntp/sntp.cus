@@ -1,0 +1,5 @@
+﻿var SntpReload = 
+[
+	{ReloadId:"ntpServer3_select", ReloadValue:[{display:0}]},
+	{ReloadId:"ntpServer4_select", ReloadValue:[{display:0}]},
+]

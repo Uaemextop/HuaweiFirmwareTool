@@ -1,0 +1,15 @@
+WAP:appmcmd show type 1
+WAP:appmcmd show type 2
+WAP:appmcmd show type 3
+WAP:osgicmd show bundlestate
+WAP:jvmcmd stack trace
+SHELL:cat /var/osgi/OSGi1.log
+SHELL:cat /var/osgi/OSGi0.log
+SHELL:cat /mnt/jffs2/app/osgi/java_error.log
+SHELL:cat /mnt/jffs2/app/osgi/java_error_bk.log
+SHELL:cat /var/osgi/java_log_0.log
+SHELL:cat /var/osgi/java_log_1.log
+SHELL:cat /var/felix-temp/status.config
+SHELL:cat /var/osgi/bundlestate 
+SHELL:cat /opt/upt/apps/apps/opt/apps/ctsgw.log
+SHELL:cat /opt/upt/apps/apps/opt/apps/ctsgw.log.old

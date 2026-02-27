@@ -1,0 +1,13 @@
+<root>
+<option system_pack="1" flash_size="0x10000000"/>
+<startcode rotate_flag="0" address0="0" length0="0x00020000"/>
+<uboot rotate_flag="1" addressA="0" lengthA="0x00080000" addressB="0" lengthB="0x00080000"/>
+<flash_config rotate_flag="1" addressA="0" lengthA="0x00020000" addressB="0" lengthB="0x00020000"/>
+<slave_param rotate_flag="1" addressA="0" lengthA="0x00020000" addressB="0" lengthB="0x00020000"/>
+<kernel rotate_flag="1" addressA="0" lengthA="0x00300000" addressB="0" lengthB="0x00300000"/>
+<rootfs rotate_flag="1" addressA="0" lengthA="0x02800000" addressB="0" lengthB="0x02800000"/>
+<wifi_param rotate_flag="1" addressA="0" lengthA="0x00020000" addressB="0" lengthB="0x00020000"/>
+<system_param rotate_flag="0" address0="0" length0="0x00020000"/>
+<file_system rotate_flag="0" address0="0" length0="0x01400000"/>
+<app rotate_flag="0" address0="0" length0="0x02000000"/>
+</root>

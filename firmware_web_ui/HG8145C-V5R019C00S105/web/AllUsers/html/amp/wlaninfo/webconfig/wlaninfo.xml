@@ -1,0 +1,10 @@
+<InternetGatewayDevice> 
+<X_HW_DEBUG> 
+<AMP>
+<WifiGlobleParam getconfig = "0x00000003">
+<MACCheck2G getconfig = "0x00000003"/>
+<MACCheck5G getconfig = "0x00000003"/>
+</WifiGlobleParam>
+</AMP>
+</X_HW_DEBUG>
+</InternetGatewayDevice> 

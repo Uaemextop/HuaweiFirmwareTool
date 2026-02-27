@@ -1,0 +1,60 @@
+SHELL:cat /proc/soc/cnt
+SHELL:cat /proc/soc/queue
+SHELL:cat /proc/soc/eth
+SHELL:cat /proc/soc/gpon
+SHELL:cat /proc/soc/epon
+SHELL:cat /proc/soc/xepon
+SHELL:cat /proc/soc/sfc
+SHELL:echo  >/var/cli_mask_file
+SHELL:sleep 2
+WAP:display wifi information
+SHELL:sleep 2
+WAP:display wifi associate
+SHELL:sleep 2
+WAP:display wifi neighbor
+SHELL:sleep 2
+SHELL:rm -rf /var/cli_mask_file
+SHELL:chipdebug print on
+WAP:display access mode
+WAP:display optic
+WAP:display wlanmac
+WAP:get mac agingtime
+WAP:get wlan enable laninst 1
+WAP:get wlan basic laninst 1 wlaninst 1
+WAP:get wlan stats laninst 1 wlaninst 1
+WAP:get wlan advance laninst 1 wlaninst 1
+WAP:get wlan wps laninst 1 wlaninst 1
+WAP:get wlan txpower
+WAP:display poncnt upstatistic
+WAP:display poncnt dnstatistic
+WAP:get global hgdetect
+SHELL:chipdebug ploam stat
+SHELL:Broadband display soc cnt
+SHELL:sleep 1
+SHELL:Broadband display l2mac
+SHELL:sleep 1
+SHELL:Broadband display soc flow
+SHELL:sleep 1
+SHELL:Broadband display soc ifc
+SHELL:sleep 2
+SHELL:ampcmdStatRx.sh
+SHELL:ampcmdStatTx.sh
+SHELL:ampcmdStatDrop.sh
+SHELL:ampcmd show flow all
+SHELL:ampcmd show log
+SHELL:chipdebug print off
+WAP:get port config portid 1
+WAP:get port config portid 2
+WAP:get port config portid 3
+WAP:get port config portid 4
+WAP:get port config portid 5
+SHELL:getcustomize.sh
+SHELL:cat /var/log/messages
+SHELL:sleep 1
+WAP:get rogue status
+WAP:ampcmd show emac stat 0
+WAP:ampcmd show emac stat 1
+WAP:ampcmd show emac stat 2
+WAP:ampcmd show emac stat 3
+WAP:ampcmd show emac stat 4
+SHELL:export LD_LIBRARY_PATH=/opt/upt/framework/saf/rootfs/lib:$LD_LIBRARY_PATH;(echo "admin")|su root -c /opt/upt/framework/saf/rootfs/sbin/logread

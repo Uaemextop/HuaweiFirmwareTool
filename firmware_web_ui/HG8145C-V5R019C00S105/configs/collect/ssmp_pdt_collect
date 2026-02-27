@@ -1,0 +1,11 @@
+WAP:display flashlock status
+WAP:display cwmp status
+SHELL:cat /mnt/jffs2/cwmp_rebootsave
+SHELL:cat /proc/kbox/deviceinfo
+SHELL:cat /proc/kbox/mem 
+SHELL:cat /proc/kbox/regions/deadlock
+SHELL:Getlastinfo.sh
+SHELL:cat /mnt/jffs2/hw_boardinfo
+SHELL:cat /mnt/jffs2/hw_boardinfo.bak
+SHELL:getcustominfo.sh
+SHELL:cat /mnt/jffs2/keyreleasecount.txt

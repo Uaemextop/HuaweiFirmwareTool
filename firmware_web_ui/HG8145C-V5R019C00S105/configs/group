@@ -1,0 +1,8 @@
+root:x:0:
+cfg:x:1001:cfg
+cplugin:x:1002:osgi
+osgi:x:2000:osgi
+config:x:2001:cfg
+service:x:2002:srv
+tools:x:2003:tool
+nobody:x:65534:

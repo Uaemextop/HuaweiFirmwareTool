@@ -1,0 +1,31 @@
+<InternetGatewayDevice>
+<WANDevice>
+<WANConnectionDevice addconfig = "0x00000003" setconfig = "0x00000001">
+<WANIPConnection setconfig = "0x00000002" addconfig = "0x00000002" delconfig = "0x00000002">
+<Enable setconfig = "0x00000002"/>
+<NATEnabled setconfig = "0x00000002"/>
+<AddressingType setconfig = "0x00000002"/>
+<ExternalIPAddress setconfig = "0x00000002"/>
+<SubnetMask setconfig = "0x00000002"/>
+<DefaultGateway setconfig = "0x00000002"/>
+</WANIPConnection>
+</WANConnectionDevice>
+</WANDevice>
+<LANDevice setconfig="0x00000003" getconfig = "0x00000003">
+<LANHostConfigManagement setconfig = "0x00000003" addconfig = "0x00000003" delconfig = "0x00000003" getconfig = "0x00000003">
+<IPInterface setconfig = "0x00000003" getconfig = "0x00000003">
+<IPInterfaceIPAddress  setconfig = "0x00000003" getconfig = "0x00000003"/>
+<IPInterfaceSubnetMask  setconfig = "0x00000003" getconfig = "0x00000003"/>
+</IPInterface>
+</LANHostConfigManagement>
+</LANDevice>
+<Services>
+<VoiceService setconfig = "0x00000003">
+<VoiceProfile setconfig = "0x00000002" >
+<Line  setconfig = "0x00000002" addconfig = "0x00000002" delconfig="0x00000002">
+<DirectoryNumber setconfig = "0x00000002" addconfig = "0x00000002" delconfig="0x00000002"/>
+</Line>
+</VoiceProfile>
+</VoiceService>
+</Services>
+</InternetGatewayDevice> 

@@ -1,0 +1,5 @@
+/etc/wap/collect/amp_pdt_collect
+/etc/wap/collect/ssmp_pdt_collect
+/etc/wap/collect/bbsp_pdt_collect
+/etc/wap/collect/ldsp_pdt_collect
+/etc/wap/collect/voice_pdt_collect

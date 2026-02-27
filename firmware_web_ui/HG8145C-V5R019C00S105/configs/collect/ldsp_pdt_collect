@@ -1,0 +1,79 @@
+SHELL:chipdebug print on
+SHELL:chipdebug phy display debug info
+SHELL:sndhlp 180 0x20007003 3 0 0
+SHELL:chipdebug print off
+SHELL:wifi_collect.sh
+SHELL:chipdebug print on
+WAP:display optic
+SHELL:chipdebug ppm stat display
+SHELL:sleep 0.05
+SHELL:chipdebug ploam show log
+SHELL:sleep 1
+SHELL:chipdebug mpcp show log
+SHELL:sleep 1
+SHELL:chipdebug codec display global info 0
+SHELL:sleep 0.05
+SHELL:chipdebug codec display global info 1
+SHELL:sleep 0.05
+SHELL:chipdebug print off
+SHELL:cat /var/ppm_message
+SHELL:cat /mnt/jffs2/chip_threshold
+SHELL:cat /proc/wap_proc/flash_log
+WAP:display chipinfo
+WAP:display boot info
+WAP:display hlp process info module 3 submodule 0
+SHELL:sleep 0.05
+WAP:display hlp process info module 4 submodule 0
+SHELL:sleep 0.05
+WAP:display hlp process info module 5 submodule 0
+SHELL:sleep 0.05
+WAP:display hlp process info module 6 submodule 0
+SHELL:sleep 0.05
+WAP:display hlp process info module 6 submodule 1
+SHELL:sleep 0.05
+WAP:display hlp process info module 6 submodule 2
+SHELL:sleep 0.05
+WAP:display hlp process info module 6 submodule 3
+SHELL:sleep 0.05
+WAP:display hlp process info module 6 submodule 4
+SHELL:sleep 0.05
+WAP:display hlp process info module 7 submodule 0
+SHELL:sleep 0.05
+WAP:display hlp process info module 8 submodule 0
+SHELL:sleep 0.05
+WAP:display hlp process info module 9 submodule 0
+SHELL:sleep 0.05
+WAP:display hlp process info module 10 submodule 0
+SHELL:sleep 0.05
+WAP:display hlp process info module 11 submodule 0
+SHELL:sleep 0.05
+WAP:display hlp process info module 12 submodule 0
+SHELL:sleep 0.05
+WAP:display hlp process info module 18 submodule 0
+SHELL:sleep 0.05
+WAP:display hlp process info module 19 submodule 0
+SHELL:sleep 0.05
+WAP:display hlp process info module 21 submodule 0
+SHELL:sleep 0.05
+WAP:display hlp process info module 22 submodule 0
+SHELL:sleep 0.05
+WAP:display hlp process info module 23 submodule 0
+SHELL:sleep 0.05
+WAP:display hlp process info module 25 submodule 0
+SHELL:sleep 0.05
+WAP:display hlp process info module 27 submodule 0
+SHELL:sleep 0.05
+WAP:display hlp process info module 32 submodule 0
+SHELL:sleep 0.05
+WAP:display hlp process info module 34 submodule 0
+SHELL:sleep 0.05
+WAP:display hlp process info module 36 submodule 0
+SHELL:sleep 0.05
+WAP:display hlp process info module 49 submodule 0
+SHELL:sleep 0.05
+WAP:display hlp process info module 54 submodule 0
+SHELL:sleep 0.05
+WAP:display hlp process info module 60 submodule 0
+SHELL:sleep 0.05
+WAP:display hlp process info module 61 submodule 0
+SHELL:sleep 0.05

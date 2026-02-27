@@ -2,15 +2,12 @@
 name: firmware-analyst
 description: Expert agent for analyzing extracted Huawei ONT firmware content — decrypts hw_ctree.xml, reverse-engineers ARM binaries, maps the web UI, and explains ISP customizations using Capstone, radare2, and qemu.
 tools:
-  - bash
-  - grep
-  - glob
-  - view
+  - execute
+  - read
   - edit
-  - create
-  - web_fetch
-  - store_memory
-  - report_progress
+  - search
+  - web
+  - agent
 mcp-servers:
   sequential-thinking:
     type: stdio
@@ -18,14 +15,6 @@ mcp-servers:
     args:
       - "-y"
       - "@modelcontextprotocol/server-sequential-thinking"
-    tools: ["*"]
-  filesystem:
-    type: stdio
-    command: npx
-    args:
-      - "-y"
-      - "@modelcontextprotocol/server-filesystem"
-      - "."
     tools: ["*"]
   memory:
     type: stdio
@@ -40,13 +29,6 @@ mcp-servers:
     args:
       - "-y"
       - "@upstash/context7-mcp"
-    tools: ["*"]
-  code-runner:
-    type: stdio
-    command: npx
-    args:
-      - "-y"
-      - "mcp-server-code-runner"
     tools: ["*"]
 ---
 

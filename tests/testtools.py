@@ -1,4 +1,4 @@
-"""Tests for firmware extraction and ARM disassembly tools."""
+"""Tests for firmware extraction, ARM disassembly, and firmware analysis tools."""
 
 import os
 import struct
@@ -190,3 +190,291 @@ class TestAescrypt2Build:
             with open(dec) as f:
                 decrypted = f.read()
             assert original == decrypted
+
+
+# ── firmware_analyzer tests ──────────────────────────────────────────────────
+
+from tools.firmware_analyzer import (
+    classify_file,
+    extract_shell_access_info,
+    extract_wan_info,
+    analyze_elf_imports,
+    analyze_config_file,
+    find_squashfs as fa_find_squashfs,
+    is_arm_elf,
+    ISP_ALIASES,
+)
+
+
+# Sample decrypted hw_ctree.xml fragment for testing
+_SAMPLE_CTREE_XML = """\
+<InternetGatewayDevice>
+<X_HW_Security>
+<AclServices TELNETLanEnable="1" TELNETWanEnable="0"
+    SSHLanEnable="1" SSHWanEnable="0"
+    HTTPPORT="80" TELNETPORT="23" SSHPORT="22"
+    TELNETWifiEnable="1" HTTPWifiEnable="1"/>
+</X_HW_Security>
+<NetInfo HostName="WAP" DomainName="HOME"/>
+<UserInterface>
+<X_HW_CLITelnetAccess Access="1"/>
+<X_HW_CLIUserInfo NumberOfInstances="1">
+<X_HW_CLIUserInfoInstance InstanceID="1" Username="root"
+    Userpassword="admin" UserGroup="" EncryptMode="3"/>
+</X_HW_CLIUserInfo>
+<X_HW_WebUserInfo NumberOfInstances="2">
+<X_HW_WebUserInfoInstance InstanceID="1" UserName="root"
+    Password="hash1" UserLevel="1" Enable="1" PassMode="2"/>
+<X_HW_WebUserInfoInstance InstanceID="2" UserName="telecomadmin"
+    Password="hash2" UserLevel="0" Enable="1" PassMode="2"/>
+</X_HW_WebUserInfo>
+</UserInterface>
+<WANDevice>
+<WANConnectionDevice>
+<WANPPPConnectionInstance Name="ppp0" Username="user@isp"
+    Enable="1" ConnectionType="IP_Routed"/>
+<WANIPConnectionInstance Name="ipoe0" Enable="0"
+    ConnectionType="IP_Routed" AddressingType="DHCP"/>
+</WANConnectionDevice>
+</WANDevice>
+</InternetGatewayDevice>
+"""
+
+
+class TestClassifyFile:
+    """Tests for classify_file()."""
+
+    def test_xml_file(self):
+        with tempfile.NamedTemporaryFile(suffix=".xml", delete=False,
+                                          mode="w") as f:
+            f.write("<?xml version='1.0'?><root/>")
+            path = f.name
+        try:
+            assert classify_file(path) == "XML"
+        finally:
+            os.unlink(path)
+
+    def test_encrypted_file(self):
+        with tempfile.NamedTemporaryFile(suffix=".xml", delete=False,
+                                          mode="wb") as f:
+            f.write(b"\x01\x00\x00\x00" + b"\xff" * 100)
+            path = f.name
+        try:
+            assert classify_file(path) == "encrypted"
+        finally:
+            os.unlink(path)
+
+    def test_empty_file(self):
+        with tempfile.NamedTemporaryFile(delete=False) as f:
+            path = f.name
+        try:
+            assert classify_file(path) == "empty"
+        finally:
+            os.unlink(path)
+
+    def test_gzip_file(self):
+        with tempfile.NamedTemporaryFile(delete=False, mode="wb") as f:
+            f.write(b"\x1f\x8b\x08" + b"\x00" * 50)
+            path = f.name
+        try:
+            assert classify_file(path) == "gzip"
+        finally:
+            os.unlink(path)
+
+    def test_elf_file(self):
+        with tempfile.NamedTemporaryFile(delete=False, mode="wb") as f:
+            f.write(b"\x7fELF" + b"\x00" * 50)
+            path = f.name
+        try:
+            assert classify_file(path) == "ELF"
+        finally:
+            os.unlink(path)
+
+    def test_nonexistent_file(self):
+        assert classify_file("/nonexistent/path/file.bin") == "unreadable"
+
+
+class TestExtractShellAccessInfo:
+    """Tests for extract_shell_access_info()."""
+
+    def test_extracts_hostname(self):
+        info = extract_shell_access_info(_SAMPLE_CTREE_XML)
+        assert info["hostname"] == "WAP"
+
+    def test_extracts_telnet_settings(self):
+        info = extract_shell_access_info(_SAMPLE_CTREE_XML)
+        assert info["telnet_lan_enable"] == "1"
+        assert info["telnet_wan_enable"] == "0"
+        assert info["telnet_wifi_enable"] == "1"
+        assert info["telnet_port"] == "23"
+
+    def test_extracts_ssh_settings(self):
+        info = extract_shell_access_info(_SAMPLE_CTREE_XML)
+        assert info["ssh_lan_enable"] == "1"
+        assert info["ssh_wan_enable"] == "0"
+        assert info["ssh_port"] == "22"
+
+    def test_extracts_cli_telnet_access(self):
+        info = extract_shell_access_info(_SAMPLE_CTREE_XML)
+        assert info["cli_telnet_access"] == "1"
+
+    def test_extracts_cli_users(self):
+        info = extract_shell_access_info(_SAMPLE_CTREE_XML)
+        assert len(info["cli_users"]) == 1
+        assert info["cli_users"][0]["username"] == "root"
+        assert info["cli_users"][0]["password"] == "admin"
+        assert info["cli_users"][0]["encrypt_mode"] == "3"
+
+    def test_extracts_web_users(self):
+        info = extract_shell_access_info(_SAMPLE_CTREE_XML)
+        assert len(info["web_users"]) == 2
+        assert info["web_users"][0]["username"] == "root"
+        assert info["web_users"][0]["user_level"] == "1"
+        assert info["web_users"][1]["username"] == "telecomadmin"
+        assert info["web_users"][1]["user_level"] == "0"
+
+    def test_handles_invalid_xml(self):
+        info = extract_shell_access_info("not valid xml <<<")
+        assert info["hostname"] == ""
+        assert info["cli_users"] == []
+
+    def test_handles_empty_xml(self):
+        info = extract_shell_access_info("")
+        assert info["hostname"] == ""
+
+
+class TestExtractWanInfo:
+    """Tests for extract_wan_info()."""
+
+    def test_extracts_pppoe(self):
+        connections = extract_wan_info(_SAMPLE_CTREE_XML)
+        pppoe = [c for c in connections if c["type"] == "PPPoE"]
+        assert len(pppoe) == 1
+        assert pppoe[0]["name"] == "ppp0"
+        assert pppoe[0]["username"] == "user@isp"
+
+    def test_extracts_ipoe(self):
+        connections = extract_wan_info(_SAMPLE_CTREE_XML)
+        ipoe = [c for c in connections if c["type"] == "IPoE"]
+        assert len(ipoe) == 1
+        assert ipoe[0]["name"] == "ipoe0"
+        assert ipoe[0]["addressing_type"] == "DHCP"
+
+    def test_handles_no_wan(self):
+        connections = extract_wan_info("<Root/>")
+        assert connections == []
+
+
+class TestIsArmElf:
+    """Tests for is_arm_elf()."""
+
+    def test_arm_elf(self):
+        data = _make_minimal_elf32()
+        with tempfile.NamedTemporaryFile(delete=False, mode="wb") as f:
+            f.write(data)
+            path = f.name
+        try:
+            assert is_arm_elf(path) is True
+        finally:
+            os.unlink(path)
+
+    def test_non_elf(self):
+        with tempfile.NamedTemporaryFile(delete=False, mode="wb") as f:
+            f.write(b"not an elf file")
+            path = f.name
+        try:
+            assert is_arm_elf(path) is False
+        finally:
+            os.unlink(path)
+
+    def test_nonexistent(self):
+        assert is_arm_elf("/nonexistent/path") is False
+
+
+class TestAnalyzeElfImports:
+    """Tests for analyze_elf_imports()."""
+
+    def test_minimal_elf(self):
+        data = _make_minimal_elf32()
+        with tempfile.NamedTemporaryFile(delete=False, mode="wb") as f:
+            f.write(data)
+            path = f.name
+        try:
+            result = analyze_elf_imports(path)
+            assert result["is_elf"] is True
+            assert result["arch"] == "ARM"
+            assert result["type"] == "executable"
+            assert result["size"] == len(data)
+        finally:
+            os.unlink(path)
+
+    def test_non_elf_file(self):
+        with tempfile.NamedTemporaryFile(delete=False, mode="wb") as f:
+            f.write(b"not an ELF")
+            path = f.name
+        try:
+            result = analyze_elf_imports(path)
+            assert result["is_elf"] is False
+        finally:
+            os.unlink(path)
+
+    def test_nonexistent_file(self):
+        result = analyze_elf_imports("/nonexistent/path")
+        assert result["is_elf"] is False
+        assert result["size"] == 0
+
+
+class TestAnalyzeConfigFile:
+    """Tests for analyze_config_file()."""
+
+    def test_xml_config(self):
+        with tempfile.NamedTemporaryFile(suffix=".xml", delete=False,
+                                          mode="w") as f:
+            f.write('<?xml version="1.0"?>\n<Config><Item key="val"/></Config>')
+            path = f.name
+        try:
+            result = analyze_config_file(path)
+            assert result["format"] == "XML"
+            assert result["elements"] == 2  # Config + Item
+            assert result["attributes"] == 1  # key="val"
+        finally:
+            os.unlink(path)
+
+    def test_encrypted_config(self):
+        with tempfile.NamedTemporaryFile(suffix=".xml", delete=False,
+                                          mode="wb") as f:
+            f.write(b"\x01\x00\x00\x00" + b"\xaa" * 100)
+            path = f.name
+        try:
+            result = analyze_config_file(path)
+            assert result["format"] == "encrypted"
+            assert result["elements"] == 0
+        finally:
+            os.unlink(path)
+
+
+class TestFirmwareAnalyzerFindSquashfs:
+    """Tests for firmware_analyzer.find_squashfs()."""
+
+    def test_no_squashfs(self):
+        assert fa_find_squashfs(b"\x00" * 128) == []
+
+    def test_single_squashfs(self):
+        hdr = bytearray(48)
+        hdr[0:4] = b"hsqs"
+        struct.pack_into("<Q", hdr, 40, 48)
+        data = b"\x00" * 100 + bytes(hdr)
+        result = fa_find_squashfs(data)
+        assert len(result) == 1
+        assert result[0][0] == 100
+
+
+class TestISPAliases:
+    """Tests for ISP alias mapping."""
+
+    def test_megacable_aliases(self):
+        assert "megacable" in ISP_ALIASES
+        aliases = ISP_ALIASES["megacable"]
+        assert "megacable" in aliases
+        assert "mega" in aliases
+        assert "megacable2" in aliases

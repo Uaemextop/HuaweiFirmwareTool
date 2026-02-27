@@ -26,6 +26,7 @@ jobs:
 
       - name: Install Python dependencies
         run: |
+          pip install --upgrade pip
           pip install -r hwflash/requirements.txt
           pip install pytest capstone r2pipe
 
@@ -46,9 +47,11 @@ jobs:
             gcc-arm-linux-gnueabi \
             liblzma-dev \
             unrar-free \
-            p7zip-full
+            p7zip-full \
+            zip
 
       - name: Build decompiled aescrypt2
+        continue-on-error: true
         run: |
           cd decompiled/aescrypt2
           cmake -B build
@@ -62,3 +65,4 @@ jobs:
           qemu-arm-static --version | head -1
           unsquashfs -v 2>&1 | head -1
           file --version | head -1
+          zip --version | head -2

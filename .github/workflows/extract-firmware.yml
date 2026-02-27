@@ -39,13 +39,13 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y -qq squashfs-tools unrar-free zip
 
       - name: Download firmwares
-        run: python tools/download_firmwares.py --output-dir "$RUNNER_TEMP/firmwares"
+        run: python tools/download_firmwares.py --output-dir firmwares
 
       - name: Upload firmware cache
         uses: actions/upload-artifact@v4
         with:
           name: firmwares-raw
-          path: ${{ runner.temp }}/firmwares/
+          path: firmwares/
           retention-days: 1
 
   # ─── Step 2: Extract each firmware in parallel ──────────────────────
@@ -87,12 +87,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: firmwares-raw
-          path: ${{ runner.temp }}/firmwares
+          path: firmwares
 
       - name: Extract RAR contents (if needed)
         if: matrix.firmware.source == 'rar'
         run: |
-          cd "$RUNNER_TEMP/firmwares"
+          cd firmwares
           if [ -f HG8245C.rar ]; then
             unrar x -o+ HG8245C.rar .
           fi
@@ -100,7 +100,8 @@ jobs:
       - name: Extract firmware rootfs
         run: |
           set -e
-          mkdir -p "$RUNNER_TEMP/firmware_extract/${{ matrix.firmware.name }}"
+          mkdir -p "firmware_extract/${{ matrix.firmware.name }}"
+          mkdir -p ".fw_work"
 
           python3 << 'PYEOF'
           import struct, os, shutil, subprocess, sys, gzip, io, tarfile
@@ -196,11 +197,12 @@ jobs:
                   pos = idx + 5
               return found
 
-          _runner_temp = os.environ["RUNNER_TEMP"]
-          fw_file = _runner_temp + "/firmwares/" + "${{ matrix.firmware.file }}"
+          _workspace = os.getcwd()
+          fw_file = os.path.join(_workspace, "firmwares", "${{ matrix.firmware.file }}")
           name = "${{ matrix.firmware.name }}"
           mode = "${{ inputs.extraction_mode }}"
-          out_dir = _runner_temp + "/firmware_extract/" + name
+          out_dir = os.path.join(_workspace, "firmware_extract", name)
+          work_dir = os.path.join(_workspace, ".fw_work")
 
           print(f"Processing {name} (mode={mode})")
           with open(fw_file, 'rb') as f:
@@ -218,10 +220,10 @@ jobs:
           for i, (offset, size, inodes) in enumerate(sqfs_list):
               label = f"sqfs_{i:02d}_0x{offset:08x}"
               print(f"  [{i}] SquashFS at 0x{offset:08x}, {size:,} bytes, {inodes} inodes")
-              sqfs_path = f"{_runner_temp}/{label}.sqfs"
+              sqfs_path = os.path.join(work_dir, f"{label}.sqfs")
               with open(sqfs_path, 'wb') as f:
                   f.write(data[offset:offset + size])
-              rootfs = f"{_runner_temp}/rootfs_{i}"
+              rootfs = os.path.join(work_dir, f"rootfs_{i}")
               os.makedirs(rootfs, exist_ok=True)
               subprocess.run(["sudo", "unsquashfs", "-f", "-d", rootfs,
                               "-no-xattrs", "-ignore-errors", sqfs_path], check=False)
@@ -260,21 +262,21 @@ jobs:
 
       - name: Create ZIP for release
         run: |
-          cd $EXTRACT_DIR
-          zip -r $RUNNER_TEMP/${{ matrix.firmware.name }}.zip ${{ matrix.firmware.name }}/
+          cd firmware_extract
+          zip -r "${{ matrix.firmware.name }}.zip" "${{ matrix.firmware.name }}/"
 
       - name: Upload extracted content as artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.firmware.name }}
-          path: ${{ env.EXTRACT_DIR }}/${{ matrix.firmware.name }}/
+          path: firmware_extract/${{ matrix.firmware.name }}/
           retention-days: 90
 
       - name: Upload ZIP as artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.firmware.name }}-zip
-          path: ${{ runner.temp }}/${{ matrix.firmware.name }}.zip
+          path: firmware_extract/${{ matrix.firmware.name }}.zip
           retention-days: 90
 
   # ─── Step 3: Create release with all ZIPs ───────────────────────────
@@ -287,16 +289,16 @@ jobs:
       - name: Download all ZIP artifacts
         uses: actions/download-artifact@v4
         with:
-          path: ${{ runner.temp }}/artifacts
+          path: artifacts
           pattern: '*-zip'
           merge-multiple: true
 
       - name: Collect ZIPs
         run: |
-          mkdir -p $RUNNER_TEMP/release_assets
-          find $RUNNER_TEMP/artifacts -name '*.zip' -exec cp {} $RUNNER_TEMP/release_assets/ \;
+          mkdir -p release_assets
+          find artifacts -name '*.zip' -exec cp {} release_assets/ \;
           echo "Release assets:"
-          ls -lh $RUNNER_TEMP/release_assets/
+          ls -lh release_assets/
 
       - name: Create release
         uses: softprops/action-gh-release@v2
@@ -322,7 +324,7 @@ jobs:
             | HG8145C-V5R019C00S105 | HG8145C | V5R019C00S105 |
             | HG8245C-8145C-BLUE-R019-xpon | HG8245C | R019 |
             | HG8145C_17120_ENG | HG8145C | 17120 |
-          files: ${{ runner.temp }}/release_assets/*.zip
+          files: release_assets/*.zip
           draft: false
           prerelease: false
 
@@ -352,7 +354,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ matrix.firmware }}
-          path: ${{ runner.temp }}/content/${{ matrix.firmware }}
+          path: content/${{ matrix.firmware }}
 
       - name: Create repo and push content
         env:
@@ -412,19 +414,18 @@ jobs:
           sleep 5
 
           # Clone and push
-          cd $RUNNER_TEMP
           git clone "https://x-access-token:${GH_TOKEN}@github.com/${TARGET_OWNER}/${REPO_NAME}.git" repo_work || {
             mkdir repo_work && cd repo_work && git init && \
             git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${TARGET_OWNER}/${REPO_NAME}.git"
           }
-          cd $RUNNER_TEMP/repo_work
+          cd repo_work
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           # Copy ALL extracted firmware content (including hidden files, using /. source)
-          if [ -d "$RUNNER_TEMP/content/${FW_NAME}" ]; then
-            cp -ra "$RUNNER_TEMP/content/${FW_NAME}/." .
+          if [ -d "${GITHUB_WORKSPACE}/content/${FW_NAME}" ]; then
+            cp -ra "${GITHUB_WORKSPACE}/content/${FW_NAME}/." .
           else
             echo "::warning::No extracted content found for ${FW_NAME}"
           fi
@@ -482,13 +483,13 @@ jobs:
           }
 
           echo "✓ ${TARGET_OWNER}/${REPO_NAME} ready"
-          rm -rf $RUNNER_TEMP/repo_work
+          rm -rf "${GITHUB_WORKSPACE}/repo_work"
 
           REPO_URL="https://github.com/${TARGET_OWNER}/${REPO_NAME}"
-          echo "${REPO_URL}" > $RUNNER_TEMP/${FW_NAME}-url.txt
+          echo "${REPO_URL}" > "${GITHUB_WORKSPACE}/${FW_NAME}-url.txt"
 
           echo "=== Disabling Copilot content exclusions (firewall) for ${TARGET_OWNER}/${REPO_NAME} ==="
-          COPILOT_HTTP=$(curl -s -o $RUNNER_TEMP/copilot_resp.json -w "%{http_code}" \
+          COPILOT_HTTP=$(curl -s -o "${GITHUB_WORKSPACE}/copilot_resp.json" -w "%{http_code}" \
             -X PUT \
             -H "Authorization: token ${GH_TOKEN}" \
             -H "Accept: application/vnd.github+json" \
@@ -500,14 +501,14 @@ jobs:
             echo "✓ Copilot content exclusions cleared for ${REPO_NAME}"
           else
             echo "::warning::Could not update Copilot settings for ${REPO_NAME} (HTTP ${COPILOT_HTTP}). Requires GitHub Copilot Business/Enterprise."
-            cat $RUNNER_TEMP/copilot_resp.json || true
+            cat "${GITHUB_WORKSPACE}/copilot_resp.json" || true
           fi
 
       - name: Upload repo URL artifact
         uses: actions/upload-artifact@v4
         with:
           name: repo-url-${{ matrix.firmware }}
-          path: ${{ runner.temp }}/${{ matrix.firmware }}-url.txt
+          path: ${{ matrix.firmware }}-url.txt
 
   # ─── Step 5: Dashboard — show all created repo URLs ─────────────────
   dashboard:
@@ -519,7 +520,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: repo-url-*
-          path: ${{ runner.temp }}/repo_urls
+          path: repo_urls
           merge-multiple: true
 
       - name: Write step summary dashboard
@@ -528,7 +529,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Firmware | Repository URL |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|----------------|" >> $GITHUB_STEP_SUMMARY
-          for f in $RUNNER_TEMP/repo_urls/*-url.txt; do
+          for f in repo_urls/*-url.txt; do
             [ -f "$f" ] || continue
             FW=$(basename "$f" -url.txt)
             URL=$(cat "$f")

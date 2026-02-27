@@ -28,7 +28,7 @@ permissions:
 jobs:
   # ─── Step 1: Download all firmware images ───────────────────────────
   download:
-    runs-on: ubuntu-latest
+    runs-on: aapt
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -51,7 +51,7 @@ jobs:
   # ─── Step 2: Extract each firmware in parallel ──────────────────────
   extract:
     needs: download
-    runs-on: ubuntu-latest
+    runs-on: aapt
     strategy:
       fail-fast: false
       matrix:
@@ -282,7 +282,7 @@ jobs:
   # ─── Step 3: Create release with all ZIPs ───────────────────────────
   release:
     needs: extract
-    runs-on: ubuntu-latest
+    runs-on: aapt
     steps:
       - uses: actions/checkout@v4
 
@@ -332,7 +332,7 @@ jobs:
   create-repos:
     if: inputs.create_repos == true && inputs.target_owner != ''
     needs: extract
-    runs-on: ubuntu-latest
+    runs-on: aapt
     strategy:
       fail-fast: false
       max-parallel: 1
@@ -471,7 +471,7 @@ jobs:
           cp "${SOURCE_REPO}/.github/copilot-instructions.md" .github/copilot-instructions.md
           cp "${SOURCE_REPO}/.github/agents/firmware-analyst.agent.md" .github/agents/firmware-analyst.agent.md
           cp "${SOURCE_REPO}/.github/workflows/copilot-setup-steps.yml" .github/workflows/copilot-setup-steps.yml
-          cp -r "${SOURCE_REPO}/tools" ./tools
+          #cp -r "${SOURCE_REPO}/tools" ./tools
 
           # Commit and push
           git add -A
@@ -514,7 +514,7 @@ jobs:
   dashboard:
     if: inputs.create_repos == true && inputs.target_owner != ''
     needs: create-repos
-    runs-on: ubuntu-latest
+    runs-on: aapt
     steps:
       - name: Download all repo URL artifacts
         uses: actions/download-artifact@v4

@@ -44,6 +44,13 @@ FIRMWARES = [
         "md5": "3691ec67d6cc10c558ecabb124f6892e",
         "size": 72836524,
     },
+    {
+        "name": "Ping7962V1-E4222-Telmex",
+        "filename": "FOlt.bin",
+        "url": "https://uaemextop.github.io/realfirmware-net/Ping-7962V1/Telmex/Unlock/FIRMWARE%20UNLOCK%20PING%20COMUNICATION%207962V1%20TELMEX/FOlt.bin",
+        "md5": "61a0ef7566e2b4d80460d05a872ee236",
+        "size": 14376960,
+    },
 ]
 
 

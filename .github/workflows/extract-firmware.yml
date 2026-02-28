@@ -74,6 +74,11 @@ jobs:
           - name: HG8145C_17120_ENG
             file: HG8145C_17120_ENG.bin
             source: rar
+          - name: Ping7962V1-E4222-Telmex
+            file: FOlt.bin
+            source: bin
+            web_dir: home/httpd/web
+            configs_dir: etc
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -238,7 +243,9 @@ jobs:
                   n = sum(1 for _, _, fs in os.walk(extra_out) for _ in fs)
                   print(f"    -> rootfs_{i}/: {n} files")
 
-          dirs_to_copy = {"web": "html", "configs": "etc/wap"}
+          web_dir = "${{ matrix.firmware.web_dir }}" if "${{ matrix.firmware.web_dir }}" else "html"
+          configs_dir = "${{ matrix.firmware.configs_dir }}" if "${{ matrix.firmware.configs_dir }}" else "etc/wap"
+          dirs_to_copy = {"web": web_dir, "configs": configs_dir}
           if mode == "full_extract":
               dirs_to_copy.update({"bin": "bin", "sbin": "sbin", "lib": "lib", "etc": "etc"})
 
@@ -324,6 +331,7 @@ jobs:
             | HG8145C-V5R019C00S105 | HG8145C | V5R019C00S105 |
             | HG8245C-8145C-BLUE-R019-xpon | HG8245C | R019 |
             | HG8145C_17120_ENG | HG8145C | 17120 |
+            | Ping7962V1-E4222-Telmex | Ping Communication 7962V1 | E4222-3.0.5-R |
           files: release_assets/*.zip
           draft: false
           prerelease: false
@@ -344,6 +352,7 @@ jobs:
           - HG8145C-V5R019C00S105
           - HG8245C-8145C-BLUE-R019-xpon
           - HG8145C_17120_ENG
+          - Ping7962V1-E4222-Telmex
     steps:
       - name: Checkout source repo
         uses: actions/checkout@v4

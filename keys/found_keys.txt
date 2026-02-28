@@ -1,0 +1,81 @@
+# Huawei ONT Firmware - Key & Certificate Extraction Report
+# Passphrase 'PolarSSLTest' successfully decrypts PolarSSL/mbedTLS test keys
+# firmware/etc/wap/prvt.key and plugprvt.key use KMC-derived passphrases (runtime-only)
+# Total entries: 76
+#
+[PRIVATE_KEY_ENCRYPTED] source=Huawei-HG8145V5_R019C10SPC310B002/libpolarssl.so:0x69140 type='RSA PRIVATE KEY' DEK=none
+[PRIVATE_KEY_ENCRYPTED] source=Huawei-HG8145V5_R019C10SPC310B002/libpolarssl.so:0x69180 type='EC PRIVATE KEY' DEK=none
+[PRIVATE_KEY_ENCRYPTED] source=Huawei-HG8145V5_R019C10SPC310B002/libpolarssl.so:0x691c0 type='PRIVATE KEY' DEK=none
+[PRIVATE_KEY_ENCRYPTED] source=Huawei-HG8145V5_R019C10SPC310B002/libpolarssl.so:0x691f8 type='ENCRYPTED PRIVATE KEY' DEK=none
+[PRIVATE_KEY_ENCRYPTED] source=Huawei-HG8145V5_R019C10SPC310B002/libpolarssl.so:0x69314 type='RSA PRIVATE KEY' DEK=none
+[CERT] source=Huawei-HG8145V5_R019C10SPC310B002/libpolarssl.so:0x6cb28 subj='CN=PolarSSL Client 2,O=PolarSSL,C=NL' issuer='CN=PolarSSL Test CA,O=PolarSSL,C=NL'
+[PRIVATE_KEY] source=Huawei-HG8145V5_R019C10SPC310B002/libpolarssl.so:0x6cfe8 type='RSA PRIVATE KEY' pw=None RSA-2048b e=65537 n=0xc14da3dde7cd1dd104d74972b899ac0e78e43a3c4acf3a...
+[CERT] source=Huawei-HG8145V5_R019C10SPC310B002/libpolarssl.so:0x6d698 subj='CN=localhost,O=PolarSSL,C=NL' issuer='CN=PolarSSL Test CA,O=PolarSSL,C=NL'
+[PRIVATE_KEY] source=Huawei-HG8145V5_R019C10SPC310B002/libpolarssl.so:0x6db60 type='RSA PRIVATE KEY' pw=b'PolarSSLTest' RSA-2048b e=65537 n=0xc0df37fc17bbe0969d3f86de96327d44a516a0cd21f199...
+[CERT] source=Huawei-HG8145V5_R019C10SPC310B002/libpolarssl.so:0x6e25c subj='CN=PolarSSL Test CA,O=PolarSSL,C=NL' issuer='CN=PolarSSL Test CA,O=PolarSSL,C=NL'
+[PRIVATE_KEY] source=Huawei-HG8145V5_R019C10SPC310B002/libpolarssl.so:0x6e77c type='EC PRIVATE KEY' pw=None ECPrivateKey pub=2d2d2d2d2d424547494e205055424c4943204b45592d2d2d2d2d0a4d466b77457759484b6f5a497a
+[CERT] source=Huawei-HG8145V5_R019C10SPC310B002/libpolarssl.so:0x6e86c subj='CN=PolarSSL Test Client 2,O=PolarSSL,C=NL' issuer='CN=Polarssl Test EC CA,O=PolarSSL,C=NL'
+[PRIVATE_KEY] source=Huawei-HG8145V5_R019C10SPC310B002/libpolarssl.so:0x6ebb0 type='EC PRIVATE KEY' pw=None ECPrivateKey pub=2d2d2d2d2d424547494e205055424c4943204b45592d2d2d2d2d0a4d466b77457759484b6f5a497a
+[CERT] source=Huawei-HG8145V5_R019C10SPC310B002/libpolarssl.so:0x6eca0 subj='CN=localhost,O=PolarSSL,C=NL' issuer='CN=Polarssl Test EC CA,O=PolarSSL,C=NL'
+[PRIVATE_KEY] source=Huawei-HG8145V5_R019C10SPC310B002/libpolarssl.so:0x6efe8 type='EC PRIVATE KEY' pw=b'PolarSSLTest' ECPrivateKey pub=2d2d2d2d2d424547494e205055424c4943204b45592d2d2d2d2d0a4d485977454159484b6f5a497a
+[CERT] source=Huawei-HG8145V5_R019C10SPC310B002/libpolarssl.so:0x6f158 subj='CN=Polarssl Test EC CA,O=PolarSSL,C=NL' issuer='CN=Polarssl Test EC CA,O=PolarSSL,C=NL'
+[CERT] source=Huawei-HG8145V5_R019C10SPC310B002/libpolarssl.so:0x6f4cc subj='CN=PolarSSL Test CA,O=PolarSSL,C=NL' issuer='CN=PolarSSL Test CA,O=PolarSSL,C=NL'
+[CERT] source=Huawei-HG8145V5_R019C10SPC310B002/libpolarssl.so:0x6f9e8 subj='CN=PolarSSL Test CA,O=PolarSSL,C=NL' issuer='CN=PolarSSL Test CA,O=PolarSSL,C=NL'
+[PRIVATE_KEY_ENCRYPTED] source=Huawei-HG8145V5_R019C10SPC386B020/libpolarssl.so:0x56d54 type='RSA PRIVATE KEY' DEK=none
+[PRIVATE_KEY_ENCRYPTED] source=Huawei-HG8145V5_R019C10SPC386B020/libpolarssl.so:0x56d94 type='EC PRIVATE KEY' DEK=none
+[PRIVATE_KEY_ENCRYPTED] source=Huawei-HG8145V5_R019C10SPC386B020/libpolarssl.so:0x56dd4 type='PRIVATE KEY' DEK=none
+[PRIVATE_KEY_ENCRYPTED] source=Huawei-HG8145V5_R019C10SPC386B020/libpolarssl.so:0x56e0c type='ENCRYPTED PRIVATE KEY' DEK=none
+[PRIVATE_KEY_ENCRYPTED] source=Huawei-HG8145V5_R020C00SPC240B470/libpolarssl.so:0x5d3e4 type='RSA PRIVATE KEY' DEK=none
+[PRIVATE_KEY_ENCRYPTED] source=Huawei-HG8145V5_R020C10SPC212B465/libpolarssl.so:0x57c09 type='RSA PRIVATE KEY' DEK=none
+[PRIVATE_KEY_ENCRYPTED] source=Huawei-HG8245Q_R017C10SPC115B136/libpolarssl.so:0x58218 type='RSA PRIVATE KEY' DEK=none
+[PRIVATE_KEY_ENCRYPTED] source=Huawei-HG8245Q_R017C10SPC115B136/libpolarssl.so:0x58258 type='PRIVATE KEY' DEK=none
+[PRIVATE_KEY_ENCRYPTED] source=Huawei-HG8245Q_R017C10SPC115B136/libpolarssl.so:0x58290 type='ENCRYPTED PRIVATE KEY' DEK=none
+[PRIVATE_KEY_ENCRYPTED] source=Huawei-HG8245Q_R017C10SPC115B136/libpolarssl.so:0x582dc type='EC PRIVATE KEY' DEK=none
+[PRIVATE_KEY_ENCRYPTED] source=Huawei-HG8245Q_R017C10SPC115B136/libpolarssl.so:0x5831c type='DSA PRIVATE KEY' DEK=none
+[PRIVATE_KEY_ENCRYPTED] source=Huawei-HG8246M_R019C00SPC050B051/libpolarssl.so:0x58248 type='RSA PRIVATE KEY' DEK=none
+[PRIVATE_KEY_ENCRYPTED] source=Huawei-HG8246M_R019C00SPC050B051/libpolarssl.so:0x58288 type='PRIVATE KEY' DEK=none
+[PRIVATE_KEY_ENCRYPTED] source=Huawei-HG8246M_R019C00SPC050B051/libpolarssl.so:0x582c0 type='ENCRYPTED PRIVATE KEY' DEK=none
+[PRIVATE_KEY_ENCRYPTED] source=Huawei-HG8246M_R019C00SPC050B051/libpolarssl.so:0x5830c type='EC PRIVATE KEY' DEK=none
+[PRIVATE_KEY_ENCRYPTED] source=Huawei-HG8246M_R019C00SPC050B051/libpolarssl.so:0x5834c type='DSA PRIVATE KEY' DEK=none
+[CERT_DER] source=Huawei-HG8145V5_R019C10SPC310B002/wap/CableLabs_Mfg_CA_CA00008.cer subj='CN=CableLabs Mfg CA,OU=CA00008,L=Louisville,ST=Colorado,O=CableLabs,C=US'
+[CERT] source=Huawei-HG8145V5_R019C10SPC310B002/wap/root.pem subj='1.2.840.113549.1.9.1=mobile@huawei.com,CN=root.home,L=Wuhan,ST=Hubei,C=CN'
+[CERT] source=Huawei-HG8145V5_R019C10SPC310B002/wap/servercert.pem subj='CN=mediarouter.home,L=Wuhan,ST=Hubei,C=CN'
+[CERT] source=Huawei-HG8145V5_R019C10SPC310B002/wap/plugpub.crt subj='OU=Ont,O=HuaWei,1.2.840.113549.1.9.1=support@huawei.com,C=CH,ST=HB,CN=ont.huawei.com'
+[CERT] source=Huawei-HG8145V5_R019C10SPC310B002/wap/plugroot.crt subj='O=Root CA of HuaWei ONT,1.2.840.113549.1.9.1=support@huawei.com,C=CN,ST=Guangdong,CN=HuaWei ONT CA'
+[CERT] source=Huawei-HG8145V5_R019C10SPC310B002/wap/pub.crt subj='OU=ONT,O=Huawei Technologies Co.\\, Ltd,1.2.840.113549.1.9.1=support@huawei.com,C=CN,ST=Guangdong,CN=Huawei Technologies Co.\\, Ltd'
+[CERT] source=Huawei-HG8145V5_R019C10SPC310B002/wap/root.crt subj='O=Huawei Technologies Co.\\, Ltd,1.2.840.113549.1.9.1=support@huawei.com,C=CN,ST=Guangdong,CN=Huawei Technologies Co.\\, Ltd'
+[CERT_DER] source=Huawei-HG8145V5_R019C10SPC386B020/wap/CableLabs_Mfg_CA_CA00008.cer subj='CN=CableLabs Mfg CA,OU=CA00008,L=Louisville,ST=Colorado,O=CableLabs,C=US'
+[CERT] source=Huawei-HG8145V5_R019C10SPC386B020/wap/root.pem subj='1.2.840.113549.1.9.1=mobile@huawei.com,CN=root.home,L=Wuhan,ST=Hubei,C=CN'
+[CERT] source=Huawei-HG8145V5_R019C10SPC386B020/wap/servercert.pem subj='CN=mediarouter.home,L=Wuhan,ST=Hubei,C=CN'
+[CERT] source=Huawei-HG8145V5_R019C10SPC386B020/wap/plugpub.crt subj='OU=Ont,O=HuaWei,1.2.840.113549.1.9.1=support@huawei.com,C=CH,ST=HB,CN=ont.huawei.com'
+[CERT] source=Huawei-HG8145V5_R019C10SPC386B020/wap/plugroot.crt subj='O=Root CA of HuaWei ONT,1.2.840.113549.1.9.1=support@huawei.com,C=CN,ST=Guangdong,CN=HuaWei ONT CA'
+[CERT] source=Huawei-HG8145V5_R019C10SPC386B020/wap/pub.crt subj='OU=ONT,O=Huawei Technologies Co.\\, Ltd,1.2.840.113549.1.9.1=support@huawei.com,C=CN,ST=Guangdong,CN=Huawei Technologies Co.\\, Ltd'
+[CERT] source=Huawei-HG8145V5_R019C10SPC386B020/wap/root.crt subj='O=Huawei Technologies Co.\\, Ltd,1.2.840.113549.1.9.1=support@huawei.com,C=CN,ST=Guangdong,CN=Huawei Technologies Co.\\, Ltd'
+[CERT] source=Huawei-HG8145V5_R020C00SPC240B470/wap/pub_1_telmex.pem subj='OU=Telefonos,O=Telmex  (Telefonos de Mexico S.A.B. de C.V.),1.2.840.113549.1.9.1=dominios@telmex.com,C=MX,ST=Ciudad de Mexico,CN=Telmex     (Telefonos de Mexico S.A.B. de C.V.)'
+[CERT] source=Huawei-HG8145V5_R020C00SPC240B470/wap/pub_1_totalplay.pem subj='CN=Huawei,OU=TotalPlay,O=Totalplay,L=Mexico,ST=Mexico,C=Me'
+[CERT] source=Huawei-HG8145V5_R020C00SPC240B470/wap/root_1_telmex.pem subj='O=Root CA of Handy,1.2.840.113549.1.9.1=zhangxiaotian@huawei.com,C=CN,ST=Guangdong,CN=Example CA'
+[CERT] source=Huawei-HG8145V5_R020C00SPC240B470/wap/root_1_totalplay.pem subj='CN=Huawei,OU=TotalPlay,O=TotalPlay,L=Mexico,ST=Mexico,C=Me'
+[CERT] source=Huawei-HG8145V5_R020C00SPC240B470/wap/root.pem subj='1.2.840.113549.1.9.1=mobile@huawei.com,CN=root.home,L=Wuhan,ST=Hubei,C=CN'
+[CERT] source=Huawei-HG8145V5_R020C00SPC240B470/wap/servercert.pem subj='CN=mediarouter.home,L=Wuhan,ST=Hubei,C=CN'
+[CERT] source=Huawei-HG8145V5_R020C00SPC240B470/wap/plugpub.crt subj='OU=Ont,O=HuaWei,1.2.840.113549.1.9.1=support@huawei.com,C=CH,ST=HB,CN=ont.huawei.com'
+[CERT] source=Huawei-HG8145V5_R020C00SPC240B470/wap/plugroot.crt subj='O=Root CA of HuaWei ONT,1.2.840.113549.1.9.1=support@huawei.com,C=CN,ST=Guangdong,CN=HuaWei ONT CA'
+[CERT] source=Huawei-HG8145V5_R020C00SPC240B470/wap/pub.crt subj='OU=ONT,O=Huawei Technologies Co.\\, Ltd,1.2.840.113549.1.9.1=support@huawei.com,C=CN,ST=Guangdong,CN=Huawei Technologies Co.\\, Ltd'
+[CERT] source=Huawei-HG8145V5_R020C00SPC240B470/wap/root.crt subj='O=Huawei Technologies Co.\\, Ltd,1.2.840.113549.1.9.1=support@huawei.com,C=CN,ST=Guangdong,CN=Huawei Technologies Co.\\, Ltd'
+[CERT_DER] source=Huawei-HG8245Q_R017C10SPC115B136/wap/CableLabs_Mfg_CA_CA00008.cer subj='CN=CableLabs Mfg CA,OU=CA00008,L=Louisville,ST=Colorado,O=CableLabs,C=US'
+[CERT] source=Huawei-HG8245Q_R017C10SPC115B136/wap/root.pem subj='1.2.840.113549.1.9.1=mobile@huawei.com,CN=root.home,L=Wuhan,ST=Hubei,C=CN'
+[CERT] source=Huawei-HG8245Q_R017C10SPC115B136/wap/servercert.pem subj='CN=mediarouter.home,L=Wuhan,ST=Hubei,C=CN'
+[CERT] source=Huawei-HG8245Q_R017C10SPC115B136/wap/plugpub.crt subj='OU=ONT,O=HuaWei,1.2.840.113549.1.9.1=support@huawei.com,C=CN,ST=HuBei,CN=ont.huawei.com'
+[CERT] source=Huawei-HG8245Q_R017C10SPC115B136/wap/plugroot.crt subj='O=Root CA of HuaWei ONT,1.2.840.113549.1.9.1=support@huawei.com,C=CN,ST=Guangdong,CN=HuaWei ONT CA'
+[CERT] source=Huawei-HG8245Q_R017C10SPC115B136/wap/pub.crt subj='OU=ONT,O=Huawei Technologies Co.\\, Ltd,1.2.840.113549.1.9.1=support@huawei.com,C=CN,ST=Guangdong,CN=Huawei Technologies Co.\\, Ltd'
+[CERT_DER] source=Huawei-HG8246M_R019C00SPC050B051/wap/CableLabs_Mfg_CA_CA00008.cer subj='CN=CableLabs Mfg CA,OU=CA00008,L=Louisville,ST=Colorado,O=CableLabs,C=US'
+[CERT] source=Huawei-HG8246M_R019C00SPC050B051/wap/root.pem subj='1.2.840.113549.1.9.1=mobile@huawei.com,CN=root.home,L=Wuhan,ST=Hubei,C=CN'
+[CERT] source=Huawei-HG8246M_R019C00SPC050B051/wap/servercert.pem subj='CN=mediarouter.home,L=Wuhan,ST=Hubei,C=CN'
+[CERT] source=Huawei-HG8246M_R019C00SPC050B051/wap/plugpub.crt subj='OU=ONT,O=HuaWei,1.2.840.113549.1.9.1=support@huawei.com,C=CN,ST=HuBei,CN=ont.huawei.com'
+[CERT] source=Huawei-HG8246M_R019C00SPC050B051/wap/plugroot.crt subj='O=Root CA of HuaWei ONT,1.2.840.113549.1.9.1=support@huawei.com,C=CN,ST=Guangdong,CN=HuaWei ONT CA'
+[CERT] source=Huawei-HG8246M_R019C00SPC050B051/wap/pub.crt subj='OU=ONT,O=Huawei Technologies Co.\\, Ltd,1.2.840.113549.1.9.1=support@huawei.com,C=CN,ST=Guangdong,CN=Huawei Technologies Co.\\, Ltd'
+[CERT_DER] source=Huawei-HG8247H_R017C10SPC102B075/wap/CableLabs_Mfg_CA_CA00008.cer subj='CN=CableLabs Mfg CA,OU=CA00008,L=Louisville,ST=Colorado,O=CableLabs,C=US'
+[CERT] source=Huawei-HG8247H_R017C10SPC102B075/wap/root.pem subj='1.2.840.113549.1.9.1=mobile@huawei.com,CN=root.home,L=Wuhan,ST=Hubei,C=CN'
+[CERT] source=Huawei-HG8247H_R017C10SPC102B075/wap/servercert.pem subj='CN=mediarouter.home,L=Wuhan,ST=Hubei,C=CN'
+[CERT] source=Huawei-HG8247H_R017C10SPC102B075/wap/plugpub.crt subj='OU=ONT,O=HuaWei,1.2.840.113549.1.9.1=support@huawei.com,C=CN,ST=HuBei,CN=ont.huawei.com'
+[CERT] source=Huawei-HG8247H_R017C10SPC102B075/wap/plugroot.crt subj='O=Root CA of HuaWei ONT,1.2.840.113549.1.9.1=support@huawei.com,C=CN,ST=Guangdong,CN=HuaWei ONT CA'
+[CERT] source=Huawei-HG8247H_R017C10SPC102B075/wap/pub.crt subj='OU=ONT,O=Huawei Technologies Co.\\, Ltd,1.2.840.113549.1.9.1=support@huawei.com,C=CN,ST=Guangdong,CN=Huawei Technologies Co.\\, Ltd'

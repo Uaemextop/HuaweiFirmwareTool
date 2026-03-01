@@ -163,6 +163,57 @@ if(BUILD_AESCRYPT2)
     install(TARGETS aescrypt2 RUNTIME DESTINATION bin)
 endif()
 
+# ── Standalone tools (no external deps, cross-platform) ─────────────────────
+# Decompiled from original Huawei firmware binaries.
+# Each tool embeds all necessary library code for standalone operation.
+
+# getfilecrc – CRC32 file integrity checker (zero HW_ imports, pure libc)
+add_executable(getfilecrc hw_qoe_tools/getfilecrc.c)
+install(TARGETS getfilecrc RUNTIME DESTINATION bin)
+
+# ontinfo – ONT device information query
+add_executable(ontinfo ontinfo/ontinfo.c)
+install(TARGETS ontinfo RUNTIME DESTINATION bin)
+
+# setboardinfo – hw_boardinfo field editor
+add_executable(setboardinfo hw_qoe_tools/setboardinfo.c)
+install(TARGETS setboardinfo RUNTIME DESTINATION bin)
+
+# ConvertLog2Dst – Binary log to text converter
+add_executable(ConvertLog2Dst hw_qoe_tools/ConvertLog2Dst.c)
+install(TARGETS ConvertLog2Dst RUNTIME DESTINATION bin)
+
+# cominfo – Process/component info query
+add_executable(cominfo hw_qoe_tools/cominfo.c)
+install(TARGETS cominfo RUNTIME DESTINATION bin)
+
+# hw_qoe_getloid – Get device LOID
+add_executable(hw_qoe_getloid hw_qoe_tools/hw_qoe_getloid.c)
+install(TARGETS hw_qoe_getloid RUNTIME DESTINATION bin)
+
+# hw_qoe_getpppaccount – Get PPP credentials
+add_executable(hw_qoe_getpppaccount hw_qoe_tools/hw_qoe_getpppaccount.c)
+install(TARGETS hw_qoe_getpppaccount RUNTIME DESTINATION bin)
+
+# decrypt_boardinfo – Decrypt AES-128-CBC encrypted hw_boardinfo files
+# Embeds AES-128 implementation (no external crypto libs needed)
+add_executable(decrypt_boardinfo hw_qoe_tools/decrypt_boardinfo.c)
+install(TARGETS decrypt_boardinfo RUNTIME DESTINATION bin)
+
+# kmc_tool – KMC key store file manager
+add_executable(kmc_tool hw_qoe_tools/kmc_tool.c)
+install(TARGETS kmc_tool RUNTIME DESTINATION bin)
+
+# keyfilemng – Key file backup/check/restore manager
+# Embeds CRC32 implementation
+add_executable(keyfilemng hw_qoe_tools/keyfilemng.c)
+install(TARGETS keyfilemng RUNTIME DESTINATION bin)
+
+# decrypt_prvtkey – Decrypt encrypted PEM private keys (prvt.key, plugprvt.key)
+# Embeds AES-256-CBC, MD5, base64, EVP_BytesToKey (no external crypto libs)
+add_executable(decrypt_prvtkey hw_qoe_tools/decrypt_prvtkey.c)
+install(TARGETS decrypt_prvtkey RUNTIME DESTINATION bin)
+
 # ── Install ──────────────────────────────────────────────────────────────────
 if(BUILD_WLAN_AES AND NOT WIN32)
     install(TARGETS wlan_aes_crypto LIBRARY DESTINATION lib)

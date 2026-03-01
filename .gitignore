@@ -25,3 +25,8 @@ hwflash/presets/
 
 # CodeQL build artifacts
 */_codeql_build_dir/
+decompiled/build/
+--help
+--version
+-V
+-h

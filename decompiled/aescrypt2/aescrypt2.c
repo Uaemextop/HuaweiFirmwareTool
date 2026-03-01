@@ -74,8 +74,20 @@ extern int HW_OS_StrToUInt32(const char *str, uint32_t *val_out);
 #define FILENAME_BUF   512
 
 /* ── Work-mode constants ────────────────────────────────────────────────── */
-#define MODE_ENCRYPT   0u
-#define MODE_DECRYPT   1u
+#define MODE_ENCRYPT     0u
+#define MODE_DECRYPT     1u
+#define MODE_REENCRYPT   2u
+#define MODE_ENCRYPT_ALL 3u
+
+/* Key labels for human-readable output */
+static const char *key_labels[6] = {
+    "V300R017",
+    "V500R019C10SPC310",
+    "V500R019C00SPC050",
+    "V500R019C10SPC386",
+    "V500R020C00SPC240",
+    "V500R020C10SPC212",
+};
 
 /* ── Gzip helper: compress file → temp file, return temp path ────────────── */
 static int gzip_file(const char *input_path, const char *output_path)
@@ -164,9 +176,15 @@ static int check_argc(int argc)
     if ((unsigned)(argc - 4) > 2u) {
         HW_OS_Printf("version[v2.0] – Huawei hw_ctree.xml encrypt/decrypt tool\n"
                      "  aescrypt2 <mode> <input.xml> <output.xml>\n\n"
-                     "  <mode>: 0 = encrypt (XML→gzip→AES), 1 = decrypt (AES→gunzip→XML)\n\n"
+                     "  <mode>:\n"
+                     "    0 = encrypt (XML→gzip→AES)\n"
+                     "    1 = decrypt (AES→gunzip→XML)\n"
+                     "    2 = re-encrypt (decrypt with auto-key, re-encrypt with AESCRYPT2_KEY_INDEX)\n"
+                     "    3 = encrypt-all (XML→gzip→AES with all 6 keys, output: <output>_key0..5.xml)\n\n"
+                     "  example: aescrypt2 0 config.xml hw_ctree.xml\n"
                      "  example: aescrypt2 1 hw_ctree.xml decrypted.xml\n"
-                     "  example: aescrypt2 0 config.xml hw_ctree.xml\n\n"
+                     "  example: AESCRYPT2_KEY_INDEX=3 aescrypt2 2 old.bin new.bin\n"
+                     "  example: aescrypt2 3 config.xml output\n\n"
                      "  env AESCRYPT2_KEY_INDEX=0..5 selects firmware key:\n"
                      "    0=V300R017  1=V500R019C10  2=V500R019C00\n"
                      "    3=V500R019C10SPC386  4=V500R020C00  5=V500R020C10\n\n");
@@ -211,7 +229,7 @@ static int validate_args(int argc, char **argv, uint32_t *work_mode_out)
 
     HW_OS_StrToUInt32(argv[1], &mode);
 
-    if (mode <= MODE_DECRYPT) {
+    if (mode <= MODE_ENCRYPT_ALL) {
         *work_mode_out = mode;
         return 0;
     }
@@ -268,6 +286,27 @@ static int validate_args(int argc, char **argv, uint32_t *work_mode_out)
  *   964  bl   0x7ac      ; OS_AescryptDecrypt(1, infile, outfile, arg4, has_arg5)
  *   968  b    914
  */
+/* ── Encrypt a single file with a specific key index ─────────────────────── */
+static int encrypt_with_key(const char *infile, const char *outfile, int key_idx)
+{
+    extern void HW_KMC_SetKeyIndex(int);
+    char gz_tmp[FILENAME_BUF + 32];
+    int ret;
+
+    HW_KMC_SetKeyIndex(key_idx);
+
+    snprintf(gz_tmp, sizeof(gz_tmp), "%s.%d.gz.tmp", infile, (int)getpid());
+
+    if (gzip_file(infile, gz_tmp) != 0) {
+        HW_OS_Printf("gzip compression of %s failed!\r\n", infile);
+        return 1;
+    }
+
+    ret = HW_OS_AESCBCEncrypt(1, gz_tmp, outfile, NULL, 0);
+    remove(gz_tmp);
+    return ret;
+}
+
 int main(int argc, char **argv)
 {
     char     infile[FILENAME_BUF];
@@ -298,23 +337,18 @@ int main(int argc, char **argv)
 
     /* Dispatch to encrypt or decrypt */
     if (work_mode == MODE_ENCRYPT) {
-        /* Encrypt: XML → gzip → AES-CBC → outfile */
-        char gz_tmp[FILENAME_BUF + 32];
-        snprintf(gz_tmp, sizeof(gz_tmp), "%s.%d.gz.tmp", infile, (int)getpid());
+        /* Mode 0: XML → gzip → AES-CBC → outfile */
+        const char *env = getenv("AESCRYPT2_KEY_INDEX");
+        int ki = (env && *env >= '0' && *env <= '5') ? (*env - '0') : 0;
 
         HW_OS_Printf("Compressing %s → gzip...\n", infile);
-        if (gzip_file(infile, gz_tmp) != 0) {
-            HW_OS_Printf("gzip compression of %s failed!\r\n", infile);
-            return 1;
-        }
-
-        ret = HW_OS_AESCBCEncrypt(1, gz_tmp, outfile, arg4, has_arg5);
-        remove(gz_tmp);
-
+        ret = encrypt_with_key(infile, outfile, ki);
         if (ret == 0)
-            HW_OS_Printf("Encrypted %s → %s (XML→gzip→AES)\n", infile, outfile);
-    } else {
-        /* Decrypt: AES-CBC → gunzip → XML outfile */
+            HW_OS_Printf("Encrypted %s → %s (key %d: %s)\n",
+                         infile, outfile, ki, key_labels[ki]);
+
+    } else if (work_mode == MODE_DECRYPT) {
+        /* Mode 1: AES-CBC → gunzip → XML outfile */
         char raw_tmp[FILENAME_BUF + 32];
         snprintf(raw_tmp, sizeof(raw_tmp), "%s.%d.raw.tmp", outfile, (int)getpid());
 
@@ -336,6 +370,71 @@ int main(int argc, char **argv)
 
         if (ret == 0)
             HW_OS_Printf("Decrypted %s → %s (AES→gunzip→XML)\n", infile, outfile);
+
+    } else if (work_mode == MODE_REENCRYPT) {
+        /* Mode 2: decrypt input (auto-detect key), re-encrypt with target key */
+        const char *env = getenv("AESCRYPT2_KEY_INDEX");
+        int target_ki = (env && *env >= '0' && *env <= '5') ? (*env - '0') : 0;
+        char dec_tmp[FILENAME_BUF + 32];
+        char raw_tmp[FILENAME_BUF + 32];
+
+        snprintf(dec_tmp, sizeof(dec_tmp), "%s.%d.dec.tmp", outfile, (int)getpid());
+        snprintf(raw_tmp, sizeof(raw_tmp), "%s.%d.raw.tmp", outfile, (int)getpid());
+
+        /* Step 1: Decrypt with auto-detected key */
+        ret = HW_OS_AESCBCDecrypt(1, infile, raw_tmp, NULL, 0);
+        if (ret != 0) {
+            HW_OS_Printf("Re-encrypt: decryption failed\n");
+            remove(raw_tmp);
+            goto reencrypt_fail;
+        }
+
+        /* Step 2: Decompress if gzipped */
+        if (is_gzip_file(raw_tmp)) {
+            if (gunzip_file(raw_tmp, dec_tmp) != 0) {
+                HW_OS_Printf("Re-encrypt: gunzip failed\n");
+                remove(raw_tmp);
+                ret = 1;
+                goto reencrypt_fail;
+            }
+            remove(raw_tmp);
+        } else {
+            rename(raw_tmp, dec_tmp);
+        }
+
+        /* Step 3: Re-encrypt with target key */
+        HW_OS_Printf("Re-encrypting with key %d (%s)...\n",
+                     target_ki, key_labels[target_ki]);
+        ret = encrypt_with_key(dec_tmp, outfile, target_ki);
+        remove(dec_tmp);
+
+        if (ret == 0)
+            HW_OS_Printf("Re-encrypted %s → %s (key %d: %s)\n",
+                         infile, outfile, target_ki, key_labels[target_ki]);
+
+    } else if (work_mode == MODE_ENCRYPT_ALL) {
+        /* Mode 3: encrypt XML with all 6 keys → output_key0..5.xml */
+        int success_count = 0;
+
+        HW_OS_Printf("Encrypting %s with all 6 firmware keys...\n\n", infile);
+
+        for (int ki = 0; ki < 6; ki++) {
+            char out_path[FILENAME_BUF + 32];
+            snprintf(out_path, sizeof(out_path), "%s_key%d.xml", outfile, ki);
+
+            HW_OS_Printf("[Key %d] %s → %s\n", ki, key_labels[ki], out_path);
+            ret = encrypt_with_key(infile, out_path, ki);
+
+            if (ret == 0) {
+                HW_OS_Printf("[Key %d] ✓ OK\n", ki);
+                success_count++;
+            } else {
+                HW_OS_Printf("[Key %d] ✗ FAILED\n", ki);
+            }
+        }
+
+        HW_OS_Printf("\nDone: %d/6 encrypted files generated.\n", success_count);
+        ret = (success_count == 6) ? 0 : 1;
     }
 
     if (ret != 0) {
@@ -343,5 +442,10 @@ int main(int argc, char **argv)
         HW_OS_Printf("Encrypt or decrypt %s failed!\r\n", infile);
     }
 
+    return ret;
+
+reencrypt_fail:
+    HW_PROC_DBG_LastWord(0x5c, "hw_ssp_ctool.c", NULL, ret, 0, 0);
+    HW_OS_Printf("Encrypt or decrypt %s failed!\r\n", infile);
     return ret;
 }

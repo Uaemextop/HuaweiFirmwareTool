@@ -5,7 +5,12 @@
 | Archivo | Formato | Descripción |
 |---------|---------|-------------|
 | `hw_ctree_unlocked.xml` | XML plano | Config desencriptada (para editar) |
-| `hw_ctree_unlocked.bin` | AES encriptado | Config lista para subir al router |
+| `hw_ctree_unlocked_key0.xml` | AES encriptado | Key 0 – V300R017 |
+| `hw_ctree_unlocked_key1.xml` | AES encriptado | **Key 1 – V500R019C10SPC310 (Telmex)** |
+| `hw_ctree_unlocked_key2.xml` | AES encriptado | Key 2 – V500R019C00SPC050 |
+| `hw_ctree_unlocked_key3.xml` | AES encriptado | Key 3 – V500R019C10SPC386 (Totalplay) |
+| `hw_ctree_unlocked_key4.xml` | AES encriptado | Key 4 – V500R020C00SPC240 (Claro-RD) |
+| `hw_ctree_unlocked_key5.xml` | AES encriptado | Key 5 – V500R020C10SPC212 |
 | `hw_ctree_original.xml` | XML plano | Config original sin modificar |
 
 ## ⚠️ IMPORTANTE: El router solo acepta archivos ENCRIPTADOS
@@ -15,7 +20,8 @@ Si subes el `.xml` plano por la web, el router:
 2. Se reinicia automáticamente
 3. Restaura la config de fábrica → pierdes todo
 
-**Siempre sube `hw_ctree_unlocked.bin`** (ya encriptado), no el `.xml`.
+**Siempre sube el archivo `hw_ctree_unlocked_keyN.xml`** encriptado que corresponda
+a tu firmware (ej: `key1` para Telmex), no el XML plano.
 
 ---
 
@@ -31,7 +37,7 @@ Si subes el `.xml` plano por la web, el router:
 ```
 Descargar Tftpd64: https://pjo2.github.io/tftpd64/
 1. Ejecutar Tftpd64
-2. Seleccionar la carpeta donde está hw_ctree_unlocked.bin
+2. Seleccionar la carpeta donde está `hw_ctree_unlocked_key1.xml` (o el keyN de tu firmware)
 3. Verificar que escucha en 192.168.100.x
 ```
 
@@ -39,14 +45,14 @@ Descargar Tftpd64: https://pjo2.github.io/tftpd64/
 ```bash
 sudo apt install tftpd-hpa
 # Copiar el archivo encriptado
-sudo cp hw_ctree_unlocked.bin /srv/tftp/hw_ctree.xml
+sudo cp hw_ctree_unlocked_key1.xml /srv/tftp/hw_ctree.xml
 sudo systemctl restart tftpd-hpa
 ```
 
 **macOS:**
 ```bash
 # Copiar al directorio TFTP
-sudo cp hw_ctree_unlocked.bin /private/tftpboot/hw_ctree.xml
+sudo cp hw_ctree_unlocked_key1.xml /private/tftpboot/hw_ctree.xml
 sudo launchctl load -F /System/Library/LaunchDaemons/tftp.plist
 ```
 
@@ -101,7 +107,7 @@ http://192.168.100.1
 1. Ir a **Sistema** → **Gestión de archivos de configuración**
    (o **System** → **Configuration File Management**)
 2. Seleccionar **Importar archivo de configuración** / **Import Configuration File**
-3. Seleccionar `hw_ctree_unlocked.bin` (⚠️ el `.bin`, NO el `.xml`)
+3. Seleccionar `hw_ctree_unlocked_key1.xml` (el archivo **encriptado** para tu firmware)
 4. Hacer clic en **Importar** / **Import**
 5. El router se reiniciará automáticamente
 
@@ -127,7 +133,7 @@ ftp 192.168.100.1
 # Subir el archivo encriptado
 ftp> binary
 ftp> cd /mnt/jffs2/
-ftp> put hw_ctree_unlocked.bin hw_ctree.xml
+ftp> put hw_ctree_unlocked_key1.xml hw_ctree.xml
 ftp> bye
 
 # Luego por Telnet:
@@ -164,11 +170,11 @@ python3 tools/ctree_modifier.py -i config_decrypted.xml \
 ```bash
 # Encriptar para subir al router
 AESCRYPT2_KEY_INDEX=1 ./decompiled/build/aescrypt2 0 \
-    config_modified.xml hw_ctree_ready.bin
+    config_modified.xml hw_ctree_encrypted.xml
 ```
 
 ### 4. Subir al router
-Usar cualquiera de los 3 métodos de arriba con `hw_ctree_ready.bin`.
+Usar cualquiera de los 3 métodos de arriba con `hw_ctree_encrypted.xml`.
 
 ---
 
@@ -199,7 +205,7 @@ done
 ## Solución de problemas
 
 ### "El router se reinicia al subir el archivo"
-- Estás subiendo el `.xml` plano. Debes subir el `.bin` encriptado.
+- Estás subiendo el XML plano sin encriptar. Debes subir el archivo encriptado (`_keyN.xml`).
 - O el `ResetFlag` está en `"1"`. Usa `--unlock-all` que lo cambia a `"0"`.
 
 ### "Después de reiniciar se restaura UserGroup=''"

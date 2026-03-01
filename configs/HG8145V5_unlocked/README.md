@@ -8,7 +8,12 @@ Configuraciones `hw_ctree.xml` original y desbloqueada para Huawei HG8145V5.
 |---------|---------|-------------|
 | `hw_ctree_original.xml` | XML plano | Config original (UserGroup vacío, solo `exit` disponible) |
 | `hw_ctree_unlocked.xml` | XML plano | Config desbloqueada (para editar manualmente) |
-| `hw_ctree_unlocked.bin` | AES encriptado | **Config lista para subir al router** (key index 1) |
+| `hw_ctree_unlocked_key0.xml` | AES encriptado | Key 0 – V300R017 (HG8245Q, HG8247H) |
+| `hw_ctree_unlocked_key1.xml` | AES encriptado | **Key 1 – V500R019C10SPC310 (HG8145V5 Telmex)** |
+| `hw_ctree_unlocked_key2.xml` | AES encriptado | Key 2 – V500R019C00SPC050 (HG8246M, HG8247H5) |
+| `hw_ctree_unlocked_key3.xml` | AES encriptado | Key 3 – V500R019C10SPC386 (HG8145V5 Totalplay) |
+| `hw_ctree_unlocked_key4.xml` | AES encriptado | Key 4 – V500R020C00SPC240 (HG8145V5 Claro-RD) |
+| `hw_ctree_unlocked_key5.xml` | AES encriptado | Key 5 – V500R020C10SPC212 (HG8145V5 General) |
 | `GUIA_SUBIR_CONFIG.md` | Documentación | Guía paso a paso para subir via TFTP/Web/FTP |
 
 ## Cambios realizados (9 modificaciones)

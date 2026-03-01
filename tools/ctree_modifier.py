@@ -464,7 +464,7 @@ def main():
     )
     parser.add_argument(
         "--url", "-u",
-        help="URL to download hw_ctree.xml from",
+        help="URL to download hw_ctree.xml from (may need updating if source repo moves)",
         default="https://raw.githubusercontent.com/Uaemextop/huawei-hg8145v5/refs/heads/main/hw_ctree.xml"
     )
     args = parser.parse_args()

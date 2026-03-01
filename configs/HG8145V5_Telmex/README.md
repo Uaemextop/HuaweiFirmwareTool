@@ -61,7 +61,7 @@
 
 ## Firmware Extraction Results
 
-The firmware `Firmware TELMEX R020 NEW.bin` (38.6 MB) contains:
+The firmware `Firmware\ TELMEX\ R020\ NEW.bin` (38.6 MB, escape spaces in CLI) contains:
 
 | Item | Section | Size | Description |
 |------|---------|------|-------------|

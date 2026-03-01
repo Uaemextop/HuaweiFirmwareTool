@@ -8,6 +8,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 from ctree_modifier import (
     disable_cwmp,
+    disable_reset_flag,
     enable_ftp,
     enable_ftp_service,
     enable_ssh,
@@ -15,6 +16,7 @@ from ctree_modifier import (
     list_acl_services,
     list_cli_users,
     set_cli_user_group,
+    set_inform_interval,
     set_web_user_level,
     unlock_all,
 )
@@ -38,8 +40,10 @@ Password="hash" UserLevel="1" Enable="1" ModifyPasswordFlag="0"/>
 Password="hash" UserLevel="0" Enable="1" ModifyPasswordFlag="0"/>
 </X_HW_WebUserInfo>
 </UserInterface>
-<ManagementServer EnableCWMP="1" URL="http://acs.isp.com" Username="" Password=""/>
+<ManagementServer EnableCWMP="1" URL="http://acs.isp.com" Username="" Password="" \
+PeriodicInformEnable="1" PeriodicInformInterval="43200"/>
 <X_HW_ServiceManage FtpEnable="0" FtpPort="21"/>
+<X_HW_PSIXmlReset ResetFlag="1"/>
 </InternetGatewayDevice>
 """
 
@@ -108,6 +112,23 @@ class TestAclServices:
         assert changed
         assert 'EnableCWMP="0"' in result
 
+    def test_disable_reset_flag(self):
+        result, changed = disable_reset_flag(SAMPLE_XML)
+        assert changed
+        assert 'ResetFlag="0"' in result
+        assert 'ResetFlag="1"' not in result
+
+    def test_disable_reset_flag_already_zero(self):
+        xml = SAMPLE_XML.replace('ResetFlag="1"', 'ResetFlag="0"')
+        result, changed = disable_reset_flag(xml)
+        assert not changed
+        assert result == xml
+
+    def test_set_inform_interval_disable(self):
+        result, changed = set_inform_interval(SAMPLE_XML, "0")
+        assert changed
+        assert 'PeriodicInformEnable="0"' in result
+
 
 class TestListFunctions:
     def test_list_cli_users(self):
@@ -126,12 +147,14 @@ class TestListFunctions:
 class TestUnlockAll:
     def test_unlock_all_root(self):
         result, changes = unlock_all(SAMPLE_XML, "root")
-        assert len(changes) >= 5
+        assert len(changes) >= 7
         assert 'UserGroup="4294967295"' in result
         assert 'SSHLanEnable="1"' in result
         assert 'FTPLanEnable="1"' in result
         assert 'FtpEnable="1"' in result
         assert 'EnableCWMP="0"' in result
+        assert 'ResetFlag="0"' in result
+        assert 'PeriodicInformEnable="0"' in result
 
     def test_unlock_all_idempotent(self):
         result1, changes1 = unlock_all(SAMPLE_XML, "root")

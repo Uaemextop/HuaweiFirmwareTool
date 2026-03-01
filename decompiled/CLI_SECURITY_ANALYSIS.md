@@ -263,6 +263,23 @@ El firmware maneja **4 copias** del config:
 
 ### Cómo hacer los cambios PERMANENTES:
 
+#### Paso 0: Desactivar ResetFlag (CRÍTICO)
+El XML tiene `<X_HW_PSIXmlReset ResetFlag="1"/>` que **fuerza restauración de fábrica**
+al importar por web. Debe ser `"0"`:
+```bash
+# Ya incluido en --unlock-all, pero verificar en tu XML:
+grep "ResetFlag" hw_ctree.xml
+# Debe ser: ResetFlag="0"
+```
+Si `ResetFlag="1"`, al subir por web el modem reinicia y restaura UserGroup="" y UserLevel="1".
+
+#### Paso 0b: Encriptar ANTES de subir por web (OBLIGATORIO)
+El modem espera el XML **encriptado** (gzip+AES). Subir XML plano causa rechazo y reinicio:
+```bash
+AESCRYPT2_KEY_INDEX=1 ./decompiled/build/aescrypt2 0 modified.xml hw_ctree_encrypted.xml
+# Subir hw_ctree_encrypted.xml como "hw_ctree.xml" en la web
+```
+
 #### Paso 1: Guardar con `save data` (OBLIGATORIO)
 Después de subir el config modificado, ejecuta en CLI:
 ```

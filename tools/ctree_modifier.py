@@ -149,6 +149,34 @@ def disable_cwmp(xml_text: str) -> Tuple[str, bool]:
     return new_text, count > 0
 
 
+def disable_reset_flag(xml_text: str) -> Tuple[str, bool]:
+    """Set ``X_HW_PSIXmlReset ResetFlag`` to ``"0"``.
+
+    When ``ResetFlag="1"`` the modem restores factory defaults after a
+    config import via the web interface, reverting all modifications.
+    Setting it to ``"0"`` prevents this automatic reset.
+
+    Returns the modified XML text and whether a change was made.
+    """
+    pattern = re.compile(
+        r'(<X_HW_PSIXmlReset\b[^>]*\bResetFlag=)"1"'
+    )
+    new_text, count = pattern.subn(r'\g<1>"0"', xml_text)
+    return new_text, count > 0
+
+
+def set_inform_interval(xml_text: str, interval: str = "0") -> Tuple[str, bool]:
+    """Set ``PeriodicInformEnable`` to ``"0"`` to stop periodic ISP check-ins.
+
+    Returns the modified XML text and whether a change was made.
+    """
+    pattern = re.compile(
+        r'(<ManagementServer\b[^>]*\bPeriodicInformEnable=)"([^"]*)"'
+    )
+    new_text, count = pattern.subn(r'\g<1>"' + interval + '"', xml_text)
+    return new_text, count > 0
+
+
 def unlock_all(xml_text: str, username: str = "root") -> Tuple[str, List[str]]:
     """Apply all modifications to unlock full access for *username*.
 
@@ -184,6 +212,14 @@ def unlock_all(xml_text: str, username: str = "root") -> Tuple[str, List[str]]:
     if ok:
         changes.append("EnableCWMP → 0 (prevent ISP config push)")
 
+    xml_text, ok = disable_reset_flag(xml_text)
+    if ok:
+        changes.append("PSIXmlReset ResetFlag → 0 (prevent factory reset on import)")
+
+    xml_text, ok = set_inform_interval(xml_text, "0")
+    if ok:
+        changes.append("PeriodicInformEnable → 0 (stop ISP check-ins)")
+
     return xml_text, changes
 
 
@@ -208,6 +244,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--enable-telnet", action="store_true")
     parser.add_argument("--disable-cwmp", action="store_true",
                         help="Disable TR-069/CWMP (prevent ISP config push)")
+    parser.add_argument("--disable-reset-flag", action="store_true",
+                        help="Set PSIXmlReset ResetFlag to 0 (prevent factory reset on import)")
+    parser.add_argument("--disable-periodic-inform", action="store_true",
+                        help="Disable PeriodicInformEnable (stop ISP check-ins)")
     parser.add_argument(
         "--set-web-level", nargs=2, metavar=("USER", "LEVEL"),
         help="Set web UserLevel (0=admin, 1=regular)",
@@ -279,6 +319,16 @@ def main(argv: Optional[List[str]] = None) -> int:
         xml_text, changed = disable_cwmp(xml_text)
         if changed:
             changes.append("EnableCWMP → 0")
+
+    if args.disable_reset_flag:
+        xml_text, changed = disable_reset_flag(xml_text)
+        if changed:
+            changes.append("PSIXmlReset ResetFlag → 0")
+
+    if args.disable_periodic_inform:
+        xml_text, changed = set_inform_interval(xml_text, "0")
+        if changed:
+            changes.append("PeriodicInformEnable → 0")
 
     if not changes:
         print("No modifications requested.", file=sys.stderr)

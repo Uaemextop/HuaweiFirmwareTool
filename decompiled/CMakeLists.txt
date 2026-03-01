@@ -235,6 +235,12 @@ install(TARGETS keyfilemng RUNTIME DESTINATION bin)
 add_executable(decrypt_prvtkey decrypt_prvtkey/decrypt_prvtkey.c)
 install(TARGETS decrypt_prvtkey RUNTIME DESTINATION bin)
 
+# backupKey – MTD flash partition key backup tool
+# Original: /bin/backupKey (9500 bytes), NEEDED: libhw_ssp_basic.so, libhw_ldsp_common.so
+# Embedded: TOOL_GetMTDNameByKeyWord, SwmReleaseKeyData, HW_OS_ReadFile, HW_OS_ExecShellCmdEx
+add_executable(backupKey backupKey/backupKey.c)
+install(TARGETS backupKey RUNTIME DESTINATION bin)
+
 # ── Install ──────────────────────────────────────────────────────────────────
 if(BUILD_WLAN_AES AND NOT WIN32)
     install(TARGETS wlan_aes_crypto LIBRARY DESTINATION lib)

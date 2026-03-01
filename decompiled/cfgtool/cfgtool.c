@@ -371,23 +371,54 @@ int HW_CFGTOOL_OperByType(int op_type, void *node,
                             const char *xml_path, const char *xml_opt,
                             int arg_count, char **args, const char *extra_buf)
 {
-    (void)arg_count; (void)extra_buf;
+    (void)extra_buf;
 
     switch (op_type) {
-    case CFGTOOL_OP_GET:
+    case CFGTOOL_OP_GET: {
+        /* Original: cfgtool get <file> <path> [AttName]
+         *   xml_opt = path, args[0] = AttName (optional)
+         *   If AttName provided: build full path path.AttName
+         */
+        if (args && arg_count >= 1 && args[0][0] != '\0') {
+            char fullpath[512];
+            snprintf(fullpath, sizeof(fullpath), "%s.%s", xml_opt, args[0]);
+            return HW_CFGTOOL_XmlGet(xml_path, fullpath);
+        }
         return HW_CFGTOOL_XmlGet(xml_path, xml_opt);
+    }
 
-    case CFGTOOL_OP_SET:
+    case CFGTOOL_OP_SET: {
+        /* Original: cfgtool set <file> <path> <AttName> <Value>
+         *   xml_opt = path, args[0] = AttName, args[1] = Value
+         *   Build full path: path.AttName, then set Value
+         */
         if (!node || !args) return -1;
+        if (arg_count >= 2) {
+            char fullpath[512];
+            snprintf(fullpath, sizeof(fullpath), "%s.%s", xml_opt, args[0]);
+            return HW_CFGTOOL_SetXMLValByPath(node, fullpath, args[1]);
+        }
+        /* Fallback: single arg = direct value set at path */
         return HW_CFGTOOL_SetXMLValByPath(node, xml_opt, args[0]);
+    }
 
     case CFGTOOL_OP_FIND:
         return HW_CFGTOOL_XmlFind(xml_path, xml_opt,
                                     args ? args[0] : NULL);
 
     case CFGTOOL_OP_ADD:
-        if (!node || !args) return -1;
-        return HW_CFGTOOL_AddXMLValByPath(node, xml_opt, args[0]);
+        if (!node) return -1;
+        if (args && arg_count >= 2) {
+            /* cfgtool add <file> <path> <childName> <value> */
+            char fullpath[512];
+            snprintf(fullpath, sizeof(fullpath), "%s.%s", xml_opt, args[0]);
+            return HW_CFGTOOL_AddXMLValByPath(node, fullpath, args[1]);
+        } else if (args && arg_count >= 1) {
+            /* cfgtool add <file> <path> <value> */
+            return HW_CFGTOOL_AddXMLValByPath(node, xml_opt, args[0]);
+        }
+        /* cfgtool add <file> <path> – add empty node */
+        return HW_CFGTOOL_AddXMLValByPath(node, xml_opt, NULL);
 
     case CFGTOOL_OP_CREATE:
         HW_CFGTOOL_XmlCreate(xml_path, xml_opt);

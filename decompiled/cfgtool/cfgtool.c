@@ -63,9 +63,14 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+/* Host build: safe-string stubs */
+#if !defined(__STDC_LIB_EXT1__) && !defined(_WIN32)
+#  include "hw_os_stubs.h"
+#endif
+
 /* ── Huawei OS / XML helpers (provided by libcfg_api.so at runtime) ──────── */
 extern int   HW_OS_Printf(const char *fmt, ...);
-extern int   HW_PROC_DBG_LastWord(int line, const char *file,
+extern void  HW_PROC_DBG_LastWord(int line, const char *file,
                                    const char *msg, int a, int b, int c);
 extern void *HW_OS_MemMallocSet(size_t size);
 extern void  HW_OS_MemFreeD(void *ptr);
@@ -108,19 +113,7 @@ extern int   HW_CFGTOOL_CheckArg(int op_type, int argc, char **argv);
 #define CFGTOOL_DEFAULT_XML "/mnt/jffs2/hw_default_ctree.xml"
 #define CFGTOOL_DEFTREE_KEY "DEFTREE"
 
-/* ── Operation type IDs ─────────────────────────────────────────────────── */
-typedef enum {
-    CFGTOOL_OP_NONE     = 0,
-    CFGTOOL_OP_GET      = 1,
-    CFGTOOL_OP_SET      = 2,
-    CFGTOOL_OP_FIND     = 3,
-    CFGTOOL_OP_ADD      = 4,
-    CFGTOOL_OP_CREATE   = 5,
-    CFGTOOL_OP_DEL      = 6,
-    CFGTOOL_OP_BATCH    = 7,
-    CFGTOOL_OP_CLONE    = 8,
-    CFGTOOL_OP_GETTOFILE = 9,
-} CfgtoolOpType;
+/* Operation type IDs are defined in hw_cfg_tool.h (CfgtoolOpType enum) */
 
 /*
  * HW_CFGTOOL_ShowUsage – display usage message to stdout.

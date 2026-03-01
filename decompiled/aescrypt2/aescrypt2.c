@@ -229,9 +229,9 @@ int main(int argc, char **argv)
 
     /* Dispatch to encrypt or decrypt */
     if (work_mode == MODE_ENCRYPT)
-        ret = OS_AescryptEncrypt(1, infile, outfile, arg4, has_arg5);
+        ret = HW_OS_AESCBCEncrypt(1, infile, outfile, arg4, has_arg5);
     else
-        ret = OS_AescryptDecrypt(1, infile, outfile, arg4, has_arg5);
+        ret = HW_OS_AESCBCDecrypt(1, infile, outfile, arg4, has_arg5);
 
     if (ret != 0) {
         HW_PROC_DBG_LastWord(0x5c, "hw_ssp_ctool.c", NULL, ret, 0, 0);

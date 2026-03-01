@@ -242,8 +242,8 @@ int OS_AescryptFillHead(uint8_t *out_hdr, const uint8_t *key_buf,
  *   634f0  bl   0x28400       ; rename/move output on success
  *   63504  ldm  sp, {..., pc}
  */
-int OS_AescryptEncrypt(int unused, const char *infile, const char *outfile,
-                       const char *arg4, int has_arg5)
+int HW_OS_AESCBCEncrypt(int unused, const char *infile, const char *outfile,
+                        const char *arg4, int has_arg5)
 {
 #if defined(HAVE_MBEDTLS)
     int ret = 0;
@@ -365,8 +365,8 @@ int OS_AescryptEncrypt(int unused, const char *infile, const char *outfile,
  *   638e8  mov  r0, r6    ; outfile
  *   638ec  bl   0x28400   ; rename output on success
  */
-int OS_AescryptDecrypt(int unused, const char *infile, const char *outfile,
-                       const char *arg4, int has_arg5)
+int HW_OS_AESCBCDecrypt(int unused, const char *infile, const char *outfile,
+                        const char *arg4, int has_arg5)
 {
 #if defined(HAVE_MBEDTLS)
     int ret = 0;

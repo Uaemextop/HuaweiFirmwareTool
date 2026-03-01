@@ -86,8 +86,8 @@ int OS_AescryptFillHead(uint8_t *out_hdr, const uint8_t *key_buf,
  * @param has_arg5  Non-zero when a 5th argv was supplied.
  * @return          0 on success, non-zero error code on failure.
  */
-int OS_AescryptEncrypt(int unused, const char *infile, const char *outfile,
-                       const char *arg4, int has_arg5);
+int HW_OS_AESCBCEncrypt(int unused, const char *infile, const char *outfile,
+                        const char *arg4, int has_arg5);
 
 /**
  * OS_AescryptDecrypt – decrypt a file produced by OS_AescryptEncrypt.
@@ -102,8 +102,8 @@ int OS_AescryptEncrypt(int unused, const char *infile, const char *outfile,
  * @param has_arg5  Non-zero when a 5th argv was supplied.
  * @return          0 on success, non-zero error code on failure.
  */
-int OS_AescryptDecrypt(int unused, const char *infile, const char *outfile,
-                       const char *arg4, int has_arg5);
+int HW_OS_AESCBCDecrypt(int unused, const char *infile, const char *outfile,
+                        const char *arg4, int has_arg5);
 
 /* ── ECB / CBC wrappers (libhw_ssp_basic.so) ───────────────────────────── */
 

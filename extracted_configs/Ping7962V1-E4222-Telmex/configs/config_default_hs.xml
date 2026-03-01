@@ -1,0 +1,4 @@
+<Config_Information_File_HS>
+<Value Name="WAN_PHY_PORT" Value="5"/>
+<Value Name="PON_MODE" Value="1"/>
+</Config_Information_File_HS>

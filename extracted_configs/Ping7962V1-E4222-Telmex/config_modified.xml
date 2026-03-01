@@ -49,10 +49,10 @@
 <Value Name="SNMP_COMM_RW" Value="public"/>
 <Value Name="SNMP_SYS_NAME" Value="V7921I1"/>
 <Value Name="MIB_SNMPV3_RO_NAME" Value="test"/>
-<Value Name="MIB_SNMPV3_RO_PASSWORD" Value="vHaxJNP9Z3"/>
+<Value Name="MIB_SNMPV3_RO_PASSWORD" Value="admin"/>
 <Value Name="MIB_SNMPV3_RO_AUTH" Value="1"/>
 <Value Name="MIB_SNMPV3_RW_NAME" Value="admin"/>
-<Value Name="MIB_SNMPV3_RW_PASSWORD" Value="vHaxJNP9Z3"/>
+<Value Name="MIB_SNMPV3_RW_PASSWORD" Value="admin"/>
 <Value Name="MIB_SNMPV3_RW_AUTH" Value="1"/>
 <Value Name="MIB_SNMPV3_RW_PRIVACY" Value="1"/>
 <Value Name="MIB_SNMP_VERSION" Value="2"/>
@@ -433,7 +433,7 @@
 <Value Name="MIB_PING_PROTOCOL_VERSION" Value="Any"/>
 <Value Name="MIB_CWMP_PERIODIC_STATISTICS_NAME" Value="sampleset-1"/>
 <Value Name="MIB_BULKDATA_ENABLE" Value="0"/>
-<Value Name="MIB_USB_SHARING_ENABLE" Value="0"/>
+<Value Name="MIB_USB_SHARING_ENABLE" Value="1"/>
 <Value Name="MIB_FIREWALL_SECURITY_LEVEL" Value="0"/>
 <chain chainName="ATM_VC_TBL">
  <Value Name="ifIndex" Value="65281"/>
@@ -886,7 +886,7 @@
 </chain>
 <chain chainName="ACC_TBL">
  <Value Name="telnet" Value="1"/>
- <Value Name="ftp" Value="0"/>
+ <Value Name="ftp" Value="1"/>
  <Value Name="tftp" Value="0"/>
  <Value Name="web" Value="2"/>
  <Value Name="snmp" Value="2"/>
@@ -896,7 +896,7 @@
  <Value Name="netlog" Value="2"/>
  <Value Name="telnet_port" Value="23"/>
  <Value Name="web_port" Value="8080"/>
- <Value Name="ftp_port" Value="1"/>
+ <Value Name="ftp_port" Value="21"/>
  <Value Name="https" Value="1"/>
  <Value Name="https_port" Value="8090"/>
 </chain>
@@ -4992,9 +4992,9 @@
 <chain chainName="MIB_BULK_HTTP_REQPARAM_TBL">
 </chain>
 <chain chainName="MIB_USB_USER_TBL">
- <Value Name="name" Value="TELMEX"/>
- <Value Name="password" Value="vHaxJNP9Z3"/>
- <Value Name="rootpath" Value="/mnt"/>
+ <Value Name="name" Value="admin"/>
+ <Value Name="password" Value="admin"/>
+ <Value Name="rootpath" Value="/"/>
  <Value Name="allfolders" Value="1"/>
  <Value Name="enablewrite" Value="1"/>
  <Value Name="enable" Value="1"/>

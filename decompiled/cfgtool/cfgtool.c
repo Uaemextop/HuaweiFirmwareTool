@@ -63,12 +63,35 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#ifdef STANDALONE_CFGTOOL
+/* ── Standalone build: XML ops from cfgtool_xml.c ────────────────────────── */
+#  include "cfgtool_xml.h"
+#else
+/* ── Router / stub-linked build ──────────────────────────────────────────── */
+extern void *HW_XML_ParseFile(const char *path, void **node_out);
+extern void  HW_XML_FreeNode(void *node);
+extern void  HW_XML_FreeSingleNode(void *node);
+extern void *HW_XML_NewNode(const char *name);
+extern int   HW_XML_SetNodeContent(void *node, const char *content);
+extern int   HW_XML_TransformFile(void *node, const char *path);
+extern int   HW_CFGTOOL_GetXMLValByPath(void *node, const char *xpath,
+                                          char *out, size_t out_sz);
+extern int   HW_CFGTOOL_SetXMLValByPath(void *node, const char *xpath,
+                                          const char *value);
+extern int   HW_CFGTOOL_AddXMLValByPath(void *node, const char *xpath,
+                                          const char *value);
+extern int   HW_CFGTOOL_DelXMLValByPath(void *node, const char *xpath);
+extern int   HW_CFGTOOL_CloneXMLValByPath(void *node, const char *xpath,
+                                             const char *dst_xpath);
+extern int   HW_CFGTOOL_CheckArg(int op_type, int argc, char **argv);
+#endif
+
 /* Host build: safe-string stubs */
 #if !defined(__STDC_LIB_EXT1__) && !defined(_WIN32)
 #  include "hw_os_stubs.h"
 #endif
 
-/* ── Huawei OS / XML helpers (provided by libcfg_api.so at runtime) ──────── */
+/* ── Huawei OS helpers (stubs on host, libhw_ssp_basic.so on device) ─────── */
 extern int   HW_OS_Printf(const char *fmt, ...);
 extern void  HW_PROC_DBG_LastWord(int line, const char *file,
                                    const char *msg, int a, int b, int c);
@@ -85,29 +108,10 @@ extern int   HW_OS_CmdFormat(char *buf, size_t len, const char *fmt, ...);
 extern int   SSP_ExecShellCmd(const char *cmd);
 extern void  HW_CFGTOOL_SysTrace(const char *file, int line, const char *fmt, ...);
 
-/* XML helpers */
-extern void *HW_XML_ParseFile(const char *path, void **node_out);
-extern void  HW_XML_FreeNode(void *node);
-extern void  HW_XML_FreeSingleNode(void *node);
-extern void *HW_XML_NewNode(const char *name);
-extern int   HW_XML_SetNodeContent(void *node, const char *content);
-extern int   HW_XML_TransformFile(void *node, const char *path);
-
-/* cfgtool-specific helpers (libcfg_api.so) */
-extern int   HW_CFGTOOL_GetXMLValByPath(void *node, const char *xpath,
-                                          char *out, size_t out_sz);
-extern int   HW_CFGTOOL_SetXMLValByPath(void *node, const char *xpath,
-                                          const char *value);
-extern int   HW_CFGTOOL_AddXMLValByPath(void *node, const char *xpath,
-                                          const char *value);
-extern int   HW_CFGTOOL_DelXMLValByPath(void *node, const char *xpath);
-extern int   HW_CFGTOOL_CloneXMLValByPath(void *node, const char *xpath,
-                                             const char *dst_xpath);
-extern int   HW_CFGTOOL_CheckArg(int op_type, int argc, char **argv);
-
 /* ── Constants ──────────────────────────────────────────────────────────── */
 #define CFGTOOL_MAX_PATH   0x100   /* 256 bytes, path buffer size */
 #define CFGTOOL_BATCH_BUF  0x2000  /* 8 KB, batch file parse buffer */
+/* Exact command from V500R022 binary (.rodata at offset 0x2849) */
 #define CFGTOOL_RET_CMD \
     "echo %s > /var/cfgtool_ret && chmod 660 /var/cfgtool_ret 2>/dev/null"
 #define CFGTOOL_DEFAULT_XML "/mnt/jffs2/hw_default_ctree.xml"
@@ -123,22 +127,19 @@ extern int   HW_CFGTOOL_CheckArg(int op_type, int argc, char **argv);
  */
 void HW_CFGTOOL_ShowUsage(void)
 {
+    /* Exact usage string from original cfgtool binary at .rodata offset 0x2638 */
     HW_OS_Printf(
-        "Usage: cfgtool <op> <xmlfile|DEFTREE> <xpath> [value]\n"
-        "\n"
-        "Operations:\n"
-        "  get         Read node value at xpath\n"
-        "  set         Write value to node at xpath\n"
-        "  find        Find child nodes matching value\n"
-        "  add         Add a new node at xpath\n"
-        "  create      Create a new XML tree\n"
-        "  del         Delete node at xpath\n"
-        "  batch       Apply a batch-change file\n"
-        "  clone       Clone a subtree within the document\n"
-        "  gettofile   Read node value and write to file\n"
-        "\n"
-        "  xmlfile: path to the XML file, or 'DEFTREE' for\n"
-        "           %s\n", CFGTOOL_DEFAULT_XML);
+        "\n[cfgtool]\n"
+        "Usage: cfgtool [OPER] [FILE] [PATH] {AttName and Value}\n"
+        "  [OPER] : get/gettofile/set/add/del/batch/create\n"
+        "  [FILE] : deftree/[abs path]\n"
+        "  [PATH] : as, a.b.c(single-instance) or a.b.c.2(multi-instance)\n"
+        "Example:\n"
+        "  cfgtool add deftree InternetGatewayDevice.LANDevice.LANDeviceInstance.2\n"
+        "  cfgtool del deftree InternetGatewayDevice.LANDevice.LANDeviceInstance.2\n"
+        "  cfgtool clone deftree InternetGatewayDevice.Service.VoiceService."
+        "VoiceServiceInstance.1 /mnt/jffs2/clone.xml\n"
+        "  cfgtool batch deftree /mnt/jffs2/batch.file\n\n");
 }
 
 /*
@@ -465,7 +466,9 @@ int main(int argc, char **argv)
         ret  = (node != NULL) ? 0 : -1;
         if (node) HW_XML_FreeNode(node);
     } else {
-        /* All other ops: parse existing XML file first */
+        /* All other ops: parse existing XML file first.
+         * HW_XML_ParseFile returns 0 on success and stores the
+         * document handle in *node_out (original API contract). */
         if (HW_XML_ParseFile(file_buf, &node) != 0 || !node) {
             HW_CFGTOOL_ShowUsage();
             HW_CFGTOOL_SysTrace("hw_cfg_tool.c", 0x28c,
@@ -484,8 +487,13 @@ int main(int argc, char **argv)
             ret = HW_CFGTOOL_DealBatchType(node, file_buf, opt_buf);
         } else {
             if (HW_CFGTOOL_CheckArg(op_type, argc, argv) == 0) {
+                /* Pass argv+4 as the extra args (value, dest, etc.)
+                 * Original disasm: OperByType receives argv[4..] as args */
                 ret = HW_CFGTOOL_OperByType(op_type, node, file_buf,
-                                              opt_buf, argc2, argv2, NULL);
+                                              opt_buf,
+                                              argc > 4 ? argc - 4 : 0,
+                                              argc > 4 ? argv + 4 : NULL,
+                                              NULL);
             }
         }
 

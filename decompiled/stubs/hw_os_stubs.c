@@ -577,6 +577,8 @@ int HW_DM_IsShareFuncsInit(void)
 }
 
 /* ── cfgtool XML stubs (normally from libcfg_api.so) ────────────────────── */
+/* When building standalone cfgtool, these are provided by cfgtool_xml.c */
+#if !defined(STANDALONE_CFGTOOL)
 
 void *HW_XML_ParseFile(const char *path, void **node_out)
 {
@@ -654,3 +656,5 @@ int HW_CFGTOOL_DealBatchType(void *node, const char *xml_path,
     fprintf(stderr, "[STUB] HW_CFGTOOL_DealBatchType: not available\n");
     return -1;
 }
+
+#endif /* !STANDALONE_CFGTOOL */

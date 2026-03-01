@@ -115,15 +115,23 @@ if(BUILD_EFUSE)
     target_add_deps(dm_efuse)
 endif()
 
-# ── cfgtool ─────────────────────────────────────────────────────────────────
+# ── cfgtool (standalone self-contained binary) ──────────────────────────────
+# Single binary: cfgtool + XML engine (libxml2) + OS stubs.
+# Embeds decompiled code from libhw_ssp_basic.so (XML ops) and
+# libsmp_api.so (CFGTOOL path ops) so it works without the router runtime.
 if(BUILD_CFGTOOL)
+    find_package(LibXml2 REQUIRED)
+
     add_executable(cfgtool
         cfgtool/cfgtool.c
+        cfgtool/cfgtool_xml.c
+        stubs/hw_os_stubs.c
     )
-    target_include_directories(cfgtool PRIVATE stubs)
-    if(HW_STUB_LIB)
-        target_link_libraries(cfgtool PRIVATE ${HW_STUB_LIB})
-    endif()
+    target_include_directories(cfgtool PRIVATE
+        cfgtool stubs ${LIBXML2_INCLUDE_DIRS}
+    )
+    target_compile_definitions(cfgtool PRIVATE STANDALONE_CFGTOOL)
+    target_link_libraries(cfgtool PRIVATE ${LIBXML2_LIBRARIES})
     install(TARGETS cfgtool RUNTIME DESTINATION bin)
 endif()
 

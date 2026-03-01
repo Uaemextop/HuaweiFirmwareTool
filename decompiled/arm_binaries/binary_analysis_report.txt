@@ -1,0 +1,300 @@
+==============================================================================
+  HUAWEI FIRMWARE BINARY ANALYSIS REPORT
+  Generated from decompiled/arm_binaries
+==============================================================================
+
+==============================================================================
+  EXECUTABLES
+==============================================================================
+
+  aescrypt2
+  ────────────────────────────────────────
+    MD5:      97bc751f2b718800cf4e8fcae297bfbc
+    Size:     17,920 bytes
+    Libc:     uClibc
+    Present in 6 firmware(s): default, Huawei-HG8145V5_Safaricom_Unlock_STEP_1_HG8145V, Huawei-HG8145V5_Totalplay_Firmware_Firmware_totalplay_produc_id_G08_G75_V5H
+
+    MD5:      d86d7956e65527c737bb67bccbadbacd
+    Size:     17,912 bytes
+    Libc:     musl
+    Present in 1 firmware(s): Huawei-HG8145V5_Claro-RD_Unlock_HGONTV500
+    Exports:  HW_CTOOL_GetKeyChipStr
+
+    MD5:      ef13237e8169e4a89f42909aabfcba50
+    Size:     13,804 bytes
+    Libc:     uClibc
+    Present in 4 firmware(s): Huawei-HG8247H5_General_General_HG8247H5_To_V5, Huawei-HG8247H_Vodafone_Firmware_HG8247H_UPGRADE, Huawei-HG8245Q_Huawei-OLT_Firmware_HG8245Q_SUBIR_UPGRADE
+
+    MD5:      b5027f942e6cbe8ce9cb00a2b963162f
+    Size:     17,692 bytes
+    Libc:     musl
+    Present in 1 firmware(s): Huawei-HG8145V5_General_Unlock_HG8145V5-
+    Exports:  HW_CTOOL_GetKeyChipStr
+
+
+  cfgtool
+  ────────────────────────────────────────
+    MD5:      f364fe695b0e2b2fe5d6ae5774fbd7ae
+    Size:     14,104 bytes
+    Libc:     uClibc
+    Present in 6 firmware(s): default, Huawei-HG8145V5_Safaricom_Unlock_STEP_1_HG8145V, Huawei-HG8145V5_Totalplay_Firmware_Firmware_totalplay_produc_id_G08_G75_V5H
+    Exports:  HW_CFGTOOL_XmlFind, HW_CFGTOOL_OperByType, HW_CFGTOOL_CheckArg, HW_CFGTOOL_GetParaFromString, HW_CFGTOOL_GetOptFile, HW_CFGTOOL_FreeArgs, HW_CFGTOOL_DealBatchType, HW_CFGTOOL_XmlGetToFile
+              ... and 6 more
+
+    MD5:      1d50270e3be62d6d88329220a1faf551
+    Size:     14,112 bytes
+    Libc:     musl
+    Present in 1 firmware(s): Huawei-HG8145V5_Claro-RD_Unlock_HGONTV500
+    Exports:  HW_CFGTOOL_BatchChangeRet, HW_CFGTOOL_ShowUsage, HW_CFGTOOL_XmlGet, HW_CFGTOOL_CheckArg, HW_CFGTOOL_XmlFind, HW_CFGTOOL_GetOptType, HW_CFGTOOL_MallocArgs, HW_CFGTOOL_GetOptFile
+              ... and 6 more
+
+    MD5:      1fe004007af60bc16aae5ddd6963afe8
+    Size:     14,108 bytes
+    Libc:     uClibc
+    Present in 4 firmware(s): Huawei-HG8247H5_General_General_HG8247H5_To_V5, Huawei-HG8247H_Vodafone_Firmware_HG8247H_UPGRADE, Huawei-HG8245Q_Huawei-OLT_Firmware_HG8245Q_SUBIR_UPGRADE
+    Exports:  HW_CFGTOOL_XmlFind, HW_CFGTOOL_OperByType, HW_CFGTOOL_CheckArg, HW_CFGTOOL_GetParaFromString, HW_CFGTOOL_GetOptFile, HW_CFGTOOL_FreeArgs, HW_CFGTOOL_DealBatchType, HW_CFGTOOL_XmlGetToFile
+              ... and 6 more
+
+    MD5:      b02026a2b5d36bb242babae9ac3a0e22
+    Size:     13,920 bytes
+    Libc:     musl
+    Present in 1 firmware(s): Huawei-HG8145V5_General_Unlock_HG8145V5-
+    Exports:  HW_CFGTOOL_BatchChangeRet, HW_CFGTOOL_ShowUsage, HW_CFGTOOL_XmlGet, HW_CFGTOOL_CheckArg, HW_CFGTOOL_XmlFind, HW_CFGTOOL_GetOptType, HW_CFGTOOL_MallocArgs, HW_CFGTOOL_GetOptFile
+              ... and 6 more
+
+
+==============================================================================
+  SHARED LIBRARIES
+==============================================================================
+
+  libhw_smp_dm_pdt.so
+  ────────────────────────────────────────
+    MD5:      95f4847983515101bff7afc9c17df27b
+    Size:     229,904 bytes
+    Present in 5 firmware(s)
+    Exported HW_ functions: 412
+
+    MD5:      ddf10ee8b8a7658a9624f0dc799a7507
+    Size:     313,032 bytes
+    Present in 1 firmware(s)
+    Exported HW_ functions: 430
+
+    MD5:      892062570cc6da7bd0211e48aba293fc
+    Size:     146,888 bytes
+    Present in 2 firmware(s)
+    Exported HW_ functions: 296
+
+    MD5:      af4e195da6f511b272565b73f5d1b57a
+    Size:     134,496 bytes
+    Present in 1 firmware(s)
+    Exported HW_ functions: 279
+
+    MD5:      d7721dd5fd91df62c2e3442c6159a650
+    Size:     138,620 bytes
+    Present in 1 firmware(s)
+    Exported HW_ functions: 283
+
+    MD5:      69e2dfae1684a0b77c7ce63dab76ba77
+    Size:     229,904 bytes
+    Present in 1 firmware(s)
+    Exported HW_ functions: 412
+
+    MD5:      2df9224c38d1557db3d5b5d2cf09a55f
+    Size:     330,456 bytes
+    Present in 1 firmware(s)
+    Exported HW_ functions: 414
+
+
+  libhw_ssp_basic.so
+  ────────────────────────────────────────
+    MD5:      942be39e865ee164df241a0612257740
+    Size:     751,728 bytes
+    Present in 5 firmware(s)
+    Exported HW_ functions: 1625
+
+    MD5:      27449eb74dff694538825e31a749b76a
+    Size:     911,584 bytes
+    Present in 1 firmware(s)
+    Exported HW_ functions: 1499
+
+    MD5:      49aa52336cec767087e84d76b34a1d78
+    Size:     884,508 bytes
+    Present in 2 firmware(s)
+    Exported HW_ functions: 1528
+
+    MD5:      615822810c5deaf79459c5ae802bf485
+    Size:     880,460 bytes
+    Present in 1 firmware(s)
+    Exported HW_ functions: 1521
+
+    MD5:      1e1b4da039e1e3abbdf2f2b681853adc
+    Size:     884,508 bytes
+    Present in 1 firmware(s)
+    Exported HW_ functions: 1527
+
+    MD5:      9bbd2f42e846d337d3ab1f2b5e6a06ff
+    Size:     747,632 bytes
+    Present in 1 firmware(s)
+    Exported HW_ functions: 1625
+
+    MD5:      14b7ceaae8784efff56ce339568c3b31
+    Size:     903,616 bytes
+    Present in 1 firmware(s)
+    Exported HW_ functions: 1499
+
+
+  libhw_ssp_ssl.so
+  ────────────────────────────────────────
+    MD5:      e65816bc752c806cb1be37b76f85f925
+    Size:     13,188 bytes
+    Present in 6 firmware(s)
+    Exported HW_ functions: 27
+
+    MD5:      10b561e8d7b64746797e18d0e2741e95
+    Size:     13,452 bytes
+    Present in 1 firmware(s)
+    Exported HW_ functions: 27
+
+    MD5:      2442200b5b49f5390ff6945be9747c87
+    Size:     9,220 bytes
+    Present in 4 firmware(s)
+    Exported HW_ functions: 20
+
+    MD5:      e9774b88c56095adf248b178773351bc
+    Size:     13,260 bytes
+    Present in 1 firmware(s)
+    Exported HW_ functions: 26
+
+
+  libhw_swm_dll.so
+  ────────────────────────────────────────
+    MD5:      b3fa396545d29da34e7c34366bb7b32c
+    Size:     279,508 bytes
+    Present in 6 firmware(s)
+    Exported HW_ functions: 449
+
+    MD5:      92f9e2027f6c7309d3289e2bba26c39a
+    Size:     370,836 bytes
+    Present in 1 firmware(s)
+    Exported HW_ functions: 430
+
+    MD5:      36a01f9910ca7b6860611eb7304d4eab
+    Size:     266,712 bytes
+    Present in 2 firmware(s)
+    Exported HW_ functions: 399
+
+    MD5:      c2817ac09e061eb8875473b5ad145f94
+    Size:     254,356 bytes
+    Present in 1 firmware(s)
+    Exported HW_ functions: 387
+
+    MD5:      d58fdb1f5b66b904d43140f7dc8dad04
+    Size:     254,360 bytes
+    Present in 1 firmware(s)
+    Exported HW_ functions: 387
+
+    MD5:      b54db6321fea77b2f0a865e5b391df30
+    Size:     387,168 bytes
+    Present in 1 firmware(s)
+    Exported HW_ functions: 396
+
+
+  libhw_swm_product.so
+  ────────────────────────────────────────
+    MD5:      9da0c40c090460f716540af527f5b05c
+    Size:     81,888 bytes
+    Present in 2 firmware(s)
+    Exported HW_ functions: 140
+
+    MD5:      d7336e10b7a4e08b5c326f884ba14635
+    Size:     73,600 bytes
+    Present in 1 firmware(s)
+    Exported HW_ functions: 125
+
+    MD5:      bd48ff2cf4078a7f1c618e27ee8f2735
+    Size:     77,624 bytes
+    Present in 1 firmware(s)
+    Exported HW_ functions: 133
+
+
+  libpolarssl.so
+  ────────────────────────────────────────
+    MD5:      80105d46fac2bb25b7743308b601b9fc
+    Size:     510,940 bytes
+    Present in 5 firmware(s)
+    Exported HW_ functions: 0
+
+    MD5:      1612bb61f2287220de06908576aa1a07
+    Size:     430,276 bytes
+    Present in 1 firmware(s)
+    Exported HW_ functions: 0
+
+    MD5:      a0a639d8330ce3a64b1843620f80957d
+    Size:     408,672 bytes
+    Present in 2 firmware(s)
+    Exported HW_ functions: 0
+
+    MD5:      949387c4abc9858b82aacb6b4788bf95
+    Size:     408,624 bytes
+    Present in 2 firmware(s)
+    Exported HW_ functions: 0
+
+    MD5:      d705b4b3b544c9bb82b332437aaac6b2
+    Size:     403,332 bytes
+    Present in 1 firmware(s)
+    Exported HW_ functions: 0
+
+    MD5:      037bf2b5fb0578b69fb899cd99b32202
+    Size:     407,220 bytes
+    Present in 1 firmware(s)
+    Exported HW_ functions: 0
+
+
+  libsmp_api.so
+  ────────────────────────────────────────
+    MD5:      9ec4266b296294bd6aed96ddf258a54a
+    Size:     245,076 bytes
+    Present in 5 firmware(s)
+    Exported HW_ functions: 452
+
+    MD5:      40d06cdc7d2f865b957095458bd53f33
+    Size:     311,112 bytes
+    Present in 1 firmware(s)
+    Exported HW_ functions: 471
+
+    MD5:      e3be18479753ba9e272f95608e216331
+    Size:     245,076 bytes
+    Present in 1 firmware(s)
+    Exported HW_ functions: 452
+
+    MD5:      829370f0aebd556f6e4ec1d839991baf
+    Size:     324,796 bytes
+    Present in 1 firmware(s)
+    Exported HW_ functions: 471
+
+
+  libwlan_aes_crypto.so
+  ────────────────────────────────────────
+    MD5:      daec8df1316ec8eac0588764ff00a1a5
+    Size:     4,964 bytes
+    Present in 6 firmware(s)
+    Exported HW_ functions: 0
+
+    MD5:      94ffd14590e6845bfa659c04895212fa
+    Size:     5,064 bytes
+    Present in 1 firmware(s)
+    Exported HW_ functions: 0
+
+    MD5:      4892cf1719c5185c1964383e47174ce5
+    Size:     5,012 bytes
+    Present in 1 firmware(s)
+    Exported HW_ functions: 0
+
+
+==============================================================================
+  SUMMARY
+==============================================================================
+  Total unique binaries (by MD5): 48
+  Executable binaries:            2 (aescrypt2, cfgtool)
+  Shared libraries:               8 (libhw_smp_dm_pdt.so, libhw_ssp_basic.so, libhw_ssp_ssl.so, libhw_swm_dll.so, libhw_swm_product.so, libpolarssl.so, libsmp_api.so, libwlan_aes_crypto.so)
+  Firmware variants analyzed:      12

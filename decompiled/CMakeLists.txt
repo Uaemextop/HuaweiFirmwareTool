@@ -167,51 +167,72 @@ endif()
 # Decompiled from original Huawei firmware binaries.
 # Each tool embeds all necessary library code for standalone operation.
 
-# getfilecrc – CRC32 file integrity checker (zero HW_ imports, pure libc)
-add_executable(getfilecrc hw_qoe_tools/getfilecrc.c)
+# Each tool has its own directory with all library code embedded inline.
+# No external router libraries (libhw_ssp_basic.so, libsmp_api.so, etc.) needed.
+
+# getfilecrc – CRC32 file integrity checker
+# Original: /bin/getfilecrc (9392 bytes), NEEDED: libc.so only (zero HW_ imports)
+add_executable(getfilecrc getfilecrc/getfilecrc.c)
 install(TARGETS getfilecrc RUNTIME DESTINATION bin)
 
 # ontinfo – ONT device information query
+# Original: /bin/ontinfo (9500 bytes), NEEDED: libhw_ssp_basic.so, libsmp_api.so
+# Embedded: HW_DM_PDGetAttr (reads hw_boardinfo), HW_OS_Printf, HW_OS_StrLen
 add_executable(ontinfo ontinfo/ontinfo.c)
 install(TARGETS ontinfo RUNTIME DESTINATION bin)
 
 # setboardinfo – hw_boardinfo field editor
-add_executable(setboardinfo hw_qoe_tools/setboardinfo.c)
+# Original: /bin/setboardinfo (13636 bytes), NEEDED: libhw_smp_dm_pdt.so, libpolarssl.so
+# Embedded: DM_SaveBoardInfo, DM_LoadBoardInfo, HW_OS_List*, HW_OS_AESDecrypt_Ex
+add_executable(setboardinfo setboardinfo/setboardinfo.c)
 install(TARGETS setboardinfo RUNTIME DESTINATION bin)
 
 # ConvertLog2Dst – Binary log to text converter
-add_executable(ConvertLog2Dst hw_qoe_tools/ConvertLog2Dst.c)
+# Original: /bin/ConvertLog2Dst (9500 bytes), NEEDED: libhw_ssp_basic.so
+# Embedded: HW_OS_Fopen/Fclose/Fgets/Fwrite, HW_TIMER_TimeToDSTStr
+add_executable(ConvertLog2Dst ConvertLog2Dst/ConvertLog2Dst.c)
 install(TARGETS ConvertLog2Dst RUNTIME DESTINATION bin)
 
 # cominfo – Process/component info query
-add_executable(cominfo hw_qoe_tools/cominfo.c)
+# Original: /bin/cominfo (9524 bytes), NEEDED: libhw_ssp_basic.so
+# Embedded: HW_OS_Printf, HW_OS_StrLen, HW_OS_BaseName, COMM_* API
+add_executable(cominfo cominfo/cominfo.c)
 install(TARGETS cominfo RUNTIME DESTINATION bin)
 
 # hw_qoe_getloid – Get device LOID
-add_executable(hw_qoe_getloid hw_qoe_tools/hw_qoe_getloid.c)
+# Original: /bin/hw_qoe_getloid (5456 bytes), NEEDED: libhw_ssp_basic.so
+# Embedded: HW_DM_PDGetAttr, HW_OS_StrCaseCmp
+add_executable(hw_qoe_getloid hw_qoe_getloid/hw_qoe_getloid.c)
 install(TARGETS hw_qoe_getloid RUNTIME DESTINATION bin)
 
 # hw_qoe_getpppaccount – Get PPP credentials
-add_executable(hw_qoe_getpppaccount hw_qoe_tools/hw_qoe_getpppaccount.c)
+# Original: /bin/hw_qoe_getpppaccount (9500 bytes), NEEDED: libcfg_api.so, libhw_ssp_basic.so
+# Embedded: HW_DM_PDGetAttr, HW_OS_StrCaseCmp, WAN_IF_GetPppWanAccountInfo
+add_executable(hw_qoe_getpppaccount hw_qoe_getpppaccount/hw_qoe_getpppaccount.c)
 install(TARGETS hw_qoe_getpppaccount RUNTIME DESTINATION bin)
 
 # decrypt_boardinfo – Decrypt AES-128-CBC encrypted hw_boardinfo files
-# Embeds AES-128 implementation (no external crypto libs needed)
-add_executable(decrypt_boardinfo hw_qoe_tools/decrypt_boardinfo.c)
+# Original: /bin/decrypt_boardinfo (5404 bytes), NEEDED: libhw_smp_dm_pdt.so, libpolarssl.so
+# Embedded: DM_DecryptBoardInfo → AES-128-CBC (full implementation, key from .rodata)
+add_executable(decrypt_boardinfo decrypt_boardinfo/decrypt_boardinfo.c)
 install(TARGETS decrypt_boardinfo RUNTIME DESTINATION bin)
 
 # kmc_tool – KMC key store file manager
-add_executable(kmc_tool hw_qoe_tools/kmc_tool.c)
+# Original: /bin/kmc_tool (9500 bytes), NEEDED: libhw_ssp_basic.so
+# Embedded: KMC_MKExsit, KMC_CheckHashEnd, WsecGetVersion, HW_OS_CopyFile, HW_OS_Fopen/Fclose
+add_executable(kmc_tool kmc_tool/kmc_tool.c)
 install(TARGETS kmc_tool RUNTIME DESTINATION bin)
 
 # keyfilemng – Key file backup/check/restore manager
-# Embeds CRC32 implementation
-add_executable(keyfilemng hw_qoe_tools/keyfilemng.c)
+# Original: /bin/keyfilemng (21936 bytes), NEEDED: libhw_smp_dm_pdt.so, libsmp_api.so, libhw_ssp_basic.so
+# Embedded: CRC32, HW_OS_* file ops, DM_DecryptBoardInfo, SwmBackUpKeyDataDirect
+add_executable(keyfilemng keyfilemng/keyfilemng.c)
 install(TARGETS keyfilemng RUNTIME DESTINATION bin)
 
 # decrypt_prvtkey – Decrypt encrypted PEM private keys (prvt.key, plugprvt.key)
-# Embeds AES-256-CBC, MD5, base64, EVP_BytesToKey (no external crypto libs)
-add_executable(decrypt_prvtkey hw_qoe_tools/decrypt_prvtkey.c)
+# Decompiled from: libhw_ssp_ssl.so + libhw_ssp_basic.so + libpolarssl.so
+# Embedded: AES-256-CBC, MD5, base64, EVP_BytesToKey, PEM parsing (all inline)
+add_executable(decrypt_prvtkey decrypt_prvtkey/decrypt_prvtkey.c)
 install(TARGETS decrypt_prvtkey RUNTIME DESTINATION bin)
 
 # ── Install ──────────────────────────────────────────────────────────────────

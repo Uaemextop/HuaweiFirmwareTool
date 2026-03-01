@@ -58,6 +58,7 @@ int    HW_SSL_Sha2HmacFinish(void *ctx, uint8_t *output);
 /* ── Version-specific imports (V500R019+, 12 functions) ──────────────────── */
 
 int    HW_KMC_CfgGetKey(const char *path, void *key_buf, size_t key_len);
+void   HW_KMC_SetKeyIndex(int idx);  /* select firmware key 0-5 */
 int    HW_OS_AESCBCCalPSWLen(uint32_t len);
 int    HW_OS_AESCBCEncrypt(int unused, const char *infile,
                             const char *outfile, const char *arg4,

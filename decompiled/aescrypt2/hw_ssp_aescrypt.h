@@ -16,13 +16,12 @@
  * AES key derivation (device-unique, NOT stored in this binary):
  *   e-fuse root key → work key (flash keyfile partition) → AES-256-CBC.
  *
- * Encrypted-file header layout (written by OS_AescryptFillHead):
+ * Encrypted-file header layout (from disassembly of V300/V500 aescrypt2):
  *   Offset  Size  Description
- *   0x00     4    Format version  (observed: 0x04)
- *   0x04     4    Mode / flags    (observed: 0x01 = encrypted)
- *   0x08    16    AES-CBC IV (random)
- *   0x18     ?    AES-CBC ciphertext (PKCS#7-padded plain-text)
- *   last 4   4    CRC32 of header + ciphertext (OS_AescryptCRC)
+ *   0x00     4    Type (0x01 = AES-256-CBC encrypted, 0x04 = self-encrypted)
+ *   0x04     4    CRC32 of ciphertext
+ *   0x08    16    AES-CBC IV
+ *   0x18     N    AES-CBC ciphertext (PKCS#7 padded gzip + HMAC tail)
  */
 
 #ifndef HW_SSP_AESCRYPT_H
@@ -36,14 +35,14 @@ extern "C" {
 
 /* ── Encrypted-file header ─────────────────────────────────────────────── */
 
-#define AESCRYPT_MAGIC_VERSION  0x04u
-#define AESCRYPT_FLAG_ENCRYPTED 0x01u
+#define AESCRYPT_TYPE_ENCRYPTED 0x01u
+#define AESCRYPT_TYPE_SELFENC   0x04u
 #define AESCRYPT_IV_LEN         16u
-#define AESCRYPT_HEADER_LEN     24u   /* version(4) + flags(4) + IV(16) */
+#define AESCRYPT_HEADER_LEN     24u   /* type(4) + CRC(4) + IV(16) */
 
 typedef struct {
-    uint32_t version;           /* 0x04 */
-    uint32_t flags;             /* 0x01 when encrypted */
+    uint32_t type;              /* 0x01 or 0x04 */
+    uint32_t crc;               /* CRC32 of ciphertext */
     uint8_t  iv[AESCRYPT_IV_LEN];
 } HW_AescryptHeader;
 

@@ -229,12 +229,101 @@ int HW_SSL_Sha2HmacFinish(void *ctx, uint8_t *output)
 /* Version-specific imports (V500R019+)                                      */
 /* ======================================================================== */
 
+/*
+ * HW_KMC_CfgGetKey – KMC key retrieval with embedded firmware keys.
+ *
+ * On device: reads key from kmc_store_A/B files via KMC_GetActiveMk.
+ * Off device: uses keys captured from real aescrypt2 processes via GDB
+ * breakpoint on HW_SSL_AesSetKeyDec across 6 firmware versions.
+ *
+ * The KMC subsystem generates a random AES-256 root key during first
+ * init (when kmc_store is empty). This root key then derives the work
+ * key via PBKDF2-SHA256. Each firmware build generates a different key
+ * because the KMC seeding is version-specific.
+ *
+ * Key index (selected via AESCRYPT2_KEY_INDEX env var, 0-5):
+ *   0 = V300R017 (HG8245Q, HG8247H)
+ *   1 = V500R019C10SPC310 (HG8145V5 Telmex/Safaricom/Claro-AR)
+ *   2 = V500R019C00SPC050 (HG8246M, HG8247H5 TO_V5)
+ *   3 = V500R019C10SPC386 (HG8145V5 Totalplay G150)
+ *   4 = V500R020C00SPC240 (HG8145V5 Claro-RD)
+ *   5 = V500R020C10SPC212 (HG8145V5 General)
+ */
+
+/* AES-256 keys captured from real firmware via qemu + GDB */
+static const uint8_t kmc_keys[6][32] = {
+    /* 0: V300R017 – from HG8247H aes_string derivation */
+    {0xe5,0x98,0xcd,0xb1,0x2e,0x61,0x20,0x7c,
+     0x64,0x12,0xde,0xe5,0x3d,0xf3,0xb8,0xf6,
+     0x01,0x17,0x3b,0x53,0xda,0x8c,0x28,0x37,
+     0xb7,0x1e,0x73,0x90,0x88,0xc4,0x2a,0x65},
+    /* 1: V500R019C10SPC310 – HG8145V5 Telmex/Safaricom */
+    {0x77,0x68,0xc7,0x0b,0x5c,0x4a,0x66,0x4a,
+     0xe1,0xb7,0x2b,0xf9,0x17,0x44,0x3b,0xb4,
+     0xe3,0x2d,0x28,0x28,0xe6,0x7d,0x2e,0xb0,
+     0x21,0x2b,0x80,0x0e,0xf5,0xb4,0x05,0x53},
+    /* 2: V500R019C00SPC050 – HG8246M, HG8247H5 */
+    {0xbf,0xfa,0xde,0xde,0x27,0xd4,0x69,0x39,
+     0xce,0x6e,0x05,0xf0,0x08,0xdd,0x55,0x20,
+     0xcf,0x86,0x5a,0xa0,0xf2,0x29,0x7a,0x35,
+     0x47,0x32,0x84,0x4d,0xe4,0x46,0xfe,0x74},
+    /* 3: V500R019C10SPC386 – HG8145V5 Totalplay */
+    {0xb8,0xa2,0x1c,0x1d,0x15,0x6a,0xaf,0x42,
+     0xf0,0xfc,0x6f,0xa1,0x79,0x94,0xb5,0x2e,
+     0xb5,0xf8,0xd2,0x8c,0x6d,0xdf,0x31,0x10,
+     0x5e,0xb5,0xda,0xb2,0x86,0xe9,0x49,0xcb},
+    /* 4: V500R020C00SPC240 – HG8145V5 Claro-RD */
+    {0xca,0xd6,0xb3,0x6d,0x64,0xa5,0xa1,0xe9,
+     0xce,0xb7,0x8f,0x3e,0xd5,0x03,0x9f,0xac,
+     0xad,0x6c,0x3d,0x3f,0x83,0xe8,0x18,0x92,
+     0x6b,0x09,0xab,0x7e,0x1b,0x64,0x84,0xc2},
+    /* 5: V500R020C10SPC212 – HG8145V5 General */
+    {0xd5,0xfc,0xb9,0x2b,0xba,0x0c,0xd3,0x3b,
+     0x79,0xb5,0xbd,0x1f,0x40,0xd2,0x06,0x83,
+     0x63,0xb2,0x07,0xe7,0x94,0xe3,0x97,0xfb,
+     0x2d,0x43,0x72,0xfe,0x09,0xf0,0x59,0x2a},
+};
+
+/* Currently selected key index (default 0 = V300, override via env) */
+static int g_kmc_key_index = -1;
+
 int HW_KMC_CfgGetKey(const char *path, void *key_buf, size_t key_len)
 {
-    (void)key_buf; (void)key_len;
-    fprintf(stderr, "[STUB] HW_KMC_CfgGetKey(%s): not available on host\n",
-            path ? path : "(null)");
-    return -1;
+    /* Try to read key from file first (mimics /var/new_key_encryte_ctree) */
+    if (path) {
+        FILE *f = fopen(path, "rb");
+        if (f) {
+            size_t n = fread(key_buf, 1, key_len, f);
+            fclose(f);
+            if (n == key_len)
+                return 0;
+        }
+    }
+
+    /* Select key index from environment or default to 0 */
+    if (g_kmc_key_index < 0) {
+        const char *env = getenv("AESCRYPT2_KEY_INDEX");
+        g_kmc_key_index = (env && *env >= '0' && *env <= '5')
+                          ? (*env - '0') : 0;
+    }
+
+    if (key_len <= 32)
+        memcpy(key_buf, kmc_keys[g_kmc_key_index], key_len);
+    else {
+        memset(key_buf, 0, key_len);
+        memcpy(key_buf, kmc_keys[g_kmc_key_index], 32);
+    }
+    return 0;
+}
+
+/*
+ * HW_KMC_SetKeyIndex – select which firmware key to use (0-5).
+ * Called from the auto-detect logic in HW_OS_AESCBCDecrypt.
+ */
+void HW_KMC_SetKeyIndex(int idx)
+{
+    if (idx >= 0 && idx < 6)
+        g_kmc_key_index = idx;
 }
 
 int HW_OS_AESCBCCalPSWLen(uint32_t len)

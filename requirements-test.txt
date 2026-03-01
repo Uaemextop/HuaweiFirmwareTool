@@ -1,0 +1,4 @@
+# Test dependencies
+pytest>=7.0
+capstone>=5.0
+Pillow>=10.2

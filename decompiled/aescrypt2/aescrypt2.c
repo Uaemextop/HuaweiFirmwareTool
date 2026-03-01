@@ -61,8 +61,9 @@ extern void HW_PROC_DBG_LastWord(int line, const char *file,
                                   const char *msg, int a, int b, int c);
 extern int HW_OS_StrToUInt32(const char *str, uint32_t *val_out);
 
-/* ── Filename buffer size (0x80 = 128 bytes, from mov r2, #0x80 in disasm) ─ */
-#define FILENAME_BUF   0x80
+/* ── Filename buffer size (0x80 = 128 in device firmware; extended to 512
+ *    for host builds where paths can be longer than device paths) ────── */
+#define FILENAME_BUF   512
 
 /* ── Work-mode constants ────────────────────────────────────────────────── */
 #define MODE_ENCRYPT   0u

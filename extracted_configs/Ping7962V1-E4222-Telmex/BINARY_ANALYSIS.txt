@@ -720,3 +720,768 @@ NON-RFC1918 / HIDDEN IP ADDRESSES
 
   220.130.158.52
     > <Value Name="NTP_SERVER_HOST2" Value="220.130.158.52"/> <Value Name="NTP_SERVER_HOST3" Value
+
+================================================================
+CONFIG_MODIFIED.XML — FULL FIELD MAP & CHANGE LOG
+================================================================
+
+CHANGES APPLIED vs config_decrypted.xml (live device):
+
+  [CWMP/TR-069 DISABLED]
+    CWMP_ACS_URL              https://cwmp.telmex.com → http://
+    CWMP_ACS_URL_OLD          https://cwmp.telmex.com → http://
+    CWMP_ACS_USERNAME         504EDCLPI194700643F     → (empty)
+    CWMP_ACS_PASSWORD         vHaxJNP9Z3              → (empty)
+    CWMP_INFORM_ENABLE        1                       → 0
+    CWMP_ACS_UPGRADESMANAGED  1                       → 0
+
+  [ACC_TBL — ACCESS CONTROL TABLE]
+    TR_069_Connection_Request 1 → 0  (no remote CWMP trigger)
+    tftp                      0 → 1  (TFTP service enabled LAN)
+    telnet                    0 → 1  (already enabled)
+    ftp                       0 → 1  (already enabled, port 21)
+    ssh                       0 → 1  (already enabled)
+
+  [FTP ALG & FIRMWARE UPDATE via FTP]
+    MIB_IP_ALG_FTP            0 → 1  (passive FTP through NAT)
+    FW_UPDATE_MODE            0 → 3  (0=none,1=TFTP,2=HTTP,3=FTP)
+    FW_UPDATE_FTP_ADDR        (empty) → 192.168.1.254  (FTP server IP — change as needed)
+    FW_UPDATE_FTP_USER        (empty) → admin
+    FW_UPDATE_FTP_PASSWD      (empty) → admin
+
+  [CREDENTIALS — PREVENT RESTORE OVERWRITE]
+    SUSER_NAME        TELMEX      → admin
+    SUSER_PASSWORD    Gaviota1980 → admin
+    MIB_USB_USER_TBL  name=admin, password=admin, rootpath=/, allfolders=1
+    NOTE: Uploading this XML sets the device password to 'admin'.
+    CWMP/TR-069 is DISABLED so Telmex cannot remotely reset credentials.
+
+  [USB SHARING]
+    MIB_USB_SHARING_ENABLE    0 → 1  (USB FTP sharing enabled)
+
+================================================================
+COMPLETE FIELD REFERENCE — config_modified.xml ROOT FIELDS
+================================================================
+
+  Total root-level fields: 771
+  Chains: 79
+
+  Security/Network relevant fields:
+    WAN_MODE                                 7
+    LAN_ENABLE_IP2                           0
+    DNS_MODE                                 0
+    DHCP_MODE                                0
+    ADSL_MODE                                1107
+    RIP_ENABLE                               0
+    PORT_FW_ENABLE                           0
+    DMZ_ENABLE                               0
+    SNMP_SYS_DESCR                           System Description
+    SNMP_SYS_OID                             1.3.6.1.4.1.16972
+    SNMP_SYS_CONTACT                         System Contact
+    SNMP_SYS_LOCATION                        System Location
+    SNMP_TRAP_IP                             192.168.1.254
+    SNMP_COMM_RO                             public
+    SNMP_COMM_RW                             public
+    SNMP_SYS_NAME                            V7921I1
+    MIB_SNMPV3_RO_NAME                       test
+    MIB_SNMPV3_RO_PASSWORD                   admin
+    MIB_SNMPV3_RO_AUTH                       1
+    MIB_SNMPV3_RW_NAME                       admin
+    MIB_SNMPV3_RW_PASSWORD                   admin
+    MIB_SNMPV3_RW_AUTH                       1
+    MIB_SNMPV3_RW_PRIVACY                    1
+    MIB_SNMP_VERSION                         2
+    BR_STP_ENABLED                           0
+    MP_MODE                                  4
+    QOS_MODE                                 0
+    SPC_ENABLED                              0
+    URL_CAPABILITY                           0
+    TFTP_SERVER_ADDR                         tftp://0.0.0.0
+    NTP_ENABLED                              1
+    DST_ENABLED                              1
+    ENABLE_QOS                               0
+    WEP64_KEY1                               0000000000
+    WEP64_KEY2                               0000000000
+    WEP64_KEY3                               0000000000
+    WEP64_KEY4                               0000000000
+    WEP128_KEY1                              00000000000000000000000000
+    WEP128_KEY2                              00000000000000000000000000
+    WEP128_KEY3                              00000000000000000000000000
+    WEP128_KEY4                              00000000000000000000000000
+    WEP_DEFAULT_KEY                          0
+    WEP_KEY_TYPE                             0
+    AUTH_TYPE                                2
+    RATE_ADAPTIVE_ENABLED                    1
+    WLAN_MODE                                0
+    WLAN_ENABLE_SUPP_NONWPA                  0
+    WLAN_WPA_AUTH                            2
+    WLAN_WPA_GROUP_REKEY_TIME                86400
+    MAC_AUTH_ENABLED                         0
+    RS_PASSWORD                              
+    ACCOUNT_RS_ENABLED                       0
+    ACCOUNT_RS_PASSWORD                      
+    ACCOUNT_RS_UPDATE_ENABLED                0
+    ACCOUNT_RS_UPDATE_DELAY                  0
+    WLAN_ENABLE_1X                           0
+    WLAN_MACAC_ENABLED                       0
+    WLAN1_WEP64_KEY1                         0000000000
+    WLAN1_WEP64_KEY2                         0000000000
+    WLAN1_WEP64_KEY3                         0000000000
+    WLAN1_WEP64_KEY4                         0000000000
+    WLAN1_WEP128_KEY1                        00000000000000000000000000
+    WLAN1_WEP128_KEY2                        00000000000000000000000000
+    WLAN1_WEP128_KEY3                        00000000000000000000000000
+    WLAN1_WEP128_KEY4                        00000000000000000000000000
+    WLAN1_WEP_DEFAULT_KEY                    0
+    WLAN1_WEP_KEY_TYPE                       0
+    WLAN1_AUTH_TYPE                          2
+    WLAN1_MACAC_ENABLED                      0
+    WLAN1_RATE_ADAPTIVE_ENABLED              1
+    WLAN1_WLAN_MODE                          0
+    WLAN1_ENABLE_SUPP_NONWPA                 0
+    WLAN1_WPA_AUTH                           2
+    WLAN1_WPA_GROUP_REKEY_TIME               86400
+    WLAN1_MAC_AUTH_ENABLED                   0
+    WLAN1_RS_PASSWORD                        
+    WLAN1_ACCOUNT_RS_ENABLED                 0
+    WLAN1_ACCOUNT_RS_PASSWORD                
+    WLAN1_ACCOUNT_RS_UPDATE_ENABLED          0
+    WLAN1_ACCOUNT_RS_UPDATE_DELAY            0
+    WLAN1_ENABLE_1X                          0
+    WLAN1_WSC_AUTH                           34
+    WLAN1_WSC_MANUAL_ENABLED                 1
+    WLAN1_WSC_UPNP_ENABLED                   1
+    WLAN1_WSC_REGISTRAR_ENABLED              0
+    WLAN1_APSD_ENABLE                        0
+    SUSER_NAME                               admin
+    SUSER_PASSWORD                           admin
+    SUSER_REMINDER                           sreminder
+    SUSER_LOGOUT                             10
+    SUSER_REMINDER_IS_DEFAULT                1
+    DIRECT_BRIDGE_MODE                       1
+    CWMP_PROVISIONINGCODE                    Telmex
+    CWMP_ACS_URL                             http://
+    CWMP_ACS_URL_OLD                         http://
+    CWMP_ACS_USERNAME                        
+    CWMP_ACS_PASSWORD                        
+    CWMP_INFORM_ENABLE                       0
+    CWMP_INFORM_INTERVAL                     86400
+    CWMP_INFORM_TIME                         0
+    CWMP_CONREQ_USERNAME                     
+    CWMP_CONREQ_PASSWORD                     
+    CWMP_ACS_UPGRADESMANAGED                 0
+    CWMP_LAN_CONFIGPASSWD                    
+    CWMP_SERIALNUMBER                        00000001
+    CWMP_DHCP_SERVERCONF                     1
+    CWMP_LAN_IPIFENABLE                      1
+    CWMP_LAN_ETHIFENABLE                     1
+    CWMP_WLAN_BASICENCRY                     0
+    CWMP_DL_COMMANDKEY                       
+    CWMP_DL_QUEUE_IDX                        -1
+    CWMP_DL_STARTTIME                        0
+    CWMP_DL_COMPLETETIME                     0
+    CWMP_DL_FAULTCODE                        0
+    CWMP_INFORM_EVENTCODE                    1
+    CWMP_RB_COMMANDKEY                       
+    CWMP_ACS_PARAMETERKEY                    
+    CWMP_CERT_PASSWORD                       client
+    CWMP_FLAG                                48
+    CWMP_FLAG2                               16
+    CWMP_PARAMETERKEY                        
+    CWMP_SI_COMMANDKEY                       
+    CWMP_ALIASBASED_ADDRESSING               1
+    CWMP_INSTANCE_MODE                       0
+    CWMP_AUTO_CREATEINSTANCES                0
+    UIF_PW_USER_SEL                          0
+    UIF_UPGRADE                              0
+    UIF_AUTOUPDATESERVER                     
+    UIF_USERUPDATESERVER                     
+    CWMP_ACS_KICKURL                         
+    CWMP_ACS_DOWNLOADURL                     
+    CWMP_CONREQ_PORT                         7547
+    CWMP_CONREQ_PATH                         /tr069
+    TR143_UDPECHO_ENABLE                     0
+    CWMP_PERSISTENT_DATA                     
+    CWMP_WAN_INTERFACE                       65535
+    DOS_ENABLED                              0
+    WSC_AUTH                                 34
+    WSC_MANUAL_ENABLED                       1
+    WSC_UPNP_ENABLED                         1
+    WSC_REGISTRAR_ENABLED                    0
+    MIB_IP_ALG_FTP                           1
+    SNMPD_ENABLE                             1
+    WLAN_APSD_ENABLE                         0
+    V6_PREFIX_MODE                           0
+    V6_PREFIX_ENABLE                         1
+    V6_ULAPrefixEnable                       0
+    DHCPV6_MODE                              0
+    DNSV6_MODE                               0
+    V6_IPV6_ENABLE                           0
+    TR064_ENABLED                            0
+    LOID                                     user
+    LOID_PASSWD                              
+    USER_DEFINED_BANDWIDTH                   0
+    MIB_HW_MODEL_NUM                         V7921I1
+    MIB_CWMP_PERIODIC_STATISTICS_ENABLE      0
+    MIB_CWMP_PERIODIC_STATISTICS_SAMPLEINTERVAL 3600
+    MIB_CWMP_PERIODIC_STATISTICS_NAME        sampleset-1
+    MIB_BULKDATA_ENABLE                      0
+    MIB_USB_SHARING_ENABLE                   1
+    FUNCKEY_PSTN                             .0
+    FUNCKEY_TRANSFER                         .1
+    CALLER_ID_DET_MODE                       1
+    AUTO_BYPASS_RELAY                        0
+    AUTO_CFG_MODE                            0
+    AUTO_CFG_TFTP_ADDR                       
+    AUTO_CFG_FTP_ADDR                        
+    AUTO_CFG_FTP_USER                        
+    AUTO_CFG_FTP_PASSWD                      
+    FW_UPDATE_MODE                           3
+    FW_UPDATE_TFTP_ADDR                      
+    FW_UPDATE_HTTP_ADDR                      
+    FW_UPDATE_HTTP_PORT                      80
+    FW_UPDATE_FTP_ADDR                       192.168.1.254
+    FW_UPDATE_FTP_USER                       admin
+    FW_UPDATE_FTP_PASSWD                     admin
+    FW_UPDATE_FILE_PATH                      
+    FW_UPDATE_POWER_ON                       0
+    FW_UPDATE_SCHEDULING_DAY                 0
+    FW_UPDATE_SCHEDULING_TIME                0
+    FW_UPDATE_AUTO                           0
+    FW_UPDATE_FILE_PREFIX                    
+    FW_UPDATE_NEXT_TIME                      0
+    FW_UPDATE_FW_VERSION                     
+    WAN_VLAN_ENABLE                          0
+    VLAN_ENABLE                              0
+    VLAN_BRIDGE_ENABLE                       0
+    VLAN_BRIDGE_MULTICAST_ENABLE             0
+    VLAN_HOST_ENABLE                         0
+    VLAN_WIFI_ENABLE                         0
+    VLAN_WIFI_VAP0_ENABLE                    0
+    VLAN_WIFI_VAP1_ENABLE                    0
+    VLAN_WIFI_VAP2_ENABLE                    0
+    VLAN_WIFI_VAP3_ENABLE                    0
+    HWNAT_ENABLE                             1
+    STUN_ENABLE                              0
+    DTMF_MODE                                0
+    FAXMODEM_RFC2833_PT_SAME_DTMF            1
+    FAXMODEM_RFC2833_PT                      101
+    FAXMODEM_RFC2833_PI                      10
+    CALL_WAITING_ENABLE                      1
+    UC_FORWARD_ENABLE                        0
+    BUSY_FORWARD_ENABLE                      0
+    NA_FORWARD_ENABLE                        0
+    DIGITMAP_ENABLE                          1
+    SID_MODE                                 0
+    ILBC_MODE                                0
+    CALLER_ID_MODE                           41
+    CID_DTMF_MODE                            8
+    FSK_GEN_MODE                             1
+    FAX_MODEM_RFC2833                        0
+    FAX_MODEM_DET                            3
+    T38_PARAM_ENABLE                         0
+    T38_ENABLE_ECM                           1
+    T38_ENABLE_SPOOF                         1
+    HOTLINE_ENABLE                           0
+    DND_MODE                                 0
+    SECURITY_ENABLE                          0
+    KEY_EXCHANGE_MODE                        0
+    OFFHOOK_PASSWD                           
+    ALARM_ENABLE                             0
+    STUN_ENABLE                              0
+    DTMF_MODE                                0
+    FAXMODEM_RFC2833_PT_SAME_DTMF            1
+    FAXMODEM_RFC2833_PT                      101
+    FAXMODEM_RFC2833_PI                      10
+    CALL_WAITING_ENABLE                      1
+    UC_FORWARD_ENABLE                        0
+    BUSY_FORWARD_ENABLE                      0
+    NA_FORWARD_ENABLE                        0
+    DIGITMAP_ENABLE                          1
+    SID_MODE                                 0
+    ILBC_MODE                                0
+    CALLER_ID_MODE                           41
+    CID_DTMF_MODE                            8
+    FSK_GEN_MODE                             1
+    FAX_MODEM_RFC2833                        0
+    FAX_MODEM_DET                            3
+    T38_PARAM_ENABLE                         0
+    T38_ENABLE_ECM                           1
+    T38_ENABLE_SPOOF                         1
+    HOTLINE_ENABLE                           0
+    DND_MODE                                 0
+    SECURITY_ENABLE                          0
+    KEY_EXCHANGE_MODE                        0
+    OFFHOOK_PASSWD                           
+    ALARM_ENABLE                             0
+
+  Chains present:
+
+  [ATM_VC_TBL]
+    ifIndex                                65281
+    VPI                                    8
+    VCI                                    81
+    QoS                                    0
+    PCR                                    6000
+    SCR                                    0
+    MBS                                    0
+    CDVT                                   0
+    Encap                                  1
+    NAPT                                   0
+    ChannelMode                            0
+    BusinessMode                           2
+    BridgeType                             0
+    pppUser                                
+    pppPasswd                              
+    pppAuth                                1
+    pppACName                              
+    pppServiceName                         
+    pppConnectType                         0
+    pppIdleTime                            0
+    ... (320 more)
+  [IP_PORT_FILTER_TBL]  (empty)
+  [MAC_FILTER_TBL]  (empty)
+  [PORT_FW_TBL]  (empty)
+  [IP_ROUTE_TBL]  (empty)
+  [DHCP_SERVER_OPTION_TBL]  (empty)
+  [DHCP_CLIENT_OPTION_TBL]  (empty)
+  [WLAN_AC_TBL]  (empty)
+  [WLAN1_AC_TBL]  (empty)
+
+  [SW_PORT_TBL]
+    PVCInterface                           65535
+    InterfaceGroup                         0
+    PVID                                   0
+    LinkMode                               4
+    VLAN on LAN Enabled                    0
+    VLAN on LAN InterfaceGroup             0
+    VID                                    0
+    PVCInterface                           65535
+    InterfaceGroup                         0
+    PVID                                   1
+    LinkMode                               4
+    VLAN on LAN Enabled                    0
+    VLAN on LAN InterfaceGroup             0
+    VID                                    0
+    PVCInterface                           65535
+    InterfaceGroup                         0
+    PVID                                   2
+    LinkMode                               4
+    VLAN on LAN Enabled                    0
+    VLAN on LAN InterfaceGroup             0
+    ... (15 more)
+  [IP_QOS_TBL]  (empty)
+  [IP_QOS_TC_TBL]  (empty)
+
+  [IP_QOS_QUEUE_TBL]
+    outif                                  65535
+    prior                                  1
+    weight                                 40
+    enable                                 0
+    desc                                   
+    QueueInstNum                           1
+    QueueInstAlias                         0
+    outif                                  65535
+    prior                                  1
+    weight                                 30
+    enable                                 0
+    desc                                   
+    QueueInstNum                           2
+    QueueInstAlias                         0
+    outif                                  65535
+    prior                                  1
+    weight                                 20
+    enable                                 0
+    desc                                   
+    QueueInstNum                           3
+    ... (8 more)
+
+  [ACC_TBL]
+    telnet                                 1
+    ftp                                    1
+    tftp                                   1
+    web                                    2
+    snmp                                   2
+    ssh                                    1
+    TR_069_Connection_Request              0
+    icmp                                   3
+    netlog                                 2
+    telnet_port                            23
+    web_port                               8080
+    ftp_port                               21
+    https                                  1
+    https_port                             8090
+  [URL_FQDN_TBL]  (empty)
+  [KEYWD_FILTER_TBL]  (empty)
+  [CWMP_PSK_TBL]  (empty)
+  [MAC_BASE_DHCP_TBL]  (empty)
+
+  [AUTO_PVC_SEARCH_TBL]
+    VPI                                    8
+    VCI                                    81
+    VPI                                    0
+    VCI                                    35
+    VPI                                    8
+    VCI                                    35
+    VPI                                    0
+    VCI                                    43
+    VPI                                    0
+    VCI                                    51
+    VPI                                    0
+    VCI                                    59
+    VPI                                    8
+    VCI                                    43
+    VPI                                    8
+    VCI                                    51
+  [MIB_DDNS_TBL]  (empty)
+  [PPPOE_SESSION_TBL]  (empty)
+  [DOMAIN_BLOCKING_TBL]  (empty)
+  [RIP_TBL]  (empty)
+
+  [WLAN_MBSSIB_TBL]
+    idx                                    0
+    encrypt                                6
+    enable1X                               0
+    wep                                    0
+    wpaAuth                                2
+    wpaPSKFormat                           0
+    wpaPSK                                 Gaviota1980
+    wpaGroupRekeyTime                      86400
+    rsPort                                 1812
+    rsIpAddr                               0.0.0.0
+    rsPassword                             
+    wlanDisabled                           0
+    ssid                                   Technicolor_5G
+    wlanMode                               0
+    authType                               2
+    cwmp_WLAN_BasicEncry                   0
+    unicastCipher                          3
+    wpa2UnicastCipher                      3
+    bcnAdvtisement                         1
+    hidessid                               0
+    ... (250 more)
+
+  [WLAN1_MBSSIB_TBL]
+    idx                                    6
+    encrypt                                6
+    enable1X                               0
+    wep                                    0
+    wpaAuth                                2
+    wpaPSKFormat                           0
+    wpaPSK                                 Gaviota1980
+    wpaGroupRekeyTime                      86400
+    rsPort                                 1812
+    rsIpAddr                               0.0.0.0
+    rsPassword                             
+    wlanDisabled                           0
+    ssid                                   Technicolor
+    wlanMode                               0
+    authType                               2
+    cwmp_WLAN_BasicEncry                   0
+    unicastCipher                          3
+    wpa2UnicastCipher                      3
+    bcnAdvtisement                         1
+    hidessid                               0
+    ... (250 more)
+
+  [VOIP_TBL]
+    SIGNATURE                              1987012976
+    VERSION                                63
+    FEATURE                                2147484271
+    EXTEND_FEATURE                         3234070560
+    MIB_VERSION                            0
+    RFC_FLAGS                              160
+    TONE_OF_COUNTRY                        15
+    TONE_OF_CUSTDIAL                       0
+    TONE_OF_CUSTRING                       1
+    TONE_OF_CUSTBUSY                       2
+    TONE_OF_CUSTWAITING                    3
+    TONE_OF_CUSTOMIZE                      0
+
+  [CUST_TONE]
+    CUST_TONE_TYPE                         0
+    CUST_TONE_CYCLE                        0
+    CUST_TONE_CAD_NUM                      1
+    CUST_TONE_CAD_ON0                      2000
+    CUST_TONE_CAD_OFF0                     0
+    CUST_TONE_CAD_ON1                      0
+    CUST_TONE_CAD_OFF1                     0
+    CUST_TONE_CAD_ON2                      0
+    CUST_TONE_CAD_OFF2                     0
+    CUST_TONE_CAD_ON3                      0
+    CUST_TONE_CAD_OFF3                     0
+    CUST_TONE_PATTERN_OFF                  0
+    CUST_TONE_NUM                          2
+    CUST_TONE_FREQ0                        350
+    CUST_TONE_FREQ1                        440
+    CUST_TONE_FREQ2                        0
+    CUST_TONE_FREQ3                        0
+    CUST_TONE_GAIN0                        7
+    CUST_TONE_GAIN1                        7
+    CUST_TONE_GAIN2                        0
+    ... (2580 more)
+  [PORT]  (empty)
+
+  [PROXIES]
+    PROXY_DISPLAY_NAME                     
+    PROXY_NUMBER                           
+    PROXY_LOGIN_ID                         
+    PROXY_PASSWORD                         
+    PROXY_URI                              
+    PROXY_ENABLE                           0
+    PROXY_ADDR                             
+    PROXY_PORT                             5060
+    PROXY_REGISTRARSERVER_ADDR             
+    PROXY_REGISTRARSERVER_PORT             5060
+    PROXY_DOMAIN_NAME                      
+    PROXY_REG_EXPIRE                       3600
+    PROXY_OUTBOUND_ENABLE                  0
+    PROXY_OUTBOUND_ADDR                    
+    PROXY_OUTBOUND_PORT                    5060
+    TLS_ENABLE                             0
+    HEARTBEAT_CYCLE                        0
+    HEARTBEAT_COUNT                        3
+    PROXY_SESSION_EXPIRE                   1800
+    PROXY_REG_RETRY                        90
+    ... (60 more)
+
+  [SPEED_DIAL]
+    SPEED_DIAL_NAME                        
+    SPEED_DIAL_URL                         
+    SPEED_DIAL_NAME                        
+    SPEED_DIAL_URL                         
+    SPEED_DIAL_NAME                        
+    SPEED_DIAL_URL                         
+    SPEED_DIAL_NAME                        
+    SPEED_DIAL_URL                         
+    SPEED_DIAL_NAME                        
+    SPEED_DIAL_URL                         
+    SPEED_DIAL_NAME                        
+    SPEED_DIAL_URL                         
+    SPEED_DIAL_NAME                        
+    SPEED_DIAL_URL                         
+    SPEED_DIAL_NAME                        
+    SPEED_DIAL_URL                         
+    SPEED_DIAL_NAME                        
+    SPEED_DIAL_URL                         
+    SPEED_DIAL_NAME                        
+    SPEED_DIAL_URL                         
+    ... (20 more)
+
+  [ABBREVIATED_DIAL]
+    ABBREVIATED_DIAL_NAME                  
+    ABBREVIATED_DIAL_URL                   
+    ABBREVIATED_DIAL_NAME                  
+    ABBREVIATED_DIAL_URL                   
+    ABBREVIATED_DIAL_NAME                  
+    ABBREVIATED_DIAL_URL                   
+    ABBREVIATED_DIAL_NAME                  
+    ABBREVIATED_DIAL_URL                   
+    ABBREVIATED_DIAL_NAME                  
+    ABBREVIATED_DIAL_URL                   
+    ABBREVIATED_DIAL_NAME                  
+    ABBREVIATED_DIAL_URL                   
+    ABBREVIATED_DIAL_NAME                  
+    ABBREVIATED_DIAL_URL                   
+    ABBREVIATED_DIAL_NAME                  
+    ABBREVIATED_DIAL_URL                   
+    ABBREVIATED_DIAL_NAME                  
+    ABBREVIATED_DIAL_URL                   
+    ABBREVIATED_DIAL_NAME                  
+    ABBREVIATED_DIAL_URL                   
+  [DHCPS_SERVING_POOL_TBL]  (empty)
+
+  [WLAN_QOS_AP_TBL]
+    aifsn                                  1
+    ecwmin                                 2
+    ecwmax                                 3
+    txop                                   47
+    ack                                    1
+    aifsn                                  1
+    ecwmin                                 3
+    ecwmax                                 4
+    txop                                   94
+    ack                                    1
+    aifsn                                  3
+    ecwmin                                 4
+    ecwmax                                 6
+    txop                                   0
+    ack                                    1
+    aifsn                                  7
+    ecwmin                                 4
+    ecwmax                                 10
+    txop                                   0
+    ack                                    1
+
+  [WLAN_QOS_STA_TBL]
+    aifsn                                  2
+    ecwmin                                 2
+    ecwmax                                 3
+    txop                                   47
+    ack                                    1
+    aifsn                                  2
+    ecwmin                                 3
+    ecwmax                                 4
+    txop                                   94
+    ack                                    1
+    aifsn                                  3
+    ecwmin                                 4
+    ecwmax                                 10
+    txop                                   0
+    ack                                    1
+    aifsn                                  7
+    ecwmin                                 4
+    ecwmax                                 10
+    txop                                   0
+    ack                                    1
+  [DHCP_RESERVED_IPADDR_TBL]  (empty)
+
+  [WAN_3G_TBL]
+    enable                                 0
+    auth                                   3
+    ctype                                  0
+    napt                                   1
+    pin                                    65535
+    idletime                               60
+    mtu                                    1492
+    dgw                                    1
+    apn                                    internet
+    dial                                   *99#
+    username                               
+    password                               
+    backup                                 0
+    backup_timer                           60
+  [DHCPV6S_NAME_SERVER_TBL]  (empty)
+  [DHCPV6S_DOMAIN_SEARCH_TBL]  (empty)
+  [V6_IP_PORT_FILTER_TBL]  (empty)
+  [IPV6_ROUTE_TBL]  (empty)
+  [CWMP_TRANSFER_QUEUE]  (empty)
+  [MIB_CWMP_ALIAS_PROCESSOR_TBL]  (empty)
+  [MIB_CWMP_ALIAS_POOLCLIENT_TBL]  (empty)
+  [MIB_CWMP_ALIAS_WIFIRADIO_TBL]  (empty)
+  [MIB_CWMP_ALIAS_WIFIENDPOINT_TBL]  (empty)
+  [MIB_CWMP_ALIAS_WIFIEPAC_TBL]  (empty)
+  [MIB_CWMP_ALIAS_WIFIEPPROFILE_TBL]  (empty)
+  [MIB_CWMP_ALIAS_WIFIAPAC_TBL]  (empty)
+  [MIB_CWMP_ALIAS_DSL_LINE_TBL]  (empty)
+  [MIB_CWMP_ALIAS_DSL_CHANNEL_TBL]  (empty)
+  [MIB_CWMP_ALIAS_QOS_POLICER_TBL]  (empty)
+  [MIB_CWMP_ALIAS_QOS_SHAPER_TBL]  (empty)
+  [CWMP_ALIAS_ROUTERADV_IFACE_TBL]  (empty)
+  [MIB_CWMP_ALIAS_ROUTING_TBL]  (empty)
+  [MIB_CWMP_ALIAS_HOSTS_TBL]  (empty)
+  [MIB_CWMP_ALIAS_ETH_LAN_TBL]  (empty)
+  [CWMP_ALIAS_DNS_CLIENT_SRV_TBL]  (empty)
+  [MIB_CWMP_ALIAS_BRLANPORT_TBL]  (empty)
+  [MIB_CWMP_ALIAS_DYNAMICROUT_TBL]  (empty)
+  [MIB_CWMP_ALIAS_VENDORLOG_TBL]  (empty)
+  [MIB_CWMP_ALIAS_TEMPSENSOR_TBL]  (empty)
+  [MIB_CWMP_ALIAS_SUPPORTEDDM_TBL]  (empty)
+  [MIB_CWMP_ALIAS_IFACESTACK_TBL]  (empty)
+  [CWMP_ALIAS_FIREWALL_LEVEL_TBL]  (empty)
+  [CWMP_ALIAS_FIREWALL_CHAIN_TBL]  (empty)
+  [CWMP_ALIAS_DHCPV6_SP_CLIENT_TBL]  (empty)
+  [CWMP_ALIAS_DHCPV6_SP_OPTION_TBL]  (empty)
+  [CWMP_ALIAS_RADVIFACEOPTION_TBL]  (empty)
+  [MIB_CWMP_ALIAS_USER_TBL]  (empty)
+  [CWMP_ALIAS_MANAGEDEVICE_TBL]  (empty)
+  [CWMP_ALIAS_SENT_OPTION_TBL]  (empty)
+
+  [CWMP_INSTANCENUM_HOSTS_TBL]
+    instnum                                10
+    alias                                  
+    key                                    10:62:e5:55:51:11
+    instnum                                12
+    alias                                  
+    key                                    1e:a2:4d:62:f0:75
+    instnum                                11
+    alias                                  
+    key                                    ba:3b:bc:cf:64:57
+    instnum                                2
+    alias                                  
+    key                                    ba:f3:c7:93:09:64
+    instnum                                3
+    alias                                  
+    key                                    7e:e5:b0:59:6c:d0
+    instnum                                9
+    alias                                  
+    key                                    6c:71:d2:39:aa:2f
+    instnum                                1
+    alias                                  
+    ... (13 more)
+
+  [CWMP_FORCEDINFORM181_TBL]
+    enable                                 1
+    parameter                              Device.DeviceInfo.HardwareVersion
+    flag                                   5
+    instnum                                1
+    alias                                  cpe-HardwareVersion
+    enable                                 1
+    parameter                              Device.DeviceInfo.SoftwareVersion
+    flag                                   6
+    instnum                                2
+    alias                                  cpe-SoftwareVersion
+    enable                                 1
+    parameter                              Device.DeviceInfo.ProvisioningCode
+    flag                                   6
+    instnum                                3
+    alias                                  cpe-ProvisioningCode
+    enable                                 1
+    parameter                              Device.ManagementServer.ConnectionRequestURL
+    flag                                   6
+    instnum                                4
+    alias                                  cpe-ConnectionRequestURL
+    ... (5 more)
+
+  [MIB_CWMP_PERIOD_STAT_TBL]
+    enable                                 1
+    parameter                              Device.IP.Interface.1.Stats.BytesSent
+    instnum                                1
+    alias                                  cpe-ip-lan-BytesSent
+    enable                                 1
+    parameter                              Device.IP.Interface.1.Stats.BytesReceived
+    instnum                                2
+    alias                                  cpe-ip-lan-BytesReceived
+
+  [MIB_LAN_PORT_TBL]
+    id                                     1
+    status                                 1000_full
+    id                                     2
+    status                                 
+    id                                     3
+    status                                 
+    id                                     4
+    status                                 
+
+  [MIB_BULK_PROFILE_TBL]
+    profile_enable                         0
+    profile_name                           Profile1
+    profile_nbrofretainfailreports         0
+    profile_protocol                       0
+    profile_encodingtype                   0
+    profile_reportinginterval              300
+    profile_timereference                  0
+    profile_streaminghost                  
+    profile_streamingport                  4737
+    profile_streamingsessionid             0
+    profile_filetransferurl                0
+    profile_filetransferusername           
+    profile_filetransferpassword           
+    profile_controlfileformat              
+    profile_csv_fieldseparator             ,
+    profile_csv_row_separator              &#13;&#10;
+    profile_csv_escapecharacter            &quot;
+    profile_csv_reportformat               ParameterPerRow
+    profile_csv_rowtimestamp               Unix-Epoch
+    profile_json_reportformat              Object­Hierarchy
+    ... (12 more)
+  [MIB_BULK_PROFILE_PARAM_TBL]  (empty)
+  [MIB_BULK_HTTP_REQPARAM_TBL]  (empty)
+
+  [MIB_USB_USER_TBL]
+    name                                   admin
+    password                               admin
+    rootpath                               /
+    allfolders                             1
+    enablewrite                            1
+    enable                                 1

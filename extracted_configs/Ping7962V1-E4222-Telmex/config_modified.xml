@@ -266,10 +266,10 @@
 <Value Name="ADSL_HIGH_INP" Value="0"/>
 <Value Name="DSL_GVECTOR" Value="3"/>
 <Value Name="CWMP_PROVISIONINGCODE" Value="Telmex"/>
-<Value Name="CWMP_ACS_URL" Value="https://cwmp.telmex.com"/>
-<Value Name="CWMP_ACS_URL" Value="https://cwmp.telmex.com"/>
-<Value Name="CWMP_ACS_USERNAME" Value="504EDCLPI194700643F"/>
-<Value Name="CWMP_ACS_PASSWORD" Value="vHaxJNP9Z3"/>
+<Value Name="CWMP_ACS_URL" Value="http://"/>
+<Value Name="CWMP_ACS_URL_OLD" Value="http://"/>
+<Value Name="CWMP_ACS_USERNAME" Value=""/>
+<Value Name="CWMP_ACS_PASSWORD" Value=""/>
 <Value Name="CWMP_INFORM_ENABLE" Value="0"/>
 <Value Name="CWMP_INFORM_INTERVAL" Value="86400"/>
 <Value Name="CWMP_INFORM_TIME" Value="0"/>
@@ -348,7 +348,7 @@
 <Value Name="WLAN_VAP1_ITF_GROUP" Value="0"/>
 <Value Name="WLAN_VAP2_ITF_GROUP" Value="0"/>
 <Value Name="WLAN_VAP3_ITF_GROUP" Value="0"/>
-<Value Name="MIB_IP_ALG_FTP" Value="0"/>
+<Value Name="MIB_IP_ALG_FTP" Value="1"/>
 <Value Name="MIB_IP_ALG_H323" Value="0"/>
 <Value Name="MIB_IP_ALG_RTSP" Value="0"/>
 <Value Name="MIB_IP_ALG_SIP" Value="0"/>
@@ -887,11 +887,11 @@
 <chain chainName="ACC_TBL">
  <Value Name="telnet" Value="1"/>
  <Value Name="ftp" Value="1"/>
- <Value Name="tftp" Value="0"/>
+ <Value Name="tftp" Value="1"/>
  <Value Name="web" Value="2"/>
  <Value Name="snmp" Value="2"/>
  <Value Name="ssh" Value="1"/>
- <Value Name="TR_069_Connection_Request" Value="1"/>
+ <Value Name="TR_069_Connection_Request" Value="0"/>
  <Value Name="icmp" Value="3"/>
  <Value Name="netlog" Value="2"/>
  <Value Name="telnet_port" Value="23"/>
@@ -4192,13 +4192,13 @@
  <Value Name="AUTO_CFG_FTP_PASSWD" Value=""/>
  <Value Name="AUTO_CFG_FILE_PATH" Value=""/>
  <Value Name="AUTO_CFG_EXPIRE" Value="0"/>
- <Value Name="FW_UPDATE_MODE" Value="0"/>
+ <Value Name="FW_UPDATE_MODE" Value="3"/>
  <Value Name="FW_UPDATE_TFTP_ADDR" Value=""/>
  <Value Name="FW_UPDATE_HTTP_ADDR" Value=""/>
  <Value Name="FW_UPDATE_HTTP_PORT" Value="80"/>
- <Value Name="FW_UPDATE_FTP_ADDR" Value=""/>
- <Value Name="FW_UPDATE_FTP_USER" Value=""/>
- <Value Name="FW_UPDATE_FTP_PASSWD" Value=""/>
+ <Value Name="FW_UPDATE_FTP_ADDR" Value="192.168.1.254"/>
+ <Value Name="FW_UPDATE_FTP_USER" Value="admin"/>
+ <Value Name="FW_UPDATE_FTP_PASSWD" Value="admin"/>
  <Value Name="FW_UPDATE_FILE_PATH" Value=""/>
  <Value Name="FW_UPDATE_POWER_ON" Value="0"/>
  <Value Name="FW_UPDATE_SCHEDULING_DAY" Value="0"/>

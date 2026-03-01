@@ -4196,7 +4196,7 @@
  <Value Name="FW_UPDATE_TFTP_ADDR" Value=""/>
  <Value Name="FW_UPDATE_HTTP_ADDR" Value=""/>
  <Value Name="FW_UPDATE_HTTP_PORT" Value="80"/>
- <Value Name="FW_UPDATE_FTP_ADDR" Value="192.168.1.254"/>
+ <Value Name="FW_UPDATE_FTP_ADDR" Value="192.168.100.254"/>
  <Value Name="FW_UPDATE_FTP_USER" Value="admin"/>
  <Value Name="FW_UPDATE_FTP_PASSWD" Value="admin"/>
  <Value Name="FW_UPDATE_FILE_PATH" Value=""/>

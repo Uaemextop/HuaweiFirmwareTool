@@ -28,6 +28,9 @@ import sys
 from pathlib import Path
 from typing import List, Optional, Tuple
 
+# 0xFFFFFFFF – matches every CmdGroup bitmask, unlocking all 600+ commands.
+USERGROUP_ALL = "4294967295"
+
 
 def _read_xml_text(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="replace")
@@ -109,6 +112,81 @@ def list_acl_services(xml_text: str) -> List[dict]:
     return services
 
 
+def set_web_user_level(
+    xml_text: str, username: str, level: str
+) -> Tuple[str, bool]:
+    """Set UserLevel for a web user (0=admin, 1=regular).
+
+    Returns the modified XML text and whether a change was made.
+    """
+    pattern = re.compile(
+        r'(<X_HW_WebUserInfoInstance\b[^>]*\bUserName="'
+        + re.escape(username)
+        + r'"[^>]*\bUserLevel=)"([^"]*)"'
+    )
+    new_text, count = pattern.subn(r'\g<1>"' + level + '"', xml_text)
+    return new_text, count > 0
+
+
+def enable_ftp_service(xml_text: str) -> Tuple[str, bool]:
+    """Enable the FTP file-transfer service (X_HW_ServiceManage)."""
+    pattern = re.compile(
+        r'(<X_HW_ServiceManage\b[^>]*\bFtpEnable=)"([^"]*)"'
+    )
+    new_text, count = pattern.subn(r'\g<1>"1"', xml_text)
+    return new_text, count > 0
+
+
+def disable_cwmp(xml_text: str) -> Tuple[str, bool]:
+    """Disable TR-069/CWMP so the ISP cannot push config changes remotely.
+
+    Returns the modified XML text and whether a change was made.
+    """
+    pattern = re.compile(
+        r'(<ManagementServer\b[^>]*\bEnableCWMP=)"([^"]*)"'
+    )
+    new_text, count = pattern.subn(r'\g<1>"0"', xml_text)
+    return new_text, count > 0
+
+
+def unlock_all(xml_text: str, username: str = "root") -> Tuple[str, List[str]]:
+    """Apply all modifications to unlock full access for *username*.
+
+    Returns the modified XML text and a list of change descriptions.
+    """
+    changes: List[str] = []
+
+    xml_text, ok = set_cli_user_group(xml_text, username, USERGROUP_ALL)
+    if ok:
+        changes.append(f"CLI UserGroup for '{username}' → 0xFFFFFFFF (all commands)")
+
+    xml_text, ok = set_web_user_level(xml_text, username, "0")
+    if ok:
+        changes.append(f"Web UserLevel for '{username}' → 0 (admin)")
+
+    xml_text, ok = enable_ssh(xml_text)
+    if ok:
+        changes.append("SSHLanEnable → 1")
+
+    xml_text, ok = enable_ftp(xml_text)
+    if ok:
+        changes.append("FTPLanEnable → 1")
+
+    xml_text, ok = enable_telnet(xml_text)
+    if ok:
+        changes.append("TELNETLanEnable → 1")
+
+    xml_text, ok = enable_ftp_service(xml_text)
+    if ok:
+        changes.append("FtpEnable → 1 (service)")
+
+    xml_text, ok = disable_cwmp(xml_text)
+    if ok:
+        changes.append("EnableCWMP → 0 (prevent ISP config push)")
+
+    return xml_text, changes
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         description="Modify decrypted Huawei hw_ctree.xml configuration"
@@ -128,6 +206,16 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--enable-ssh", action="store_true")
     parser.add_argument("--enable-ftp", action="store_true")
     parser.add_argument("--enable-telnet", action="store_true")
+    parser.add_argument("--disable-cwmp", action="store_true",
+                        help="Disable TR-069/CWMP (prevent ISP config push)")
+    parser.add_argument(
+        "--set-web-level", nargs=2, metavar=("USER", "LEVEL"),
+        help="Set web UserLevel (0=admin, 1=regular)",
+    )
+    parser.add_argument(
+        "--unlock-all", metavar="USER", nargs="?", const="root",
+        help="Apply all unlocks for USER (default: root)",
+    )
     parser.add_argument(
         "--list-users", action="store_true",
         help="List CLI users and exit",
@@ -156,11 +244,21 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     changes: List[str] = []
 
+    if args.unlock_all:
+        xml_text, unlock_changes = unlock_all(xml_text, args.unlock_all)
+        changes.extend(unlock_changes)
+
     if args.set_usergroup:
         user, group = args.set_usergroup
         xml_text, changed = set_cli_user_group(xml_text, user, group)
         if changed:
             changes.append(f"UserGroup for '{user}' → {group}")
+
+    if args.set_web_level:
+        user, level = args.set_web_level
+        xml_text, changed = set_web_user_level(xml_text, user, level)
+        if changed:
+            changes.append(f"Web UserLevel for '{user}' → {level}")
 
     if args.enable_ssh:
         xml_text, changed = enable_ssh(xml_text)
@@ -176,6 +274,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         xml_text, changed = enable_telnet(xml_text)
         if changed:
             changes.append("TELNETLanEnable → 1")
+
+    if args.disable_cwmp:
+        xml_text, changed = disable_cwmp(xml_text)
+        if changed:
+            changes.append("EnableCWMP → 0")
 
     if not changes:
         print("No modifications requested.", file=sys.stderr)

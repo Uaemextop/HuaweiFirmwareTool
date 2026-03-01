@@ -7,11 +7,10 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # ── Build options ────────────────────────────────────────────────────────────
 option(ENABLE_MBEDTLS  "Link against mbedTLS (required for encrypt/decrypt)"  ON)
-option(BUILD_AESCRYPT2 "Build aescrypt2 utility"                               ON)
 option(BUILD_WLAN_AES  "Build libwlan_aes_crypto shared library"               ON)
 option(BUILD_CFGTOOL   "Build cfgtool XML config utility"                      ON)
 option(BUILD_EFUSE     "Build eFuse key derivation library"                    ON)
-option(BUILD_STANDALONE "Build unified standalone aescrypt2 binary (default)"   ON)
+option(BUILD_AESCRYPT2 "Build aescrypt2 (XML encrypt/decrypt)"                 ON)
 
 # ── Platform detection ───────────────────────────────────────────────────────
 if(WIN32)
@@ -131,7 +130,7 @@ endif()
 # ── aescrypt2 (unified self-contained binary) ───────────────────────────────
 # Single binary: aescrypt2 + crypto + efuse + stubs.  Accepts XML input/output.
 # Automatically gzip-compresses before encrypt, gunzip-decompresses after decrypt.
-if(BUILD_STANDALONE)
+if(BUILD_AESCRYPT2)
     find_package(ZLIB REQUIRED)
 
     add_executable(aescrypt2

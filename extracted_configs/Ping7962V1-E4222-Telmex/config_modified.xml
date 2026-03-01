@@ -403,6 +403,7 @@
 <Value Name="TR064_ENABLED" Value="0"/>
 <Value Name="LOID" Value="user"/>
 <Value Name="LOID_PASSWD" Value=""/>
+<Value Name="DUAL_MGMT_MODE" Value="0"/>
 <Value Name="DHCP_PORT_FILTER" Value="0"/>
 <Value Name="NTP_EXT_ITF" Value="65535"/>
 <Value Name="RTK_DEVID_MANUFACTURER" Value=""/>

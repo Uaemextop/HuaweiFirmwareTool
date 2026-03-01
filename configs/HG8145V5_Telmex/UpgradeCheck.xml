@@ -1,0 +1,82 @@
+<upgradecheck>
+<HardVerCheck  CheckEnable="1">
+<IncludeList Enable="1">
+<HardVerCheckIns BoardId="13351" /> 
+<HardVerCheckIns BoardId="13371" />
+<HardVerCheckIns BoardId="13011" /> 
+<HardVerCheckIns BoardId="13021" />
+<HardVerCheckIns BoardId="13431" />
+<HardVerCheckIns BoardId="13691" />
+<HardVerCheckIns BoardId="13701" />
+</IncludeList>
+<ExcludeList Enable="0">
+<HardVerCheckIns BoardId="" PcbVersion=""/> 
+</ExcludeList>
+</HardVerCheck>
+<LswChipCheck CheckEnable="1">
+<IncludeList Enable="1">
+<LswChipCheckIns name="COMMON,NONE"/>
+</IncludeList>
+<ExcludeList Enable="0">
+</ExcludeList>
+</LswChipCheck>
+<WifiChipCheck CheckEnable="1">
+<IncludeList Enable="1">
+<WifiChipCheckIns name="COMMON,NONE"/>
+</IncludeList>
+<ExcludeList Enable="0">
+</ExcludeList>
+</WifiChipCheck>
+<VoiceChipCheck CheckEnable="1">
+<IncludeList Enable="1">
+<VoiceChipCheckIns name="COMMON,NONE"/>
+</IncludeList>
+<ExcludeList Enable="0">
+</ExcludeList>
+</VoiceChipCheck>
+<UsbChipCheck CheckEnable="1">
+<IncludeList Enable="1">
+<UsbChipCheckIns name="COMMON,NONE"/>
+</IncludeList>
+<ExcludeList Enable="0">
+</ExcludeList>
+</UsbChipCheck>
+<OpticalCheck CheckEnable="1">
+<IncludeList Enable="1">
+<OpticalCheckIns name="COMMON,NONE"/>
+</IncludeList>
+<ExcludeList Enable="0">
+<OpticalCheckIns name="COMMON"/>
+</ExcludeList>
+</OpticalCheck>
+<OtherChipCheck CheckEnable="1">
+<IncludeList Enable="1">
+<OtherChipCheckIns name="COMMON,NONE,FLASH256,S34ML02G2,W29N02GV,MX30LF2G18AC,TC58BVG1S3HTA00,PSU2GA30BT-G4IA,TC58NVG1S3HTA00,MT29F2G08ABA,PSU2GA30BTG1IA,GD9FU1G8F2AMGI,FMND2G08U3DIA"/>
+</IncludeList>
+<ExcludeList Enable="0">
+</ExcludeList>
+</OtherChipCheck>
+<ProductCheck CheckEnable="1">
+<IncludeList Enable="1">
+<ProductCheckIns name="159D,15ED,15DD,18ED"/>
+</IncludeList>
+<ExcludeList Enable="0">
+</ExcludeList>
+</ProductCheck>
+<ProgramCheck CheckEnable="1">
+<IncludeList Enable="1">
+<ProgramCheckIns name="COMMON,DT_HUNGARY"/>
+</IncludeList>
+<ExcludeList Enable="0">
+</ExcludeList>
+</ProgramCheck>
+<CfgCheck CheckEnable="1">
+<IncludeList Enable="1">
+<CfgCheckIns name="COMMON,NONE"/>
+</IncludeList>
+<ExcludeList Enable="0">
+</ExcludeList>
+</CfgCheck>
+</upgradecheck>
+
+

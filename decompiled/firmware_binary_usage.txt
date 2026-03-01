@@ -1,0 +1,524 @@
+========================================
+  cfgtool
+  Path: /bin/cfgtool
+  Size: 13920 bytes
+========================================
+  Args: ''
+
+[cfgtool]
+Usage: cfgtool [OPER] [FILE] [PATH] {AttName and Value}
+  [OPER] : get/gettofile/set/add/del/batch/create
+  [FILE] : deftree/[abs path]
+  [PATH] : as, a.b.c(single-instance) or a.b.c.2(multi-instance)
+Example:
+  cfgtool add deftree InternetGatewayDevice.LANDevice.LANDeviceInstance.2
+  cfgtool del deftree InternetGatewayDevice.LANDevice.LANDeviceInstance.2
+  cfgtool clone deftree InternetGatewayDevice.Service.VoiceService.VoiceServiceInstance.1 /mnt/jffs2/clone.xml
+  cfgtool batch deftree /mnt/jffs2/batch.file
+
+========================================
+  cfgtoolc
+  Path: /bin/cfgtoolc
+  Size: 9500 bytes
+========================================
+  Args: ''
+
+[cfgtoolc]
+Usage: cfgtoolc [OPER] [FILE] [PATH] {AttName and Value}
+  [OPER] : start/shutdown/save/get/gettofile/set/add/del/create/cpobj
+  [FILE] : deftree
+  [PATH] : as, a.b.c(single-instance) or a.b.c.2(multi-instance)
+Example:
+  cfgtoolc start  cfgtoolc shutdown  cfgtoolc add deftree InternetGatewayDevice.LANDevice.LANDeviceInstance.2
+  cfgtoolc del deftree InternetGatewayDevice.LANDevice.LANDeviceInstance.2
+  cfgtoolc create spec System_Configuration
+
+========================================
+  cfgtools
+  Path: /bin/cfgtools
+  Size: 13596 bytes
+========================================
+  (no usage output obtained)
+
+========================================
+  aescrypt2
+  Path: /bin/aescrypt2
+  Size: 17692 bytes
+========================================
+  Args: ''
+version[v1.0]
+  aescrypt2 <mode> <input filename> <output filename>
+
+  <mode>: 0 = encrypt, 1 = decrypt
+
+  example: aescrypt2 0 file file.aes
+
+========================================
+  shellconfig
+  Path: /bin/shellconfig
+  Size: 13596 bytes
+========================================
+  Args: ''
+Parameter Number Error!
+
+========================================
+  kmc
+  Path: /bin/kmc
+  Size: 34180 bytes
+========================================
+  Args: ''
+KMCMaster call HW_OS_IsProcExist_Ex error. uiReturn=0x2;
+
+========================================
+  kmc_tool
+  Path: /bin/kmc_tool
+  Size: 9500 bytes
+========================================
+  Args: ''
+KMC version[KMC 3.0.0.B003], is hardware crypt[0]
+
+========================================
+  keyfilemng
+  Path: /bin/keyfilemng
+  Size: 21936 bytes
+========================================
+  Args: ''
+
+Usage:  keyfilemng [cmd] [obj]
+cmd:    support save/check/restore
+obj:    only support restore, you can chose following object:
+        all/boardtype/boardinfo/defaultctree/customizepara
+example:
+        keyfilemng save
+        keyfilemng check
+        keyfilemng restore
+        keyfilemng restore boardtype
+        keyfilemng restore boardinfo
+        keyfilemng restore defaultctree
+        keyfilemng restore customizepara
+
+========================================
+  backupKey
+  Path: /bin/backupKey
+  Size: 9500 bytes
+========================================
+  Args: ''
+/bin/sh: 1: cannot create /var/tmpmtdname: Permission denied
+grep: /proc/mtd: No such file or directory
+Read Mtd fail,errno:2
+
+========================================
+  setboardinfo
+  Path: /bin/setboardinfo
+  Size: 13636 bytes
+========================================
+  Args: '--help'
+/tmp/fw_rootfs/HG8145V5_General/rootfs_0/bin/setboardinfo: unrecognized option: -
+/tmp/fw_rootfs/HG8145V5_General/rootfs_0/bin/setboardinfo: unrecognized option: h
+/tmp/fw_rootfs/HG8145V5_General/rootfs_0/bin/setboardinfo: unrecognized option: e
+/tmp/fw_rootfs/HG8145V5_General/rootfs_0/bin/setboardinfo: unrecognized option: l
+/tmp/fw_rootfs/HG8145V5_General/rootfs_0/bin/setboardinfo: option requires an argument: p
+
+========================================
+  decrypt_boardinfo
+  Path: /bin/decrypt_boardinfo
+  Size: 5404 bytes
+========================================
+  Args: '--help'
+/tmp/fw_rootfs/HG8145V5_General/rootfs_0/bin/decrypt_boardinfo: unrecognized option: -
+/tmp/fw_rootfs/HG8145V5_General/rootfs_0/bin/decrypt_boardinfo: unrecognized option: h
+/tmp/fw_rootfs/HG8145V5_General/rootfs_0/bin/decrypt_boardinfo: unrecognized option: e
+/tmp/fw_rootfs/HG8145V5_General/rootfs_0/bin/decrypt_boardinfo: unrecognized option: l
+/tmp/fw_rootfs/HG8145V5_General/rootfs_0/bin/decrypt_boardinfo: unrecognized option: p
+
+========================================
+  cfgreserve
+  Path: /bin/cfgreserve
+  Size: 13612 bytes
+========================================
+  (no usage output obtained)
+
+========================================
+  getfilecrc
+  Path: /bin/getfilecrc
+  Size: 9392 bytes
+========================================
+  Args: ''
+Please input file path.
+
+========================================
+  ontinfo
+  Path: /bin/ontinfo
+  Size: 9500 bytes
+========================================
+  Args: ''
+Usage: ontinfo [OPTION]... 
+
+Options are listed as follows. 
+  -s        used with -p or -b, output information directly. for example: HG8245, or 3.
+  -p        output PCB version, for example: pcbver=3.
+  -b        output Board Type, for example: boardtype=HG8245 or HG8240, HG8247, HG8447, HG8010, HG8110.
+  -h        display help infomation.
+  -?        display help infomation.
+
+========================================
+  omcicmd
+  Path: /bin/omcicmd
+  Size: 9500 bytes
+========================================
+  Args: ''
+Init msg queue error! Return=0xf710402b!
+
+========================================
+  start
+  Path: /bin/start
+  Size: 9500 bytes
+========================================
+  Args: ''
+Start pid=17062; uiProcNum=0;
+
+[Start Phase]::uiStartPhase: 0, uiEndPhase: 1, Seconds: 0
+/bin/sh: 1: cannot create /var/OKstartframe: Permission denied
+
+[Start Phase]::uiStartPhase: 1, uiEndPhase: 2, Seconds: 0
+
+[Start Phase]::uiStartPhase: 2, uiEndPhase: 3, Seconds: 0
+
+[Start Phase]::uiStartPhase: 3, uiEndPhase: 4, Seconds: 0
+
+[Start Phase]::uiStartPhase: 4, uiEndPhase: 5, Seconds: 0
+
+[Start Phase]::uiStartPhase: 5, uiEndPhase: 6, Seconds: 0
+
+[Start Phase]::uiStartPhase: 0, uiEndPhase: 6, Seconds: 0
+
+========================================
+  maintain
+  Path: /bin/maintain
+  Size: 5404 bytes
+========================================
+  (no usage output obtained)
+
+========================================
+  procmonitor
+  Path: /bin/procmonitor
+  Size: 9516 bytes
+========================================
+  Args: ''
+Call HW_OS_IsProcExist_Ex Error! 0x2;
+
+========================================
+  ldspcli
+  Path: /bin/ldspcli
+  Size: 51192 bytes
+========================================
+  Args: ''
+[LDSP CLI]: Call HW_OS_IsProcExist_Ex Error!Return=0x2;
+
+========================================
+  hw_ldsp_cfg
+  Path: /bin/hw_ldsp_cfg
+  Size: 17712 bytes
+========================================
+  Args: ''
+
+<LDSP_CFG> OpticPara Init fail!ret ffffffff 
+<LDSP_CFG> XponProc get pon mode attr err
+
+<LDSP>[HW_LdspCfg_XponProc_266]uiRet=0xffffffff,par1=0x0,par2=0x0,par3=0x0,par4=0x0,
+
+<LDSP_CFG> Creat access mode file fail!
+
+<LDSP>[HW_LdspCfg_GetSysCfgPath_360]uiRet=0xffffffff,par1=0x20004002,par2=0x0,par3=0x0,par4=0x0,
+
+<LDSP_CFG> Get SysConfigfg Path fail!path = 
+
+<LDSP_CFG> Parse hw_ldsp_cfg.xml file fail!path =  , reason is 
+<LDSP_CFG> xml does not  exist !
+
+<LDSP>[main_840]uiRet=0xf7500003,par1=0x0,par2=0x0,par3=0x0,par4=0x0,
+
+<LDSP_CFG> HW_LdspCfg_LoadWAP failed !ret = f7500012 
+
+<LDSP_CFG> Get Soc Chip id fail ret is ffffffff !
+
+========================================
+  loadexfs
+  Path: /bin/loadexfs
+  Size: 21788 bytes
+========================================
+  Args: ''
+/bin/sh: 1: cannot create /var/tmpmtdname: Permission denied
+grep: /proc/mtd: No such file or directory
+TOOL_GetImageAddr enArea=0
+/bin/sh: 1: cannot create /var/rootfsMtdName: Permission denied
+grep: /proc/mtd: No such file or directory
+TOOL_GetImageAddr acMtdBlockName=mtdblock11 uiOffset=[0]
+
+========================================
+  loadsdkfs
+  Path: /bin/loadsdkfs
+  Size: 27964 bytes
+========================================
+  Args: ''
+/bin/sh: 1: cannot create /var/rootfsMtdName: Permission denied
+grep: /proc/mtd: No such file or directory
+
+========================================
+  cominfo
+  Path: /bin/cominfo
+  Size: 9524 bytes
+========================================
+  Args: ''
+usage:
+-g get com info -c com name
+
+========================================
+  dataview
+  Path: /bin/dataview
+  Size: 17692 bytes
+========================================
+  Args: ''
+Input err, please see the help info with ?
+
+========================================
+  psi
+  Path: /bin/psi
+  Size: 23160 bytes
+========================================
+  Args: ''
+[hw_psi_main.c:995]PSI call HW_OS_IsProcExist_Ex error. uiReturn=0x2;
+
+[hw_psi_main.c:1380]PSI call HW_PSI_CheckProc return. uiReturn=0x2;
+
+
+========================================
+  user_choice
+  Path: /bin/user_choice
+  Size: 13620 bytes
+========================================
+  Args: ''
+[hw_userchoice_main.c:275]user_choice call HW_OS_IsProcExist_Ex error. uiReturn=0x2;
+
+[hw_userchoice_main.c:617]user_choice call HW_USERCHOICE_CheckProc return. uiReturn=0x2;
+
+
+========================================
+  web
+  Path: /bin/web
+  Size: 349876 bytes
+========================================
+  Args: ''
+Not support web!
+
+========================================
+  wap.ssp.dmsg
+  Path: /bin/wap.ssp.dmsg
+  Size: 9532 bytes
+========================================
+  Args: ''
+Usage :
+wap.ssp.msg show [all|timeout] <appname>
+wap.ssp.msg set [timeout] <value> <appname>
+wap.ssp.msg call [rpcid] <inputFile> <inputLen> <outputFile> <outputLen> <appname>
+wap.ssp.msg dump <msgqid> <msgnum>
+
+========================================
+  wap.ssp.dproc
+  Path: /bin/wap.ssp.dproc
+  Size: 9500 bytes
+========================================
+  Args: ''
+Invalid Arguments.
+Usage :
+wap.ssp.dproc <pid>
+wap.ssp.dproc <tid> <type>
+
+========================================
+  cwmp
+  Path: /bin/cwmp
+  Size: 63380 bytes
+========================================
+  Args: ''
+Cwmp call HW_OS_IsProcExist_Ex error. uiReturn=0x2;
+
+========================================
+  collect_exe
+  Path: /bin/collect_exe
+  Size: 13596 bytes
+========================================
+  Args: ''
+get diagnose collection process error, uiRet:0x2
+
+========================================
+  collect_pipe
+  Path: /bin/collect_pipe
+  Size: 9500 bytes
+========================================
+  Args: ''
+Create /var/collect_ctrl_fifo Failed : 13
+
+========================================
+  ConvertLog2Dst
+  Path: /bin/ConvertLog2Dst
+  Size: 9500 bytes
+========================================
+  Args: ''
+ConvertLog2Dst Usage: 
+ConvertLog2Dst srcPath dstPath: 
+
+========================================
+  getlanmac
+  Path: /bin/getlanmac
+  Size: 9500 bytes
+========================================
+  (no usage output obtained)
+
+========================================
+  write_proc
+  Path: /bin/write_proc
+  Size: 5404 bytes
+========================================
+  Args: ''
+
+Usage: write_proc[ProcFile/SysFile][SetValue]
+
+========================================
+  kmsgread
+  Path: /bin/kmsgread
+  Size: 5404 bytes
+========================================
+  (no usage output obtained)
+
+========================================
+  speeddiag
+  Path: /bin/speeddiag
+  Size: 83424 bytes
+========================================
+  (no usage output obtained)
+
+========================================
+  udp_echo
+  Path: /bin/udp_echo
+  Size: 17692 bytes
+========================================
+  Args: ''
+iptables v1.8.10 (nf_tables): Could not fetch rule set generation id: Permission denied (you must be root)
+iptables v1.8.10 (nf_tables): Could not fetch rule set generation id: Permission denied (you must be root)
+
+========================================
+  udp_echoc
+  Path: /bin/udp_echoc
+  Size: 17692 bytes
+========================================
+  Args: ''
+iptables v1.8.10 (nf_tables): Could not fetch rule set generation id: Permission denied (you must be root)
+
+========================================
+  sntp
+  Path: /bin/sntp
+  Size: 42300 bytes
+========================================
+  Args: ''
+mkdir /var/sntp Failed[errno = 13].
+sudo: BackStackInfo.sh: command not found
+HW_OS_GetStackRange open /var/stackrange_17829 err
+
+========================================
+  bftpd
+  Path: /bin/bftpd
+  Size: 115992 bytes
+========================================
+  Args: ''
+<Error>HW_Open_CheckDevice error, errno = 2;
+421 Unable to open configuration file.
+<Error>HW_Open_CheckDevice error, errno = 2;
+
+========================================
+  httpc
+  Path: /bin/httpc
+  Size: 29980 bytes
+========================================
+  Args: '--help'
+/tmp/fw_rootfs/HG8145V5_General/rootfs_0/bin/httpc: unrecognized option: -
+
+========================================
+  dropbear
+  Path: /bin/dropbear
+  Size: 251616 bytes
+========================================
+  Args: ''
+cp: cannot stat '/etc/dropbear/dropbear_rsa_host_key': No such file or directory
+sh: 1: aescrypt2: not found
+[svr-runopts.c_521]
+cp: cannot stat '/etc/dropbear/dropbear_dss_host_key': No such file or directory
+sh: 1: aescrypt2: not found
+cp: cannot stat '/etc/dropbear/dropbear_ecdsa_host_key': No such file or directory
+sh: 1: aescrypt2: not found
+[svr-runopts.c_521]
+[svr-runopts.c_521]
+
+========================================
+  Customize
+  Path: /bin/Customize
+  Size: 25936 bytes
+========================================
+  Args: ''
+
+acOutput is 
+[customize]
+Usage: customize [binword] [confword] [spec paras]
+  [binword] : stands for bin word
+  [confword] : stands for spec config word
+  [spec paras] : stands for paras, include spec sn,web user name,ssid,wpa
+Example:
+  customize MOBILY MOBILY
+  cfgtool E8C JSCT 6877687710000000
+
+
+
+========================================
+  wifi
+  Path: /bin/wifi
+  Size: 26124 bytes
+========================================
+  Args: ''
+[WIFI] Pre init error 0x2
+
+========================================
+  wificli
+  Path: /bin/wificli
+  Size: 55268 bytes
+========================================
+  Args: ''
+[WIFI EQUIP CLI]: Call HW_OS_IsProcExist_Ex Error! Return=0x2;
+
+========================================
+  audit
+  Path: /bin/audit
+  Size: 38196 bytes
+========================================
+  (no usage output obtained)
+
+
+========================================
+  V300 FIRMWARE BINARIES (HG8247H Vodafone)
+========================================
+
+--- wl (483800 bytes) ---
+Usage: wl [-a|i <adapter>] [-h] [-d|u|x] <command> [arguments]
+  -h        this message and command descriptions
+  -a, -i    adapter name or number
+  ver       get version information
+  cmds      generate a short list of available commands
+  up        reinitialize and mark adapter up
+  down      reset and mark adapter down
+
+--- nvram (7896 bytes) ---
+usage: nvram [get name] [set name=value] [unset name] [show] [commit]
+
+--- wlconf (96232 bytes) ---
+Usage: wlconf <ifname> up|down config.txt
+
+--- iwpriv (10168 bytes) ---
+Usage: iwpriv interface [private-command [private-arguments]]

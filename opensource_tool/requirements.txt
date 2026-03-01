@@ -1,0 +1,4 @@
+# Open OBSC Tool - Requirements
+# No external dependencies required for the GUI (tkinter is built into Python)
+# PyInstaller is only needed for building the standalone .exe
+pyinstaller>=6.0

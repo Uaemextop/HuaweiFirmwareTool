@@ -47,7 +47,15 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <stdint.h>
+#include <zlib.h>
+#ifndef _WIN32
+#  include <unistd.h>
+#else
+#  include <process.h>
+#  define getpid _getpid
+#endif
 #include "hw_ssp_aescrypt.h"
 
 /* Host build: safe-string stubs */
@@ -68,6 +76,62 @@ extern int HW_OS_StrToUInt32(const char *str, uint32_t *val_out);
 /* ── Work-mode constants ────────────────────────────────────────────────── */
 #define MODE_ENCRYPT   0u
 #define MODE_DECRYPT   1u
+
+/* ── Gzip helper: compress file → temp file, return temp path ────────────── */
+static int gzip_file(const char *input_path, const char *output_path)
+{
+    FILE *fin = fopen(input_path, "rb");
+    if (!fin) return -1;
+
+    gzFile gz = gzopen(output_path, "wb9");
+    if (!gz) { fclose(fin); return -1; }
+
+    unsigned char buf[8192];
+    size_t n;
+    while ((n = fread(buf, 1, sizeof(buf), fin)) > 0) {
+        if (gzwrite(gz, buf, (unsigned)n) <= 0) {
+            fclose(fin); gzclose(gz); return -1;
+        }
+    }
+    fclose(fin);
+    gzclose(gz);
+    return 0;
+}
+
+/* ── Gzip helper: decompress file → output path ─────────────────────────── */
+static int gunzip_file(const char *input_path, const char *output_path)
+{
+    gzFile gz = gzopen(input_path, "rb");
+    if (!gz) return -1;
+
+    FILE *fout = fopen(output_path, "wb");
+    if (!fout) { gzclose(gz); return -1; }
+
+    unsigned char buf[8192];
+    int n;
+    int err = 0;
+    while ((n = gzread(gz, buf, sizeof(buf))) > 0) {
+        if (fwrite(buf, 1, (size_t)n, fout) != (size_t)n) {
+            err = -1;
+            break;
+        }
+    }
+    if (n < 0) err = -1;
+    fclose(fout);
+    gzclose(gz);
+    return err;
+}
+
+/* ── Check if file starts with gzip magic (1f 8b) ──────────────────────── */
+static int is_gzip_file(const char *path)
+{
+    FILE *f = fopen(path, "rb");
+    if (!f) return 0;
+    unsigned char hdr[2] = {0, 0};
+    size_t got = fread(hdr, 1, 2, f);
+    fclose(f);
+    return (got == 2 && hdr[0] == 0x1f && hdr[1] == 0x8b);
+}
 
 /*
  * check_argc – validate the argument count.
@@ -98,10 +162,14 @@ static int check_argc(int argc)
 {
     /* argc must be 4, 5 or 6 */
     if ((unsigned)(argc - 4) > 2u) {
-        HW_OS_Printf("version[v1.0]\n"
-                     "  aescrypt2 <mode> <input filename> <output filename>\n\n"
-                     "  <mode>: 0 = encrypt, 1 = decrypt\n\n"
-                     "  example: aescrypt2 0 file file.aes\n\n");
+        HW_OS_Printf("version[v2.0] – Huawei hw_ctree.xml encrypt/decrypt tool\n"
+                     "  aescrypt2 <mode> <input.xml> <output.xml>\n\n"
+                     "  <mode>: 0 = encrypt (XML→gzip→AES), 1 = decrypt (AES→gunzip→XML)\n\n"
+                     "  example: aescrypt2 1 hw_ctree.xml decrypted.xml\n"
+                     "  example: aescrypt2 0 config.xml hw_ctree.xml\n\n"
+                     "  env AESCRYPT2_KEY_INDEX=0..5 selects firmware key:\n"
+                     "    0=V300R017  1=V500R019C10  2=V500R019C00\n"
+                     "    3=V500R019C10SPC386  4=V500R020C00  5=V500R020C10\n\n");
         return -1;
     }
     return 0;
@@ -229,10 +297,46 @@ int main(int argc, char **argv)
     has_arg5 = (argc > 5) ? 1 : 0;
 
     /* Dispatch to encrypt or decrypt */
-    if (work_mode == MODE_ENCRYPT)
-        ret = HW_OS_AESCBCEncrypt(1, infile, outfile, arg4, has_arg5);
-    else
-        ret = HW_OS_AESCBCDecrypt(1, infile, outfile, arg4, has_arg5);
+    if (work_mode == MODE_ENCRYPT) {
+        /* Encrypt: XML → gzip → AES-CBC → outfile */
+        char gz_tmp[FILENAME_BUF + 32];
+        snprintf(gz_tmp, sizeof(gz_tmp), "%s.%d.gz.tmp", infile, (int)getpid());
+
+        HW_OS_Printf("Compressing %s → gzip...\n", infile);
+        if (gzip_file(infile, gz_tmp) != 0) {
+            HW_OS_Printf("gzip compression of %s failed!\r\n", infile);
+            return 1;
+        }
+
+        ret = HW_OS_AESCBCEncrypt(1, gz_tmp, outfile, arg4, has_arg5);
+        remove(gz_tmp);
+
+        if (ret == 0)
+            HW_OS_Printf("Encrypted %s → %s (XML→gzip→AES)\n", infile, outfile);
+    } else {
+        /* Decrypt: AES-CBC → gunzip → XML outfile */
+        char raw_tmp[FILENAME_BUF + 32];
+        snprintf(raw_tmp, sizeof(raw_tmp), "%s.%d.raw.tmp", outfile, (int)getpid());
+
+        ret = HW_OS_AESCBCDecrypt(1, infile, raw_tmp, arg4, has_arg5);
+
+        if (ret == 0 && is_gzip_file(raw_tmp)) {
+            HW_OS_Printf("Decompressing gzip → XML...\n");
+            if (gunzip_file(raw_tmp, outfile) != 0) {
+                HW_OS_Printf("gunzip failed, raw output in %s\n", raw_tmp);
+                ret = 1;
+            }
+            remove(raw_tmp);
+        } else if (ret == 0) {
+            /* Not gzip — just rename raw output */
+            rename(raw_tmp, outfile);
+        } else {
+            remove(raw_tmp);
+        }
+
+        if (ret == 0)
+            HW_OS_Printf("Decrypted %s → %s (AES→gunzip→XML)\n", infile, outfile);
+    }
 
     if (ret != 0) {
         HW_PROC_DBG_LastWord(0x5c, "hw_ssp_ctool.c", NULL, ret, 0, 0);

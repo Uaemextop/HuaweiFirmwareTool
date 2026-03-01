@@ -11,7 +11,7 @@ option(BUILD_AESCRYPT2 "Build aescrypt2 utility"                               O
 option(BUILD_WLAN_AES  "Build libwlan_aes_crypto shared library"               ON)
 option(BUILD_CFGTOOL   "Build cfgtool XML config utility"                      ON)
 option(BUILD_EFUSE     "Build eFuse key derivation library"                    ON)
-option(BUILD_STANDALONE "Build unified standalone aescrypt2 binary"            ON)
+option(BUILD_STANDALONE "Build unified standalone aescrypt2 binary (default)"   ON)
 
 # ── Platform detection ───────────────────────────────────────────────────────
 if(WIN32)
@@ -99,22 +99,12 @@ if(BUILD_WLAN_AES AND NOT WIN32)
     )
 endif()
 
-# ── hw_ssp_aescrypt (static helper lib used by aescrypt2) ───────────────────
+# ── hw_ssp_aescrypt (static helper lib, used when not building standalone) ──
 add_library(hw_ssp_aescrypt STATIC
     aescrypt2/hw_ssp_aescrypt.c
 )
 target_include_directories(hw_ssp_aescrypt PUBLIC aescrypt2 stubs)
 target_add_deps(hw_ssp_aescrypt)
-
-# ── aescrypt2 executable ─────────────────────────────────────────────────────
-if(BUILD_AESCRYPT2)
-    add_executable(aescrypt2
-        aescrypt2/aescrypt2.c
-    )
-    target_include_directories(aescrypt2 PRIVATE stubs aescrypt2)
-    target_link_libraries(aescrypt2 PRIVATE hw_ssp_aescrypt)
-    target_add_deps(aescrypt2)
-endif()
 
 # ── libdm_efuse (eFuse key derivation) ──────────────────────────────────────
 if(BUILD_EFUSE)
@@ -138,34 +128,35 @@ if(BUILD_CFGTOOL)
     install(TARGETS cfgtool RUNTIME DESTINATION bin)
 endif()
 
-# ── Unified standalone aescrypt2 ─────────────────────────────────────────────
-# Single self-contained binary: aescrypt2 + crypto + efuse + stubs
+# ── aescrypt2 (unified self-contained binary) ───────────────────────────────
+# Single binary: aescrypt2 + crypto + efuse + stubs.  Accepts XML input/output.
+# Automatically gzip-compresses before encrypt, gunzip-decompresses after decrypt.
 if(BUILD_STANDALONE)
-    add_executable(aescrypt2_standalone
+    find_package(ZLIB REQUIRED)
+
+    add_executable(aescrypt2
         aescrypt2/aescrypt2.c
         aescrypt2/hw_ssp_aescrypt.c
         efuse/hal_efuse.c
         efuse/dm_key.c
         stubs/hw_os_stubs.c
     )
-    target_include_directories(aescrypt2_standalone PRIVATE
+    target_include_directories(aescrypt2 PRIVATE
         aescrypt2 efuse stubs
     )
-    target_compile_definitions(aescrypt2_standalone PRIVATE STANDALONE_BUILD)
+    target_compile_definitions(aescrypt2 PRIVATE STANDALONE_BUILD)
     if(MBEDTLS_FOUND_FLAG)
-        target_compile_definitions(aescrypt2_standalone PRIVATE HAVE_MBEDTLS)
-        target_link_libraries(aescrypt2_standalone PRIVATE ${MBEDTLS_LIBS})
+        target_compile_definitions(aescrypt2 PRIVATE HAVE_MBEDTLS)
+        target_link_libraries(aescrypt2 PRIVATE ${MBEDTLS_LIBS})
     endif()
+    target_link_libraries(aescrypt2 PRIVATE ZLIB::ZLIB)
     if(WIN32)
-        target_link_libraries(aescrypt2_standalone PRIVATE ws2_32)
+        target_link_libraries(aescrypt2 PRIVATE ws2_32)
     endif()
-    install(TARGETS aescrypt2_standalone RUNTIME DESTINATION bin)
+    install(TARGETS aescrypt2 RUNTIME DESTINATION bin)
 endif()
 
 # ── Install ──────────────────────────────────────────────────────────────────
-if(BUILD_AESCRYPT2)
-    install(TARGETS aescrypt2 RUNTIME DESTINATION bin)
-endif()
 if(BUILD_WLAN_AES AND NOT WIN32)
     install(TARGETS wlan_aes_crypto LIBRARY DESTINATION lib)
 endif()

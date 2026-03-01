@@ -379,9 +379,11 @@ int HW_CFGTOOL_OperByType(int op_type, void *node,
          *   xml_opt = path, args[0] = AttName (optional)
          *   If AttName provided: build full path path.AttName
          */
-        if (args && arg_count >= 1 && args[0][0] != '\0') {
+        if (args && arg_count >= 1 && args[0] && args[0][0] != '\0') {
             char fullpath[512];
-            snprintf(fullpath, sizeof(fullpath), "%s.%s", xml_opt, args[0]);
+            if (snprintf(fullpath, sizeof(fullpath), "%s.%s",
+                         xml_opt, args[0]) >= (int)sizeof(fullpath))
+                return -1;
             return HW_CFGTOOL_XmlGet(xml_path, fullpath);
         }
         return HW_CFGTOOL_XmlGet(xml_path, xml_opt);
@@ -393,9 +395,11 @@ int HW_CFGTOOL_OperByType(int op_type, void *node,
          *   Build full path: path.AttName, then set Value
          */
         if (!node || !args) return -1;
-        if (arg_count >= 2) {
+        if (arg_count >= 2 && args[0] && args[1]) {
             char fullpath[512];
-            snprintf(fullpath, sizeof(fullpath), "%s.%s", xml_opt, args[0]);
+            if (snprintf(fullpath, sizeof(fullpath), "%s.%s",
+                         xml_opt, args[0]) >= (int)sizeof(fullpath))
+                return -1;
             return HW_CFGTOOL_SetXMLValByPath(node, fullpath, args[1]);
         }
         /* Fallback: single arg = direct value set at path */
@@ -408,10 +412,12 @@ int HW_CFGTOOL_OperByType(int op_type, void *node,
 
     case CFGTOOL_OP_ADD:
         if (!node) return -1;
-        if (args && arg_count >= 2) {
+        if (args && arg_count >= 2 && args[0] && args[1]) {
             /* cfgtool add <file> <path> <childName> <value> */
             char fullpath[512];
-            snprintf(fullpath, sizeof(fullpath), "%s.%s", xml_opt, args[0]);
+            if (snprintf(fullpath, sizeof(fullpath), "%s.%s",
+                         xml_opt, args[0]) >= (int)sizeof(fullpath))
+                return -1;
             return HW_CFGTOOL_AddXMLValByPath(node, fullpath, args[1]);
         } else if (args && arg_count >= 1) {
             /* cfgtool add <file> <path> <value> */

@@ -1,0 +1,25 @@
+Name:mabr
+Group:
+Version:v1.0
+InstallSize:4102010
+Type:app
+Right:user
+Visibility:yes
+Architecture:arm
+KernelVersion:2.6.34.10
+EntryFile:nanocdn.sh
+BootArg:start
+RelProc:
+Cpu:
+PhysicalRam:
+VirtualRam:
+Disk:
+Socket:
+Provides:china telecom
+Description:mabr
+Compile:hisilinux
+MatchedDevicesType:
+lxc.name:mabr
+lxc.template:lxc-wap-share
+lxc.cgroup.cpu:20
+lxc.cgroup.mem:32768

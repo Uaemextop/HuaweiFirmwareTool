@@ -1,0 +1,57 @@
+arch     arm
+baddr    0x0
+binsz    4323
+bintype  elf
+bits     32
+canary   false
+class    ELF32
+crypto   false
+endian   little
+havecode true
+laddr    0x0
+lang     c
+linenum  false
+lsyms    false
+machine  ARM
+nx       true
+os       linux
+pic      true
+relocs   false
+relro    partial
+rpath    NONE
+sanitize false
+static   true
+stripped true
+subsys   linux
+va       true
+[Exports]
+
+nth paddr      vaddr      bind   type   size lib name
+―――――――――――――――――――――――――――――――――――――――――――――――――――――
+2   ---------- 0x0000902c GLOBAL NOTYPE 0        _bss_end__
+4   ---------- 0x0000902c GLOBAL NOTYPE 0        __bss_start__
+7   ---------- 0x0000902c GLOBAL NOTYPE 0        __bss_end__
+8   0x00000000 0x00000000 GLOBAL OBJ    0        so.ld
+9   0x00000698 0x00000698 GLOBAL FUNC   276      WLAN_AES_Cbc_128_Decrypt
+10  ---------- 0x0000902c GLOBAL NOTYPE 0        __bss_start
+11  ---------- 0x0000902c GLOBAL NOTYPE 0        __end__
+15  ---------- 0x0000902c GLOBAL NOTYPE 0        _edata
+16  ---------- 0x0000902c GLOBAL NOTYPE 0        _end
+18  0x00000540 0x00000540 GLOBAL FUNC   344      WLAN_AES_Cbc_128_Encrypt
+[Imports]
+nth vaddr      bind   type   lib name
+―――――――――――――――――――――――――――――――――――――
+3   0x000004e0 GLOBAL NOTYPE     HW_OS_MemFreeD
+5   0x000004ec GLOBAL NOTYPE     polarssl_aes_setkey_dec
+6   0x000004f8 GLOBAL NOTYPE     polarssl_aes_init
+12  0x00000504 GLOBAL NOTYPE     polarssl_aes_setkey_enc
+13  0x00000510 GLOBAL NOTYPE     HW_OS_MemMallocSet
+14  0x0000051c GLOBAL NOTYPE     polarssl_aes_crypt_cbc
+17  0x00000528 GLOBAL NOTYPE     HW_OS_MemCpy_S
+19  0x00000000 GLOBAL NOTYPE     __aeabi_unwind_cpp_pr1
+20  0x00000534 GLOBAL NOTYPE     HW_PROC_DBG_LastWord
+
+[Strings]
+nth paddr      vaddr      len size section type  string
+―――――――――――――――――――――――――――――――――――――――――――――――――――――――
+0   0x000007ac 0x000007ac 17  18   .rodata ascii wlan_aes_crypto.c

@@ -1,0 +1,1975 @@
+<CliRoot>
+<BosaReset CmdStr="bosareset" ObjPath="InternetGatewayDevice.X_HW_DEBUG.AMP.BosaReset" OpType="5" Help="usage: reset bosa [device {opticdev}]" OutPut="bosareset" CmdGroup="0x00000010">
+<para ParaName="device" AttName="OpticDevice" ParaAtt="0"/>
+</BosaReset>
+<ClearBosaCount CmdStr="clear countbosa" ObjPath="InternetGatewayDevice.X_HW_DEBUG.AMP.BosaCount" OpType="5" Help="usage:clear countbosa" OutPut="" CmdGroup="0x00000010"/>
+<GetBosa CmdStr="get bosa" ObjPath="InternetGatewayDevice.X_HW_DEBUG.AMP.Bosa" OpType="1" Help="usage: get bosa  [device {opticdev}] table {table} addr {addr} len {len}" OutPut="table: %Device%
+addr : %Addr%
+len  : %Len%
+value: %Data%" CmdGroup="0x00000010">
+<para ParaName="device" AttName="OpticDevice" ParaAtt="0"/>
+<para ParaName="table" AttName="Table" ParaAtt="0"/>
+<para ParaName="addr" AttName="Addr" ParaAtt="0"/>
+<para ParaName="len" AttName="Len" ParaAtt="0"/>
+</GetBosa>
+<GetBosaCount CmdStr="get countbosa" ObjPath="InternetGatewayDevice.X_HW_DEBUG.AMP.BosaCount" OpType="1" Help="usage:get countbosa" OutPut="pon rx count  : %PonRxCount%
+pon drop count: %PonDropCount%" CmdGroup="0x00000010"/>
+<SetBosa CmdStr="set bosa" ObjPath="InternetGatewayDevice.X_HW_DEBUG.AMP.Bosa" OpType="5" Help="usage: set bosa [device {opticdev}] table {table} addr {addr} len {len} value {value}" OutPut="set bosa" CmdGroup="0x00000010">
+<para ParaName="device" AttName="OpticDevice" ParaAtt="0"/>
+<para ParaName="table" AttName="Table" ParaAtt="0"/>
+<para ParaName="addr" AttName="Addr" ParaAtt="0"/>
+<para ParaName="len" AttName="Len" ParaAtt="0"/>
+<para ParaName="value" AttName="Data" ParaAtt="0"/>
+</SetBosa>
+<!-- SUPPORT_WIFI_START-->
+<SetRfFilter CmdStr="set filter rf" ObjPath="InternetGatewayDevice.X_HW_AmpInfo" OpType="5" Help="set filter rf switch (0 band-pass; 1 low-pass; 2 high-pass)" OutPut="" CmdGroup="0x00000010">
+<para ParaName="switch" AttName="RfFilterSwitch" ParaAtt="0"/>
+</SetRfFilter>
+<!-- SUPPORT_WIFI_END-->
+<SetRogueOnt CmdStr="set ontrogue" ObjPath="InternetGatewayDevice.X_HW_DEBUG.AMP.SetRogueOnt" OpType="5" Help="usage: set ontrogue switch {0|1}" OutPut="output: set ringcheck enable" CmdGroup="0x00000010">
+<para ParaName="switch" AttName="switch" ParaAtt="0"/>
+</SetRogueOnt>
+<SetOptic CmdStr="set optic" ObjPath="InternetGatewayDevice.X_HW_DEBUG.AMP.Optic" OpType="5" Help="set optic [device {opticdev}] [loslevel high/low] [power on/off] [sendpower on/off/ontoflash/offtoflash] [controlmode cpu/log] [txdata enable/disable]" OutPut="" CmdGroup="0x00000010">
+<para ParaName="device" AttName="OpticDevice" ParaAtt="0"/>
+<para ParaName="loslevel" AttName="LosEnable" ParaAtt="0"/>
+<para ParaName="sendpower" AttName="SendPowerSupply" ParaAtt="0"/>
+<para ParaName="controlmode" AttName="ControlMode" ParaAtt="0"/>
+<para ParaName="power" AttName="PowerSupply" ParaAtt="0"/>
+<para ParaName="txdata" AttName="TxData" ParaAtt="0"/>
+</SetOptic>
+<SetSerdesConnect CmdStr="set serdes" ObjPath="InternetGatewayDevice.X_HW_DEBUG.AMP.SerdesConnect" OpType="0" Help="set serdes connect [bob/sfp]" OutPut="" CmdGroup="0x80000010">
+<para ParaName="connect" AttName="Object" ParaAtt="0"/>
+</SetSerdesConnect>
+<GetSerdesConnect CmdStr="display serdes connect object" ObjPath="InternetGatewayDevice.X_HW_DEBUG.AMP.SerdesConnect" OpType="1" Help="display serdes connect object" OutPut="serdes connect to %Object%" CmdGroup="0x80000010">
+</GetSerdesConnect>
+<!-- SUPPORT_WIFI_START-->
+<SetRadio CmdStr="set radio" ObjPath="InternetGatewayDevice.LANDevice.WiFi.Radio" OpType="5" Help="USAGE: 
+        set radio radioinst {1|2} [enable {0|1}] [txchainmask {0|1|2|3|4|7|15}] [rxchainmask {0|1|2|3|4|7|15}]   
+OPTIONS:
+    para: enable -- 
+              0 - disable radio
+              1 - enable radio
+          txchainmask/rxchainmask --
+              0 - default value
+              1 - antenna_1 open, others close
+              2 - antenna_2 open, others close
+              3 - 2*2 all antennas open
+              4 - antenna_3 open, others close
+              7 - 3*3 all antennas open
+              15 - 4*4 all antennas open
+          Notice: After make the TX/RX Chain open, the TX/RX power turn up to max that will be restore after reset." OutPut="set radio" CmdGroup="0x00000010">
+<para ParaName="laninst" AttName="LANDevice" ParaAtt="1"/>
+<para ParaName="radioinst" AttName="Radio" ParaAtt="1"/>
+<para ParaName="enable" AttName="Enable" ParaAtt="0"/>
+<para ParaName="txchainmask" AttName="X_HW_TxChainMask" ParaAtt="0"/>
+<para ParaName="rxchainmask" AttName="X_HW_RxChainMask" ParaAtt="0"/>
+</SetRadio>
+<SetWifiCalibrationTxPower CmdStr="set wifi calibrate" ObjPath="InternetGatewayDevice.X_HW_DEBUG.WifiCalibrationTxPower" OpType="5" Help="usage: set wifi calibrate txpower" OutPut="" CmdGroup="0x00000010">
+<para ParaName="txpower" AttName="Result" ParaAtt="0"/>
+</SetWifiCalibrationTxPower>
+<GetWifiCalibrationTxPower CmdStr="get wifi calibrate txpower" ObjPath="InternetGatewayDevice.X_HW_DEBUG.WifiCalibrationTxPower" OpType="1" Help="usage: get wifi calibrate txpower" OutPut="%Result%" CmdGroup="0x00000010">
+<para ParaName="txpower" AttName="Result" ParaAtt="0"/>
+</GetWifiCalibrationTxPower>
+<ClsWifiCalibrationTxPower CmdStr="clear wifi calibrate" ObjPath="InternetGatewayDevice.X_HW_DEBUG.WifiCalibrationTxPower" OpType="2" Help="usage: clear wifi calibrate" OutPut="%Result%" CmdGroup="0x00000010">
+<para ParaName="txpower" AttName="Result" ParaAtt="0"/>
+</ClsWifiCalibrationTxPower>
+<GetWifiAntennaRSSI CmdStr="display wifi antenna rssi" ObjPath="InternetGatewayDevice.X_HW_DEBUG.WifiAntennaRSSI" OpType="1" Help="usage: get wifi antenna rssi" OutPut="%Result%" CmdGroup="0x00000010">
+<para ParaName="rssi" AttName="Result" ParaAtt="0"/>
+</GetWifiAntennaRSSI>
+<SetWifiCalTxPower CmdStr="set wifi txcalpower" ObjPath="InternetGatewayDevice.X_HW_DEBUG.TxCalPower" OpType="5" Help="usage: set wifi txcalpower txpower" OutPut="" CmdGroup="0x00000010">
+<para ParaName="txpower" AttName="TxCalPower" ParaAtt="0"/>
+</SetWifiCalTxPower>
+<GetWifiCalTxPower CmdStr="get wifi txcalpower" ObjPath="InternetGatewayDevice.X_HW_DEBUG.TxCalPower" OpType="1" Help="usage: get wifi txcalpower" OutPut="%TxCalPower%" CmdGroup="0x00000010"/>
+<ClsWifiCalTxPower CmdStr="clear wifi txcalpower" ObjPath="InternetGatewayDevice.X_HW_DEBUG.TxCalPower" OpType="2" Help="usage: clear wifi txcalpower" OutPut="%TxCalPower%" CmdGroup="0x00000010"/>
+<SetWifiTransmitPower CmdStr="set wlan tx" ObjPath="InternetGatewayDevice.X_HW_DEBUG.WifiTransmitPower" OpType="5" Help="usage: set wlan tx power [power]" OutPut="" CmdGroup="0x00000010">
+<para ParaName="power" AttName="Power" ParaAtt="0"/>
+</SetWifiTransmitPower>
+<WifiTxPowerRecover CmdStr="recover wlan tx power" ObjPath="InternetGatewayDevice.X_HW_DEBUG.WifiTransmitPower" OpType="1"  Help="usage: recover wlan tx power" OutPut="%Power%" CmdGroup="0x00000010"/>
+<GetWifiAssociatedStatus CmdStr="display wlan associate" ObjPath="InternetGatewayDevice.X_HW_DEBUG.AMP.WifiAssociate" OpType="5" Help="display wlan associate" OutPut="" CmdGroup="0x00000010"/>
+<!-- SUPPORT_WIFI_END-->
+<SetRF CmdStr="set rf" ObjPath="InternetGatewayDevice.X_HW_DEBUG.AMP.RF" OpType="5" Help="usage: set rf switch on/off for:set rf config;" OutPut="" CmdGroup="0x00000010">
+<para ParaName="switch" AttName="Switch" ParaAtt="0"/>
+</SetRF>
+<SetEthPortAll CmdStr="set ethportall" ObjPath="InternetGatewayDevice.X_HW_DEBUG.AMP.SetEthPortAll" OpType="5" Help="usage: set ethportall l3enable [0|1]" OutPut="" CmdGroup="0x00000010">
+<para ParaName="l3enable" AttName="L3Enable" ParaAtt="0"/>
+</SetEthPortAll>
+<BosaPretest CmdStr="bosa pretest" ObjPath="InternetGatewayDevice.X_HW_DEBUG.AMP.BOSAPRETEST" OpType="5" Help="usage: bosa pretest" OutPut="" CmdGroup="0x00000010">
+</BosaPretest>
+<SetPrbs23 CmdStr="set prbs23" ObjPath="InternetGatewayDevice.X_HW_DEBUG.AMP.SETPRBS23" OpType="5" Help="usage: set prbs23 switch enable / disable" OutPut="" CmdGroup="0x00000010">
+<para ParaName="switch" AttName="Switch" ParaAtt="0"/>
+</SetPrbs23>
+<EthEyeTest CmdStr="set etheyetest" ObjPath="InternetGatewayDevice.X_HW_DEBUG.AMP.EthEyeTest" OpType="5" Help="usage: Eth Eye Test 
+    set etheyetest portid {value} eyemode {value}
+Para:
+    portid : value range [1-4] 
+    eyemode:
+        1 - 100M Channel A test
+        2 - 100M Channel B test
+        3 - 1000M test " OutPut="" CmdGroup="0x00000010">
+<para ParaName="portid" AttName="PortId" ParaAtt="0"/>
+<para ParaName="eyemode" AttName="EyeMode" ParaAtt="0"/>
+</EthEyeTest>
+
+<EthEyeStop CmdStr="etheyetest stop" ObjPath="InternetGatewayDevice.X_HW_DEBUG.AMP.EthEyeTest" OpType="1" Help="USAGE:etheyetest stop " OutPut="portid:%PortId%" CmdGroup="0x00000010">
+</EthEyeStop>
+<ColorLedTest CmdStr="set color led" ObjPath="InternetGatewayDevice.X_HW_DEBUG.AMP.ColorLedTest" OpType="0" Help="set color led color {red|green|white} switch [on/off]" OutPut="" CmdGroup="0x00000010">
+<para ParaName="color" AttName="Color" ParaAtt="0"/>
+<para ParaName="switch" AttName="Switch" ParaAtt="0"/>
+</ColorLedTest>
+<DisplayWifiEquipStatus CmdStr="display wifi equiptest status" ObjPath="InternetGatewayDevice.X_HW_DEBUG.AMP.DisplayWifiEquipStatus" OpType="1" Help="USAGE:
+display wifi equiptest status -- ready means equip test would run" OutPut="Status:%Status%" CmdGroup="0x00004010"/>
+
+<iottxtest CmdStr="iottest txtest" ObjPath="InternetGatewayDevice.X_HW_IOT_ZWAVE.TxTest" OpType="5" Help="usage: IOT transmit Testing
+iottest txtest [channel (Channel) freq (freq) side (injectionside)  rate (transmit rate) power (power) lbt (LBT) linktype (linktype) show (show config) txnum (num)]
+Para:
+	channel: 11-26
+	freq: 919800 or 921400 for ANZ;916000 or 908400 for US; 869850 or 868400 for EU
+	side:(h)ighside or (l)owside
+	rate: Baudrate 40k(4), 9.6k(9), 40k and 9.6k(b), or 100k(1)
+	power: 0-63
+	lbt:LBT threshold (35-80, greater than 255 to skip, otherwise disabled)
+	linktype:Link one-way(o) or two-way(t)
+	show:s   (to show the current configurations)
+	txnum: 1-1000: Limited frame transmission;65534:Transmit modulated RF signal; 65535: Transmit carrier wave" 
+OutPut="" CmdGroup="0x00000010">
+<para ParaName="channel" AttName="Channel" ParaAtt="0"/>
+<para ParaName="freq" AttName="freq" ParaAtt="0"/>
+<para ParaName="rate" AttName="rate" ParaAtt="0"/>
+<para ParaName="side" AttName="injectionside" ParaAtt="0"/>
+<para ParaName="power" AttName="power" ParaAtt="0"/>
+<para ParaName="lbt" AttName="LBT" ParaAtt="0"/>
+<para ParaName="linktype" AttName="linktype" ParaAtt="0"/>
+<para ParaName="show" AttName="command" ParaAtt="0"/>
+<para ParaName="txnum" AttName="txnum" ParaAtt="0"/>
+</iottxtest>
+
+<iottxresult CmdStr="iottest txstop" ObjPath="InternetGatewayDevice.X_HW_IOT_ZWAVE.TxTest" OpType="1" Help="iottest txstop" OutPut="tx stoped channel %Channel%" CmdGroup="0x00000010">
+</iottxresult>
+
+<iotrxtest CmdStr="iottest rxtest" ObjPath="InternetGatewayDevice.X_HW_IOT_ZWAVE.RxTest" OpType="5" Help="iottest rxtest  [channel (Channel) count (num)]" OutPut="" CmdGroup="0x00000010">
+	<para ParaName="channel" AttName="Channel" ParaAtt="0"/>
+    <para ParaName="count" AttName="count" ParaAtt="0"/>    
+</iotrxtest>
+
+<iotrxresult CmdStr="iottest rxresult" ObjPath="InternetGatewayDevice.X_HW_IOT_ZWAVE.RxTest" OpType="1" Help="iottest rxresult" OutPut="%result%" CmdGroup="0x00000010">
+</iotrxresult>
+
+<iotantenna CmdStr="iottest antenna" ObjPath="InternetGatewayDevice.X_HW_IOT_ZWAVE.AntennaTest" OpType="5" Help="iottest antenna [command (start|end)]" OutPut="" CmdGroup="0x00000010">
+<para ParaName="command" AttName="Command" ParaAtt="0"/>
+</iotantenna>
+
+<iotgenerator CmdStr="iottest generator" ObjPath="InternetGatewayDevice.X_HW_IOT_ZWAVE.Generator" OpType="5" Help="iottest generator [freq (U|E|Z|M|I|J) count (max 255)]" OutPut="" CmdGroup="">
+<para ParaName="freq" AttName="Freq" ParaAtt="0"/>
+<para ParaName="count" AttName="Count" ParaAtt="0"/>
+</iotgenerator>
+
+<iotResetPin CmdStr="iottest set cpu reset" ObjPath="InternetGatewayDevice.X_HW_IOT_ZWAVE.Generator" OpType="5" Help="iottest set cpu reset [function (0|1|2)]" OutPut="" CmdGroup="0x00000010">
+<para ParaName="function" AttName="ResetPin" ParaAtt="0"/>
+</iotResetPin>
+
+<iotlisten CmdStr="iottest rflink" ObjPath="InternetGatewayDevice.X_HW_IOT_ZWAVE.Listen" OpType="5" Help="iottest listen [command (start|end)]" OutPut="" CmdGroup="">
+	<para ParaName="command" AttName="Command" ParaAtt="0"/>
+</iotlisten>
+
+<iottalk CmdStr="iottest talk" ObjPath="InternetGatewayDevice.X_HW_IOT_ZWAVE.Talk" OpType="5" Help="iottest talk [Command (hexstring)]" OutPut="" CmdGroup="0x00000010">
+	<para ParaName="command" AttName="Command" ParaAtt="0"/>
+</iottalk>
+
+<SetWlanCfgBasic CmdStr="set wlancfg basic" ObjPath="InternetGatewayDevice.LANDevice.X_HW_WLANCFG" OpType="5" Help="USAGE:
+set wlancfg basic laninst [1] wlcfginst [1-8] [para {value}]
+OPTIONS:
+    para: chiptype-- chip type
+          rfband-- 2.4GHz, 5GHz
+          countrycode-- country code" OutPut="" CmdGroup="0x00000010">
+	<para ParaName="laninst" AttName="LANDevice" ParaAtt="1"/>
+	<para ParaName="wlcfginst" AttName="X_HW_WLANCFG" ParaAtt="1"/>
+	<para ParaName="chiptype" AttName="ChipType" ParaAtt="0"/>
+	<para ParaName="rfband" AttName="RFBand" ParaAtt="0"/>
+	<para ParaName="countrycode" AttName="CountryCode" ParaAtt="0"/>
+</SetWlanCfgBasic>
+
+<GetWlanCfgBasic CmdStr="get wlancfg basic" ObjPath="InternetGatewayDevice.LANDevice.X_HW_WLANCFG" OpType="1" Help="USAGE:
+get wlancfg basic laninst [1] wlcfginst [1-8]" OutPut="WlanCfg Basic Info:
+ChipType                        : %ChipType%
+RFBand                          : %RFBand%
+CountryCode                     : %CountryCode%" CmdGroup="0x00000010">
+	<para ParaName="laninst" AttName="LANDevice" ParaAtt="1"/>
+	<para ParaName="wlcfginst" AttName="X_HW_WLANCFG" ParaAtt="1"/>
+</GetWlanCfgBasic>
+
+<SetWlanCfgPlimit CmdStr="set wlancfg pwrlimit" ObjPath="InternetGatewayDevice.LANDevice.X_HW_WLANCFG.Power" OpType="5" Help="USAGE:
+set wlancfg pwrlimit laninst [1] wlcfginst [1-8] power {value}" OutPut="" CmdGroup="0x00000010">
+	<para ParaName="laninst" AttName="LANDevice" ParaAtt="1"/>
+	<para ParaName="wlcfginst" AttName="X_HW_WLANCFG" ParaAtt="1"/>
+	<para ParaName="power" AttName="PowerLimit" ParaAtt="0"/>
+</SetWlanCfgPlimit>
+
+<GetWlanCfgPlimit CmdStr="get wlancfg pwrlimit" ObjPath="InternetGatewayDevice.LANDevice.X_HW_WLANCFG.Power" OpType="1" Help="USAGE:
+get wlancfg pwrlimit laninst [1] wlcfginst [1-8]" OutPut="WlanCfg PowerLimit Info:
+Power                     : %PowerLimit%" CmdGroup="0x00000010">
+	<para ParaName="laninst" AttName="LANDevice" ParaAtt="1"/>
+	<para ParaName="wlcfginst" AttName="X_HW_WLANCFG" ParaAtt="1"/>
+</GetWlanCfgPlimit>
+
+<SetWlanCfgChannel CmdStr="set wlancfg channel" ObjPath="InternetGatewayDevice.LANDevice.X_HW_WLANCFG.Channel" OpType="5" Help="USAGE:
+set wlancfg channel laninst [1] wlcfginst [1-8] [para {value}]
+OPTIONS:
+    para: chan11b-- chan11b
+    	  chan11ng-- chan11ng
+    	  chan11ngHt40Minus-- chan11ngHt40Minus
+    	  chan11ngHt40Plus-- chan11ngHt40Plus
+    	  chan11na-- chan11na
+    	  chan11naHt40Minus-- chan11naHt40Minus
+    	  chan11naHt40Plus-- chan11naHt40Plus
+    	  chan11acHt80-- chan11acHt80
+    	  chan11acHt160-- chan11acHt160" OutPut="" CmdGroup="0x00000010">
+	<para ParaName="laninst" AttName="LANDevice" ParaAtt="1"/>
+	<para ParaName="wlcfginst" AttName="X_HW_WLANCFG" ParaAtt="1"/>
+	<para ParaName="chan11b" AttName="Chan11b" ParaAtt="0"/>
+	<para ParaName="chan11ng" AttName="Chan11ng" ParaAtt="0"/>
+	<para ParaName="chan11ngHt40Minus" AttName="Chan11ngHt40Minus" ParaAtt="0"/>
+	<para ParaName="chan11ngHt40Plus" AttName="Chan11ngHt40Plus" ParaAtt="0"/>
+	<para ParaName="chan11na" AttName="Chan11na" ParaAtt="0"/>
+	<para ParaName="chan11naHt40Minus" AttName="Chan11naHt40Minus" ParaAtt="0"/>
+	<para ParaName="chan11naHt40Plus" AttName="Chan11naHt40Plus" ParaAtt="0"/>
+	<para ParaName="chan11acHt80" AttName="Chan11acHt80" ParaAtt="0"/>
+	<para ParaName="chan11acHt160" AttName="Chan11acHt160" ParaAtt="0"/>	
+</SetWlanCfgChannel>
+
+<GetWlanCfgChannel CmdStr="get wlancfg channel" ObjPath="InternetGatewayDevice.LANDevice.X_HW_WLANCFG.Channel" OpType="1" Help="USAGE:
+get wlancfg channel laninst [1] wlcfginst [1-8]" OutPut="WlanCfg Channel Info:
+chan11b                       :%Chan11b%
+chan11ng                      :%Chan11ng%
+chan11ngHt40Minus             :%Chan11ngHt40Minus%
+chan11ngHt40Plus              :%Chan11ngHt40Plus%
+chan11na                      :%Chan11na%
+chan11naHt40Minus             :%Chan11naHt40Minus%
+chan11naHt40Plus              :%Chan11naHt40Plus%
+chan11acHt80                  :%Chan11acHt80%
+chan11acHt160                 :%Chan11acHt160%" CmdGroup="0x00000010">
+	<para ParaName="laninst" AttName="LANDevice" ParaAtt="1"/>
+	<para ParaName="wlcfginst" AttName="X_HW_WLANCFG" ParaAtt="1"/>
+</GetWlanCfgChannel>
+
+<SetBeamforming CmdStr="set wlan beamforming" ObjPath="InternetGatewayDevice.X_HW_DEBUG.AMP.X_HW_Beamforming" OpType="5" Help="USAGE:set wlan beamforming [radioinst {1/2}] [mode {ebf/ibf}] [enable {0/1}]
+OPTIONS:
+        radioinst: 1 means 2.4G, 2 means 5G
+	mode: ebf means explicit beamforming , ibf means implicit beamforming
+	enable: 1 means enable, 0 means disable" OutPut="" CmdGroup="0x00004010">
+<para ParaName="radioinst" AttName="RadioInst" ParaAtt="0"/>
+<para ParaName="mode" AttName="Mode" ParaAtt="0"/>
+<para ParaName="enable" AttName="Enable" ParaAtt="0"/>
+</SetBeamforming>
+<GetBeamforming CmdStr="get wlan beamforming" ObjPath="InternetGatewayDevice.X_HW_DEBUG.AMP.DisplayBeamforming" OpType="5" Help="USAGE:get wlan beamforming radioinst [1/2] " OutPut="" CmdGroup="0x00004010">
+<para ParaName="radioinst" AttName="RadioInst" ParaAtt="0"/>
+</GetBeamforming>
+<SetTribandInfo CmdStr="set wlan triband" ObjPath="InternetGatewayDevice.X_HW_WIFIInfo.X_HW_TribandInfo" OpType="5" Help="USAGE:set wlan triband [channel {100-161}] [width {0-5}] [mode {2,8,12}]
+OPTIONS:
+		channel: high band channel
+	width: 0 means Auto 20/40M, 1 means 20M, 2 means 40M, 3 means Auto 20/40M/80M, 4 means 160M, 5means 80+80M
+	mode: 2 means 11a, 8 means 11a/n, 12 means 11a/n/ac" OutPut="" CmdGroup="0x00004010">
+<para ParaName="channel" AttName="ChannelNum" ParaAtt="0"/>
+<para ParaName="width" AttName="ChannelWidth" ParaAtt="0"/>
+<para ParaName="mode" AttName="WirelessMode" ParaAtt="0"/>
+<para ParaName="ssid" AttName="SSID" ParaAtt="0"/>
+<para ParaName="BeaconType" AttName="BeaconType" ParaAtt="0"/>
+</SetTribandInfo>
+<SetWifiLink CmdStr="set wifi link" ObjPath="InternetGatewayDevice.X_HW_WIFIInfo.X_HW_WifiLink" OpType="5" Help="USAGE:set wifi link ssid [ssidname] password [password]" OutPut="" CmdGroup="0x00004010">
+<para ParaName="ssid" AttName="Ssid" ParaAtt="0"/>
+<para ParaName="password" AttName="Password" ParaAtt="0"/>
+</SetWifiLink>
+<WifiSearch CmdStr="exec wifi search" ObjPath="InternetGatewayDevice.X_HW_DEBUG.AMP.X_HW_WifiSearch" OpType="5" Help="USAGE:exec wifi search" OutPut="" CmdGroup="0x00004010"/>
+<SetPortConfig CmdStr="set port config" ObjPath="InternetGatewayDevice.X_HW_DEBUG.AMP.LANPort.CommonConfig" OpType="0" Help="USAGE:set port config portid [1-5,9,10][para{value}]
+OPTIONS:
+    enable--0 means disable,1 means enable
+    speed--0 means 10M,1 means 100M,2 means 1000M,3 means 2.5G,4 means 10G,5 means Auto-matched
+    duplex--0 means half-duplex,1 means full duplex,2 means Auto-negotiation
+    mtu--indicates the maximum transimmision unit on the port,value range[1518-2020]
+    nego--0 means No,1 means Auto
+    pauseen--0 means disable,1 means enable
+    loopmode--0 means No,1 means MAC Inner,2 means MAC-Outer,3 means PHY Inner,4 means PHY Outer
+    mirroren--0 means disable,1 means enable
+    dstportid--indicates mirror destination port id,value range [1-4]
+    mirrortype--0 means Output,1 means Input,2 means Both" OutPut="set port config" CmdGroup="0x00004000">
+<para ParaName="portid" AttName="LANPort" ParaAtt="1"/>
+<para ParaName="enable" AttName="Enable" ParaAtt="0"/>
+<para ParaName="mtu" AttName="Mtu" ParaAtt="0"/>
+<para ParaName="nego" AttName="NegoMode" ParaAtt="0"/>
+<para ParaName="speed" AttName="Speed" ParaAtt="0"/>
+<para ParaName="duplex" AttName="Duplex" ParaAtt="0"/>
+<para ParaName="pauseen" AttName="PauseEn" ParaAtt="0"/>
+<para ParaName="loopmode" AttName="LoopMode" ParaAtt="0"/>
+<para ParaName="mirroren" AttName="MirrorEn" ParaAtt="0"/>
+<para ParaName="dstportid" AttName="MirrorDstPortID" ParaAtt="0"/>
+<para ParaName="mirrortype" AttName="MirrorType" ParaAtt="0"/>
+</SetPortConfig>
+<GetWifiAntennaRSSI CmdStr="display wifi antenna rssi" ObjPath="InternetGatewayDevice.X_HW_DEBUG.WifiAntennaRSSI" OpType="1" Help="usage: get wifi antenna rssi" OutPut="%Result%" CmdGroup="0x80000000">
+<para ParaName="rssi" AttName="Result" ParaAtt="0"/>
+</GetWifiAntennaRSSI>
+<Wifi11bPowerGet CmdStr="display wifi 11b power" ObjPath="InternetGatewayDevice.Wifi11bPowerGet" OpType="1" Help="USAGE: display wifi 11b power" OutPut="%Output%" CmdGroup="0x00004010"/>
+<SetEquipIPnet CmdStr="set equip" ObjPath="InternetGatewayDevice.X_HW_DEBUG.BBSP.SetEquipIPNet" OpType="0" Help="usage: set equip ipnet xxx.xxx" OutPut="" CmdGroup="0x00000010">
+<para ParaName="ipnet" AttName="IPNet" ParaAtt="0"/>
+</SetEquipIPnet>
+<GetEquipIPnet CmdStr="get equip ipnet" ObjPath="InternetGatewayDevice.X_HW_DEBUG.BBSP.GetEquipIPNet" OpType="5" Help="usage: get equip ipnet" OutPut="" CmdGroup="0x00000010"/>
+  <DisplayPrbsCnt CmdStr="get prbs statistics"
+                  ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.PrbsCnt"
+                  OpType="1"
+                  Help="USAGE:
+    get prbs statistics [id {value}]
+OPTIONS:
+    id : channel id range [0-6]   "
+                  OutPut="-----------------------CLI PRBS CHANNEL CNT INFO-----------------------
+CLI PRBS CHANNEL ID           : %CHANID%
+CLI PRBS Frames TX CNT        : %CHANTXCNT%
+CLI PRBS Frames RX CNT        : %CHANRXCNT%
+CLI PRBS Frames ERR BIT CNT   : %CHANERRCNT%"
+                  CmdGroup="0x00000010">
+    <para ParaName="id"
+          AttName="CHANID"
+          ParaAtt="0" />
+  </DisplayPrbsCnt>
+  <ClearPrbsCnt CmdStr="clear prbs statistics"
+                ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.PrbsCntClear"
+                OpType="5"
+                Help="USAGE:
+    clear prbs statistics [id  {value}]
+OPTIONS:
+    id : channel id range [0-6]   "
+                OutPut=""
+                CmdGroup="0x00000010">
+    <para ParaName="id"
+          AttName="CHANID"
+          ParaAtt="0" />
+  </ClearPrbsCnt>
+  <PrbsParaSet CmdStr="set prbs para"
+               ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.PrbsParaSet"
+               OpType="5"
+               Help="USAGE:
+    set prbs para basespeed [1-1000] pktlen [64-2000] smac [11:22:33:44:55:66] dmac [11:22:33:44:55:66] 
+OPTIONS:
+    basespeed  : Mbps
+    pktlen : packet length
+    smac   : source mac address
+    dmac   : destination mac address"
+               OutPut=""
+               CmdGroup="0x00000010">
+    <para ParaName="basespeed"
+          AttName="BASESPEED"
+          ParaAtt="0" />
+    <para ParaName="pktlen"
+          AttName="LENGTH"
+          ParaAtt="0" />
+    <para ParaName="smac"
+          AttName="SMACADDR"
+          ParaAtt="0" />
+    <para ParaName="dmac"
+          AttName="DMACADDR"
+          ParaAtt="0" />
+  </PrbsParaSet>
+  <PrbsPduSet  CmdStr="set prbs flow count"
+               ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.PrbsPduSet"
+               OpType="5"
+               Help="USAGE:
+set prbs flow count smac [11:22:33:44:55:66] dmac [11:22:33:44:55:66] vlan[123]
+OPTIONS:
+smac   : source mac address
+dmac   : destination mac address
+vlan   : vlanId"
+               OutPut=""
+               CmdGroup="0x00000010">
+    <para ParaName="smac"
+          AttName="SMACADDR"
+          ParaAtt="0" />
+    <para ParaName="dmac"
+          AttName="DMACADDR"
+          ParaAtt="0" />
+    <para ParaName="vlan"
+          AttName="VLANID"
+          ParaAtt="0" />	  
+  </PrbsPduSet>
+  <PrbsParaGet CmdStr="get prbs para"
+               ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.PrbsParaGet"
+               OpType="1"
+               Help="get prbs para"
+               OutPut="-------------------CLI PRBS INFO-------------------
+CLI PRBS Frames TPID       : %TPID%
+CLI PRBS Frames LENGTH     : %LENGTH%
+CLI PRBS Frames TX PERIOD  : %PERIOD%
+CLI PRBS Frames RX MODE    : %MODE%
+CLI PRBS Frames RX ERRRANGE: %ERRANGE%
+CLI PRBS Frames SMAC       : %SMAC0%:%SMAC1%:%SMAC2%:%SMAC3%:%SMAC4%:%SMAC5%
+CLI PRBS Frames DMAC       : %DMAC0%:%DMAC1%:%DMAC2%:%DMAC3%:%DMAC4%:%DMAC5%"
+               CmdGroup="0x00000010" />
+  <PrbsChnParaSet CmdStr="set prbs chn para"
+                  ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.PrbsChnParaSet"
+                  OpType="5"
+                  Help="USAGE:
+    set prbs chn para id [0-6] enable [0-1] vlan [1-4095] pri [0-7] speed [1-10000] [loopmode [1-4]]
+OPTIONS:
+    id       : channel id  
+    enable   : channel enable
+    vlan     : vlan id
+    pri      : pri
+    speed    : Mbps 
+    loopmode : 1 - MAC Inner Ring ;2 - MAC Outer Ring ;3 - Phy Inner Ring; 4 - Phy Outer Ring"
+                  OutPut=""
+                  CmdGroup="0x00000010">
+    <para ParaName="id"
+          AttName="CHANID"
+          ParaAtt="0" />
+    <para ParaName="enable"
+          AttName="ENABLE"
+          ParaAtt="0" />
+    <para ParaName="vlan"
+          AttName="VLAN"
+          ParaAtt="0" />
+    <para ParaName="pri"
+          AttName="PRI"
+          ParaAtt="0" />
+    <para ParaName="speed"
+          AttName="SPEED"
+          ParaAtt="0" />
+    <para ParaName="loopmode"
+          AttName="LOOPMODE"
+          ParaAtt="0" />
+  </PrbsChnParaSet>
+  <PrbsChnParaGet CmdStr="get prbs chn para"
+                  ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.PrbsChnParaGet"
+                  OpType="1"
+                  Help="USAGE:
+    get prbs chn para [id {value}]
+OPTIONS:
+    id : channel id range [0-5]   "
+                  OutPut="-------------------CLI PRBS CHANNEL INFO-------------------
+CLI PRBS CHANNEL ID       : %CHANID%
+CLI PRBS CHANNEL ENABLE   : %ENABLE%
+CLI PRBS Frames VLAN      : %VLAN%
+CLI PRBS Frames PRI       : %PRI%
+CLI PRBS Frames TX NUM    : %TXNUM%
+CLI PRBS Frames EM CFI    : %CFI%"
+                  CmdGroup="0x00000010">
+    <para ParaName="id"
+          AttName="CHANID"
+          ParaAtt="0" />
+  </PrbsChnParaGet>
+  <PrbsTxEnableSet CmdStr="set prbs tx"
+                   ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.PrbsTxStatus"
+                   OpType="5"
+                   Help="set prbs tx switch {enable | disable}"
+                   OutPut=""
+                   CmdGroup="0x00000010">
+    <para ParaName="switch"
+          AttName="PrbsTxSwitch"
+          ParaAtt="0" />
+  </PrbsTxEnableSet>
+  <PrbsTxEnableGet CmdStr="get prbs tx"
+                   ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.PrbsTxStatus"
+                   OpType="1"
+                   Help="get prbs tx"
+                   OutPut="Prbs Tx Switch: %PrbsTxSwitch%"
+                   CmdGroup="0x00000010" />
+  <PrbsRxEnableSet CmdStr="set prbs rx"
+                   ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.PrbsRxStatus"
+                   OpType="5"
+                   Help="set prbs rx switch {enable | disable}"
+                   OutPut=""
+                   CmdGroup="0x00000010">
+    <para ParaName="switch"
+          AttName="PrbsRxSwitch"
+          ParaAtt="0" />
+  </PrbsRxEnableSet>
+  <PrbsRxEnableGet CmdStr="get prbs rx"
+                   ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.PrbsRxStatus"
+                   OpType="1"
+                   Help="get prbs rx"
+                   OutPut="Prbs Rx Switch: %PrbsRxSwitch%"
+                   CmdGroup="0x00000010" />
+  <SerdesEnableSet CmdStr="set epon serdes local clk enable"
+                   ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.SerdesEnableSet"
+                   OpType="5"
+                   Help="USAGE: set epon serdes local clk enable "
+                   OutPut=""
+                   CmdGroup="0x00000010" />
+  <SerdesRegSet CmdStr="set serdes reg"
+                ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.SerdesRegSet "
+                OpType="5"
+                Help="USAGE: set serdes reg addr [0-0xffffffff] value[0-0xffffffff]
+OPTIONS:
+    addr  : reg address 
+    value : reg value "
+                OutPut=""
+                CmdGroup="0x00000010">
+    <para ParaName="addr"
+          AttName="ADDR"
+          ParaAtt="0" />
+    <para ParaName="value"
+          AttName="VALUE"
+          ParaAtt="0" />
+  </SerdesRegSet>
+  <SerdesRegGet CmdStr="get serdes reg"
+                ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.SerdesRegGet "
+                OpType="5"
+                Help="USAGE: get serdes reg addr [0-0xffffffff]
+OPTIONS:
+    addr  : reg address "
+                OutPut=""
+                CmdGroup="0x00000010">
+    <para ParaName="addr"
+          AttName="ADDR"
+          ParaAtt="0" />
+  </SerdesRegGet>
+<!-- SUPPORT_WIFI_START-->
+  <WifiParaCrcCalc CmdStr="wifi calibrate parameter crc calc"
+                   ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.WifiParaCrcCalc"
+                   OpType="5"
+                   Help=""
+                   OutPut=""
+                   CmdGroup="0x00000010" />
+  <WifiParaCrcChk CmdStr="wifi calibrate parameter crc check"
+                  ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.WifiParaCrcChk"
+                  OpType="5"
+                  Help=""
+                  OutPut=""
+                  CmdGroup="0x00000010" />
+<!-- SUPPORT_WIFI_END-->
+  <OpticParaSave CmdStr="save optic para"
+                 ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.OpticParaSave"
+                 OpType="5"
+                 Help="USAGE: save optic para [device {opticdev}]"
+                 OutPut=""
+                 CmdGroup="0x00000010" >
+      <para ParaName="device" AttName="OpticDevice" ParaAtt="0" />
+  </OpticParaSave>
+  <OpticLosGet CmdStr="get optic los status"
+               ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.OpticLosGet"
+               OpType="1"
+               Help="USAGE: get optic los status"
+               OutPut="recv optic status: %LosStatus%"
+               CmdGroup="0x00000010" />
+  <OpticParaClear CmdStr="clear optic para flag"
+                  ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.OpticParaClear"
+                  OpType="5"
+                  Help="USAGE: clear optic para flag [device {opticdev}]"
+                  OutPut=""
+                  CmdGroup="0x00000010" >
+      <para ParaName="device" AttName="OpticDevice" ParaAtt="0" />
+  </OpticParaClear>
+  <OpticParaLoad CmdStr="load optic par by tftp"
+                 ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.OpticParaLoad"
+                 OpType="5"
+                 Help="USAGE: load optic par by tftp [device {opticdev}] [svrip {ip addr}] [par_name {file name}]"
+                 OutPut=""
+                 CmdGroup="0x00000010">
+    <para ParaName="device"
+          AttName="OpticDevice"
+          ParaAtt="0" />
+    <para ParaName="svrip"
+          AttName="IPADDR"
+          ParaAtt="0" />
+    <para ParaName="par_name"
+          AttName="PARANAME"
+          ParaAtt="0" />
+  </OpticParaLoad>
+<!-- SUPPORT_WIFI_START-->
+  <WifiCalParaWrite CmdStr="wifi calibrate parameter write"
+                    ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.WifiCalParaWrite"
+                    OpType="5"
+                    Help="USAGE: wifi calibrate parameter write [addr {para addr}] [len {para len}] [value {para value}]"
+                    OutPut=""
+                    CmdGroup="0x00000010">
+    <para ParaName="addr"
+          AttName="WIFIADDR"
+          ParaAtt="0" />
+    <para ParaName="len"
+          AttName="PARALEN"
+          ParaAtt="0" />
+    <para ParaName="value"
+          AttName="PARAVALUE"
+          ParaAtt="0" />
+  </WifiCalParaWrite>
+  <WifiCalParaRead CmdStr="wifi calibrate parameter read"
+                   ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.WifiCalParaRead"
+                   OpType="1"
+                   Help="USAGE: wifi calibrate parameter read [addr {para addr}] [len {para len}]"
+                   OutPut="%CALIVALUE%"
+                   CmdGroup="0x00000010">
+    <para ParaName="addr"
+          AttName="WIFIADDR"
+          ParaAtt="0" />
+    <para ParaName="len"
+          AttName="PARALEN"
+          ParaAtt="0" />
+  </WifiCalParaRead>
+<!-- SUPPORT_WIFI_END-->
+  <CpuDIEIdGet CmdStr="display cpu id"
+               ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.CpuDIEIdGet"
+               OpType="1"
+               Help="USAGE: display cpu id "
+               OutPut="%CpuDieIdInfo%"
+               CmdGroup="0x00000010">
+  </CpuDIEIdGet>
+  <OpticTxStatusGet CmdStr="display optic txsd status"
+                    ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.OpticTxStatusGet"
+                    OpType="1"
+                    Help="USAGE: display optic txsd status [device {opticdev}]"
+                    OutPut="
+result is %Normal%,%ONTState% "
+                    CmdGroup="0x00000010">
+                   <para ParaName="device" AttName="OpticDevice" ParaAtt="0" />
+  </OpticTxStatusGet>
+  <SerdesPrbsEnable CmdStr="set serdes prbs"
+                    ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.SerdesPrbsEnable"
+                    OpType="5"
+                    Help="set serdes prbs switch {enable | disable}"
+                    OutPut=""
+                    CmdGroup="0x00000010">
+    <para ParaName="switch"
+          AttName="SerdesEnable"
+          ParaAtt="0" />
+  </SerdesPrbsEnable>
+  <UsbSpeedGet CmdStr="get usb speed"
+               ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.UsbSpeedGet"
+               OpType="1"
+               Help="USAGE: get usb speed"
+               OutPut="%Usb1Speed%
+%Usb2Speed%"
+               CmdGroup="0x00000010" />
+    <UsbPortPowerSet CmdStr="set usb power"
+                    ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.UsbPortPowerSet"
+                    OpType="5"
+                    Help="set usb power port {0 | 1} switch {0 | 1}"
+                    OutPut=""
+                    CmdGroup="0x00000010">
+    <para ParaName="port"
+          AttName="UsbPort"
+          ParaAtt="0" />
+    <para ParaName="switch"
+          AttName="UsbPowerSwitch"
+          ParaAtt="0" />
+  </UsbPortPowerSet>                	
+	<ANTENNASet CmdStr="set datacard"
+					ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.ANTENNASet"
+					OpType="5"
+					Help="USAGE:  set datacard antenna {main | slave } mode {inside | outside}"
+					OutPut=""
+					CmdGroup="0x00000010" >
+	<para ParaName="antenna"
+			  AttName="ANTENNA"
+			  ParaAtt="0" />
+	<para ParaName="mode"
+			  AttName="MODE"
+			  ParaAtt="0" />
+	</ANTENNASet>
+	<DatacardReset CmdStr="set reset datacard"
+                ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.DatacardReset"
+                OpType="5"
+                Help="USAGE:  set  reset datacard"
+                OutPut=""
+                CmdGroup="0x00000010">
+	</DatacardReset>
+	<DatacardIMEIGet CmdStr="display datacard imei"
+                    ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.DatacardIMEIGet"
+                    OpType="1"
+                    Help="USAGE: display datacard imei"
+                    OutPut="
+					IMEI is: %IMEI% "
+					CmdGroup="0x00000010" />		    
+	<DatacardANTENNA CmdStr="display datacard antenna"
+					ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.DatacardANTENNA"
+					OpType="1"
+					Help="USAGE: display datacard antenna"
+					OutPut="
+	Main  antenna : %ANTENNA1%  
+	Salve antenna : %ANTENNA2% "
+						CmdGroup="0x00000010" />
+    <LteANTENNA CmdStr="display antenna mode"
+                ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.DatacardANTENNA"
+                OpType="1"
+                Help="USAGE: display antenna mode"
+                OutPut="antenna mode: %ANTENNA1%"
+                CmdGroup="0x00000010" />
+	<DatacardATCmdSend CmdStr="send at "
+  	 ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.DatacardATCmdSend"
+  	 OpType="1"
+  	 Help="USAGE: send at [command {ATCommand}]"
+  	 OutPut="%ATCMDRESP%"
+  	 CmdGroup="0x00000010">
+   	<para ParaName="command"
+          AttName="ATCMD"
+          ParaAtt="0" />
+	</DatacardATCmdSend>
+	<OpticEfuseRead CmdStr="get optic efuse"
+  	 ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.OpticEfuseRead"
+  	 OpType="1"
+  	 Help="USAGE: get optic efuse [reg {addr} len {reg len}]"
+   	OutPut="%EFUSERESULT%"
+   	CmdGroup="0x00000010">
+   	<para ParaName="reg"
+          AttName="EFUSEREG"
+          ParaAtt="0" />
+   	<para ParaName="len"
+          AttName="EFUSELEN"
+          ParaAtt="0" />
+	</OpticEfuseRead>
+	<NfcUriWrite CmdStr="nfc write" 
+			ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.NfcUriWrite" 
+			OpType="5" 
+			Help="USAGE: nfc write [value {para value}]" 
+			OutPut="" 
+			CmdGroup="0x00000010">
+	<para ParaName="value" 
+		AttName="PARAVALUE" 
+		ParaAtt="0"/>
+	</NfcUriWrite>
+	<NfcUriRead CmdStr="nfc read" 
+			ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.NfcUriRead" 
+			OpType="1" 
+			Help="USAGE: nfc read" 
+			OutPut="the value: %PARAVALUE%" 
+			CmdGroup="0x00000010">
+	</NfcUriRead>
+	<SdStatusGet CmdStr="display sdcard status"
+             ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.SdStatusGet"
+             OpType="1"
+             Help="USAGE: display sdcardstatus"
+             OutPut="SDcardstatus = %Status%"
+             CmdGroup="0x00000010" />
+    <SdInfoGet CmdStr="get sdcard info"
+             ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.SdInfoGet"
+             OpType="1"
+             Help="USAGE: display sdcard INFO"
+             OutPut="sd size : %SdSize%
+sd speed : %SdSpeedClass%"
+             CmdGroup="0x00000010" />
+	<SdTest CmdStr="sdcard equiptest"
+             ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.SdTest"
+             OpType="0"
+             Help="USAGE: sdcard equiptest"
+             OutPut=""
+             CmdGroup="0x00000010" />
+	<DectRXTUNConfigGet CmdStr="get dect rxtun"
+	   ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.DectRXTUNConfigGet"
+	   OpType="1"
+	   Help="USAGE: get dect rxtun "
+	   OutPut="%RXTUN%"
+	   CmdGroup="0x00000010" >
+	</DectRXTUNConfigGet>
+	<DectRXTUNConfigSet CmdStr="set dect rxtun "
+	   ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.DectRXTUNConfigSet"
+	   OpType="5"
+	   Help="USAGE: set dect rxtun [value {10}]"
+	   OutPut=""
+	   CmdGroup="0x00000010">
+	   <para ParaName="value"
+	   AttName="VALUE"
+	   ParaAtt="0" />
+    	</DectRXTUNConfigSet>
+	<DectRXTUNGPIOConfigSet CmdStr="set dect rxtun gpio "
+	   ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.DectRXTUNGPIOConfigSet"
+	   OpType="5"
+	   Help="USAGE: set dect rxtun gpio [gpioid {10}]"
+	   OutPut=""
+	   CmdGroup="0x00000010">
+	   <para ParaName="gpioid"
+	   AttName="GPIOID"
+	   ParaAtt="0" />
+    	</DectRXTUNGPIOConfigSet>
+	<DectParaSave CmdStr="dect para save"
+                 ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.DectParaSave"
+                 OpType="5"
+                 Help="USAGE: dect para save"
+                 OutPut=""
+                 CmdGroup="0x00000010" />
+	<DectRFTESTSTART CmdStr="set dect rftest start "
+                  ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.DectRFTESTSTART"
+                  OpType="5"
+                  Help="USAGE:
+    set dect rftest start devidentify[0-9] slottype[0-2] atetype[0-3] instance[0-6] slot[0-10] carrier[0-10] ant[0/1] pattern[0-4] preamble[0/1] powerlev[0-2] gpio[3-27] berferenable[0/1] framecount[100-]
+OPTIONS:
+    dev identity: device identity [00 -- 09]
+    slot type   : 0 - slot; 1 - double slot; 2 - long slot
+    ate  type   : 0 - TX; 1 - Continuous TX; 2 - RX; 3 - Continuous RX
+    instance    : 0 suggested value 
+    slot        : slot number
+    carrier     : carrier number:0..9 for ETSI DECT, 0..94 for WDCT, 23:27 for US DECT
+    ant         : Antenna 0/1
+    pattern     : [RX:1-pp;0-fp] [TX:0-4]
+    preamble    : Normal preamble enbale flag: 0/1
+    powerlev    : power level 0 -- highest level
+    gpio        : gpio number [3 - 27]  
+    berferenable: 0 disable BER/FER test ,1 enable BER/FER test
+    framecount  : Frame Count: value > 100"
+                  OutPut=""
+                  CmdGroup="0x00000010">
+    <para  ParaName="devidentify"
+          AttName="DEVIDENTITY"
+          ParaAtt="0" />
+    <para ParaName="slottype"
+          AttName="SLOTTYPE"
+          ParaAtt="0" />
+    <para ParaName="atetype"
+          AttName="ATETYPE"
+          ParaAtt="0" />
+    <para ParaName="instance"
+          AttName="INST"
+          ParaAtt="0" />
+    <para ParaName="slot"
+          AttName="SLOT"
+          ParaAtt="0" />
+    <para ParaName="carrier"
+          AttName="CARRIER"
+          ParaAtt="0" />
+    <para ParaName="ant"
+          AttName="ANT"
+          ParaAtt="0" />
+   <para ParaName="pattern"
+          AttName="PATTERN"
+          ParaAtt="0" />
+   <para ParaName="preamble"
+          AttName="PREA"
+          ParaAtt="0" />
+   <para ParaName="powerlev"
+          AttName="POWERLEV"
+          ParaAtt="0" />
+   <para ParaName="gpio"
+          AttName="GPIO"
+          ParaAtt="0" />
+   <para  ParaName="berferenable"
+          AttName="BER"
+          ParaAtt="0" />
+   <para  ParaName="framecount"
+          AttName="FC"
+          ParaAtt="0" />
+    </DectRFTESTSTART>
+	<DectRFRXGet CmdStr="get dect rfrx"
+                  ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.DectRFRXGet"
+                  OpType="1"
+                  Help="USAGE:get dect rfrx"
+                  OutPut="%Bercount% 
+%Fercount%"
+                  CmdGroup="0x00000010" />
+	<DectRfTestStop CmdStr="set dect rftest stop"
+                  ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.DectRfTestStop"
+                  OpType="5"
+                  Help="USAGE: set dect rftest stop"
+                  OutPut=""
+                  CmdGroup="0x00000010" >
+	</DectRfTestStop>
+	<ONTLocalDereg CmdStr="set ont local dereg"
+                ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.ONTLocalDereg"
+                OpType="5"
+                Help="USAGE: set ont local dereg"
+                OutPut=""
+                CmdGroup="0x00000010">
+	</ONTLocalDereg>
+<OpticRfOutputSet CmdStr="set rf power"
+   ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.OpticRfOutputSet"
+   OpType="5"
+   Help="USAGE: set rf power adjustment [0-20 or 129-255]"
+   OutPut=""
+   CmdGroup="0x00000010">
+   <para ParaName="adjustment"
+          AttName="ADJUSTMENTSET"
+          ParaAtt="0" />
+</OpticRfOutputSet>
+<OpticRfOutputGet CmdStr="get rf power adjustment"
+   ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.OpticRfOutputGet"
+   OpType="1"
+   Help="USAGE: get rf power adjustment"
+   OutPut="%ADJUSTMENTGET%"
+   CmdGroup="0x00000010">
+</OpticRfOutputGet>
+<!-- SUPPORT_WIFI_START-->
+    <WifiCalParaWriteEx CmdStr="wifi calibrate test parameter write "
+          ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.WifiCalParaWriteEx"
+          OpType="5"
+          Help="USAGE: wifi calibrate test parameter write [wifichip {1/2 (2.4G/5G)}] [type {power/freqoffset}] [len {para len}] [value {para value}] [11g_target_power {para 11gpower}] [11a_target_power {para 11apower}]"
+          OutPut=""
+          CmdGroup="0x00000010">
+    <para ParaName="wifichip"
+          AttName="WIFICHIP"
+          ParaAtt="0" />
+    <para ParaName="type"
+          AttName="TYPE"
+          ParaAtt="0" />
+    <para ParaName="len"
+          AttName="LEN"
+          ParaAtt="0" />
+    <para ParaName="value"
+          AttName="PARAVALUE"
+          ParaAtt="0" />
+	<para ParaName="11g_target_power"
+          AttName="11GTARGETPOWER"
+          ParaAtt="0" />
+	<para ParaName="11a_target_power"
+          AttName="11ATARGETPOWER"
+          ParaAtt="0" />
+    </WifiCalParaWriteEx>
+    <WifiTemperatureComp  CmdStr="wifi temperature compensation "
+          ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.WifiTemperatureComp"
+          OpType="5"
+          Help="USAGE: wifi temperature compensation [wifichip {1/2 (2.4G/5G)}] [switch  {on/off}] "
+          OutPut=""
+          CmdGroup="0x00000010">
+    <para ParaName="wifichip"
+          AttName="WIFICHIP"
+          ParaAtt="0" />
+    <para ParaName="switch"
+          AttName="SWITCH"
+          ParaAtt="0" />
+    </WifiTemperatureComp>
+  <WifiCalParaReadEx CmdStr="wifi calibrate test parameter read "
+          ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.WifiCalParaReadEx"
+          OpType="1"
+          Help="USAGE: wifi calibrate test parameter read [wifichip {1/2 (2.4G/5G)}] [type {power/freqoffset}] [len {para len}]]"
+          OutPut="%PARAVALUE%"
+          CmdGroup="0x00000010">
+    <para ParaName="wifichip"
+          AttName="WIFICHIP"
+          ParaAtt="0" />
+    <para ParaName="type"
+          AttName="TYPE"
+          ParaAtt="0" />
+    <para ParaName="len"
+          AttName="LEN"
+          ParaAtt="0" />
+  </WifiCalParaReadEx>
+  <WifiCalSetCalmode CmdStr="wifi calibrate set qtn calstate"
+          ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.WifiCalSetCalmode"
+          OpType="1"
+          Help="USAGE: wifi calibrate set qtn calstate [value {mode-value}]"
+          OutPut="%SETRESULT%"
+          CmdGroup="0x00000010">
+    <para ParaName="value"
+          AttName="MODEVALUE"
+          ParaAtt="0" />      
+  </WifiCalSetCalmode>
+  <WifiCalGetCalmode CmdStr="wifi calibrate get qtn calstate"
+          ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.WifiCalGetCalmode"
+          OpType="1"
+          Help="USAGE: wifi calibrate get qtn calstate "
+          OutPut="%MODEVALUESTR%"
+          CmdGroup="0x00000010">  
+  </WifiCalGetCalmode> 
+  <WifiCalCheckCalfile CmdStr="wifi calibrate check qtn calfile"
+          ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.WifiCalCheckCalfile"
+          OpType="1"
+          Help="USAGE: wifi calibrate check qtn calfile "
+          OutPut="%CHECKRESULT%"
+          CmdGroup="0x00000010">    
+  </WifiCalCheckCalfile>
+  <WifiCalDeleteCalfile CmdStr="wifi calibrate delete qtn calfile"
+          ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.WifiCalDeleteCalfile"
+          OpType="1"
+          Help="USAGE: wifi calibrate delete qtn calfile "
+          OutPut="%DELETERESULT%"
+          CmdGroup="0x00000010">    
+  </WifiCalDeleteCalfile>
+  <WifiCalGetAutomode CmdStr="get wifi calibrate automode"
+          ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.WifiCalGetAutomode"
+          OpType="1"
+          Help="USAGE: get wifi calibrate automode "
+          OutPut="%AUTOMODESTR%"
+          CmdGroup="0x00000010">  
+  </WifiCalGetAutomode>   
+<!-- SUPPORT_WIFI_END-->
+  <SetChipThreshold CmdStr="set threshold"
+                  ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.SetChipThreshold"
+                  OpType="5"
+                  Help="USAGE:
+    set threshold type[0-3] upper[0-0xffffffff] lower[0-0xffffffff] opswitch[0-1]
+OPTIONS:
+    type: 0 - Cpu Temperature; 1 - Optic Temperature; 2 - Optic Rxpower; 3 - Optic Current
+    upper   : Alarm upper limit value
+    lower   : Alarm lower limit value
+    opswitch    : 0 - Optic monitor switch off; 1 - Optic monitor switch on"
+                  OutPut=""
+                  CmdGroup="0x00000010">
+    <para  ParaName="type"
+          AttName="TYPE"
+          ParaAtt="0" />
+    <para ParaName="upper"
+          AttName="UPPER"
+          ParaAtt="0" />
+    <para ParaName="lower"
+          AttName="LOWER"
+          ParaAtt="0" />
+    <para ParaName="opswitch"
+          AttName="OPSWITCH"
+          ParaAtt="0" />
+    </SetChipThreshold>
+	<FlashMonitorInfoGet CmdStr="get flash monitor info"
+                   ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.FlashMonitorInfoGet"
+                   OpType="1"
+                   Help="USAGE: get flash monitor info "
+                   OutPut="--------------------flash monitor info--------------------
+flash erase time = %Erase%
+flash write time = %Write%
+flash correct ecc error time = %CorrectEcc%
+flash uncorrect ecc error time = %UNCorrectEcc%"
+                   CmdGroup="0x00000010" >
+     </FlashMonitorInfoGet>	 
+	 <ChipTypeInfoGet CmdStr="display chipinfo"
+                   ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.ChipTypeInfoGet"
+                   OpType="1"
+                   Help="USAGE: display chipinfo "
+                   OutPut="%ChipTypeInfo%"
+                   CmdGroup="0x00000010" >
+     </ChipTypeInfoGet>
+<BootInfoGet CmdStr="display boot info"
+                  ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.BootInfoGet"
+                  OpType="1"
+                  Help="USAGE:display boot info"
+                  OutPut="%BootInfo%"
+                  CmdGroup="0x00000010" >
+</BootInfoGet>
+<MediaInfoGet CmdStr="display mediainfo"
+                   ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.MediaInfoGet"
+                   OpType="1"
+                   Help="USAGE: display mediainfo "
+                   OutPut="%MediaInfo%"
+                   CmdGroup="0x00000010" >
+     </MediaInfoGet>
+<MediaPowerOff CmdStr="set media poweroff"
+                ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.MediaPowerOff"
+                OpType="5"
+                Help="USAGE:  set media poweroff"
+                OutPut=""
+                CmdGroup="0x00000010">
+	</MediaPowerOff>
+ <AntennaSwitchSet  CmdStr="set antenna1 to"
+	     ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.AntennaSwitchSet"
+	     OpType="5"
+	     Help="USAGE: set antenna1 to mode {main|aux}"
+	     OutPut=""
+	     CmdGroup="0x00000010">
+       <para ParaName="mode"
+	     AttName="MODE"
+	     ParaAtt="0" />
+ </AntennaSwitchSet>
+    <HlpProcessInfoGet CmdStr="display hlp process info"
+                    ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.HlpProcessInfoGet"
+                    OpType="1"
+                    Help="USAGE:
+    display hlp process info module [0-255] submodule [0-15]
+OPTIONS:
+    module:Module ID, default is 34
+    submodule:Submodule ID, default is 0
+
+module submodule description
+  3       0      PLOAM
+  4       0      DEV
+  5       0      OPTIC
+  6       0      CODEC INIT
+  6       1      CODEC GLB
+  6       2      CODEC PORT
+  6       3      CODEC DEBUG
+  6       4      CODEC EVENT
+  7       0      KEY
+  8       0      LED
+  9       0      PHY
+  10      0      BATTERY
+  11      0      RF
+  12      0      USB
+  18      0      GPIO
+  19      0      I2C
+  21      0      UART
+  22      0      HIGHWAY
+  23      0      DATACARD
+  25      0      SIM
+  27      0      PPM
+  32      0      NFC
+  34      0      COMMON
+  36      0      SD
+  49      0      MPCP
+  54      0      WIFI
+  60      0      IOT
+  61      0      MBIST"
+                    OutPut="%HlpProcessInfo%"
+                    CmdGroup="0x00000010">
+    <para ParaName="module"
+          AttName="ModuleID"
+          ParaAtt="0" />
+    <para ParaName="submodule"
+          AttName="SubModuleID"
+          ParaAtt="0" />
+  </HlpProcessInfoGet> 
+<!-- SUPPORT_WIFI_START-->
+   <WifiCalClear CmdStr="wifi calibrate parameter clear"
+	  	  ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.WifiCalClear"
+	  	  OpType="5"
+		  Help="USAGE: wifi calibrate parameter clear"
+	  	  OutPut=""
+	      CmdGroup="0x00000010">
+  </WifiCalClear>
+  <WifiCalTxbfWrite CmdStr="wifi calibrate txbf data write"
+          ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.WifiCalTxbfWrite"
+          OpType="5"
+          Help="USAGE: wifi calibrate txbf data write [wifichip {7 (bcm4360)}] [paraname {name value}] [len {len value}] [value  {parameter value}]"
+          OutPut=""
+          CmdGroup="0x00000010">
+    <para ParaName="wifichip"
+          AttName="WIFICHIP"
+          ParaAtt="0" />
+    <para ParaName="paraname"
+          AttName="PARANAME"
+          ParaAtt="0" />
+    <para ParaName="len"
+          AttName="PARALEN"
+          ParaAtt="0" />
+    <para ParaName="value"
+          AttName="PARAVALUE"
+          ParaAtt="0" />
+    </WifiCalTxbfWrite>
+	<WifiCalTxbfRead CmdStr="wifi calibrate txbf data read"
+          ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.WifiCalTxbfRead"
+          OpType="1"
+          Help="USAGE: wifi calibrate txbf data read [wifichip {7 (bcm4360)}]"
+          OutPut="%ReadResult%"
+          CmdGroup="0x00000010">
+    <para ParaName="wifichip"
+          AttName="WIFICHIP"
+          ParaAtt="0" />
+    </WifiCalTxbfRead>
+    <WifiCalStatusGet CmdStr="display wifi pa calibrate mode"
+          ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.WifiCalStatusGet"
+          OpType="1"
+          Help="USAGE: display wifi pa calibrate mode"
+          OutPut="%STATUS%"
+          CmdGroup="0x00000010">
+    </WifiCalStatusGet>
+  <WifiCalParaPowerSet CmdStr="wifi calibrate test parameter write poweroffset"
+                    ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.WifiCalParaPowerSet"
+                    OpType="5"
+                    Help="USAGE: wifi calibrate test parameter write poweroffset [wifichip {wifi chip}] [ant {ant number}] [pavars {para value}]"
+                    OutPut=""
+                    CmdGroup="0x00000010">
+    <para ParaName="wifichip"
+          AttName="WIFICHIP"
+          ParaAtt="0" />
+    <para ParaName="ant"
+          AttName="WIFIANT"
+          ParaAtt="0" />
+    <para ParaName="pavars"
+          AttName="PAVARS"
+          ParaAtt="0" />
+    </WifiCalParaPowerSet>
+  <WifiCalParaPowerGet CmdStr="wifi calibrate test parameter read poweroffset"
+                    OpType="1"
+                    ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.WifiCalParaPowerGet"
+                    Help="USAGE: wifi calibrate test parameter read poweroffset [wifichip {wifi chip}] [ant {ant number}]"
+                    OutPut="%PAVARS%"
+                    CmdGroup="0x00000010">
+    <para ParaName="wifichip"
+          AttName="WIFICHIP"
+          ParaAtt="0" />
+    <para ParaName="ant"
+          AttName="WIFIANT"
+          ParaAtt="0" />
+    </WifiCalParaPowerGet>
+<!-- SUPPORT_WIFI_END-->
+	<DiagInfoGet CmdStr="diag module"
+                 ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.DiagInfoGet"
+                 OpType="1"
+                 Help="USAGE:
+        diag module [id {value}] [par1 {value}] [par2 {value}]
+
+OPTIONS: 
+par1/par2: optional, if par1.value = 0xffff, output par1/par2 help info.
+
+id value:
+MODULE            ID
+GMAC             0x02 
+PLOAM            0x03 
+DEV              0x04 
+OPTIC            0x05 
+CODEC            0x06 
+KEY              0x07 
+LED              0x08 
+PHY              0x09 
+BATTERY          0x0a 
+RF               0x0b 
+USB              0x0c 
+EXTENDED_PHY     0x0d 
+DSP              0x0e 
+EMAC             0x0f 
+OAM              0x10 
+GPIO             0x12 
+I2C              0x13 
+MDIO             0x14 
+UART             0x15 
+HIGHWAY          0x16 
+DATACARD         0x17 
+SPI              0x18 
+SIM              0x19 
+DATACARD_CHIP    0x1a 
+PPM              0x1b 
+DECT             0x1c 
+NFC              0x20 
+SD               0x24 
+MPCP             0x31 
+IOT              0x3c"                       
+			     OutPut="%DiagInfo%"
+                 CmdGroup="0x00000010">
+        <para ParaName="id"
+		      AttName="MODULEID"
+              ParaAtt="0"/>
+		<para ParaName="par1"
+		      AttName="PARAVALUE1"
+              ParaAtt="0"/> 
+		<para ParaName="par2"
+		      AttName="PARAVALUE2"
+              ParaAtt="0"/>
+  </DiagInfoGet> 
+   <WifiChainMaskSet  CmdStr="set wlan"
+          ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.WifiChainMaskSet"
+          OpType="5"
+          Help="USAGE: set wlan [wifichip {0 | 1 (2.4g|5g)}] [antenna {0 | 1 | 2 | 3}] [switch {send | stop}]"
+          OutPut=""
+          CmdGroup="0x00000010">
+    <para ParaName="wifichip"
+          AttName="WIFICHIP"
+          ParaAtt="0" />
+    <para ParaName="antenna"
+          AttName="ANTENNA"
+          ParaAtt="0" />
+   <para ParaName="switch"
+          AttName="SWITCH"
+          ParaAtt="0" />
+    </WifiChainMaskSet>
+    <WifiDiversityAntGet CmdStr="display wifi diversity ant info"
+          ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.WifiDiversityAntGet"
+          OpType="1"
+          Help="USAGE: display wifi diversity ant info"
+          OutPut="%STATUS%"
+          CmdGroup="0x00000010">
+    </WifiDiversityAntGet>
+    <WifiSTATUSGET CmdStr="display wifi status"
+                   ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.WifiSTATUSGET"
+                   OpType="1"
+                   Help="USAGE: display wifi status"
+                   OutPut="%WifiStatus%"
+                   CmdGroup="0x00000010" >
+   </WifiSTATUSGET>
+    <XeponUpmodeSpeedSet  CmdStr="set xepon"
+	     ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.XeponUpmodeSpeedSet"
+	     OpType="5"
+	     Help="USAGE: set xepon mode {0 | 1}
+OPTIONS:
+mode   : 0 - 1.25G; 1 - 2.5G"
+	     OutPut=""
+	     CmdGroup="0x00000010">
+       <para ParaName="mode"
+	     AttName="MODES"
+	     ParaAtt="0" />
+    </XeponUpmodeSpeedSet>	
+	<XeponUpmodeSpeedGet CmdStr="get xepon mode"
+                   ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.XeponUpmodeSpeedGet"
+                   OpType="1"
+                   Help="USAGE: get xepon mode"
+                   OutPut="xepon up speed mode : %ModeStatus%"
+                   CmdGroup="0x00000010">
+   </XeponUpmodeSpeedGet>
+   <OpticLosLofAlarmSet CmdStr="set optic loslof"
+	   ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.OpticLosLofAlarmSet"
+	   OpType="5"
+	   Help="USAGE: set optic loslof alarm {enable | disable}"
+	   OutPut=""
+	   CmdGroup="0x00000010">
+	   <para ParaName="alarm"
+			  AttName="AlarmEnable"
+			  ParaAtt="0" />
+   </OpticLosLofAlarmSet>
+  <TestDIDOInterface CmdStr="test DIDO interface"
+                    ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.TestDIDOInterface"
+                    OpType="1"
+                    Help="USAGE: test DIDO interface"
+                    OutPut="
+test DODI1: %RESULT1%, DO is %DOVALUE1%, DI is %DIVALUE1%
+test DODI2: %RESULT2%, DO is %DOVALUE2%, DI is %DIVALUE2%"
+                    CmdGroup="0x00000010">
+   </TestDIDOInterface>
+   <TestDIInterface CmdStr="test DI interface"
+                    ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.TestDIInterface"
+                    OpType="1"
+                    Help="USAGE: test DI interface port {0(all)|portid} state {0|1}"
+                    OutPut="test DI1: %RESULT1%, DI1 is %DIVALUE1%"
+                    CmdGroup="0x00000010">
+                    <para ParaName="port" AttName="DiIfPort" ParaAtt="0" />
+                    <para ParaName="state" AttName="DiIfState" ParaAtt="0" />
+   </TestDIInterface>
+   <TestRS232Interface CmdStr="test RS232 interface"
+                    ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.TestRS232Interface"
+                    OpType="1"
+                    Help="USAGE: test RS232 interface"
+                    OutPut="test RS232: %RESULT%"
+                    CmdGroup="0x00000010">
+   </TestRS232Interface>
+   <TestAcFaultData CmdStr="test ac fault data"
+                    ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.TestAcFaultData"
+                    OpType="1"
+                    Help="USAGE: test ac fault data"
+                    OutPut="AC fault data: %VALUE%"
+                    CmdGroup="0x00000010">
+   </TestAcFaultData>
+   <WifiSendPacketSet  CmdStr="set wlan equiptest"
+          ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.WifiSendPacketSet"
+          OpType="5"
+          Help="USAGE: set wlan equiptest chipindex [1|2(2.4G/5G)}] [mode {11a | 11b | 11g | 11na | 11ng | 11ac}] [bw {20|40|80}] [ch {value}] [rate {value}] [ant {Value}] switch{send | stop}"
+          OutPut=""
+          CmdGroup="0x00000010">
+    <para ParaName="chipindex"
+          AttName="CHIPINDEX"
+          ParaAtt="0" />
+    <para ParaName="mode"
+          AttName="MODE"
+          ParaAtt="0" />
+    <para ParaName="bw"
+          AttName="BW"
+          ParaAtt="0" />
+    <para ParaName="ch"
+          AttName="CHANNEL"
+          ParaAtt="0" />
+    <para ParaName="rate"
+          AttName="RATE"
+          ParaAtt="0" />
+    <para ParaName="ant"
+          AttName="ANT"
+          ParaAtt="0" />
+    <para ParaName="switch"
+          AttName="SWITCH"
+          ParaAtt="0" />         
+    </WifiSendPacketSet>
+    <CpuFreqSet CmdStr="set cpu freq"
+          ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.CpuFreqSet"
+          OpType="5"
+          Help="USAGE: set cpu freq type recover|low|medium|high|supper"
+          OutPut=""
+          CmdGroup="0x00000010">
+          <para ParaName="type"
+          AttName="CpuFreq"
+          ParaAtt="0" />
+   </CpuFreqSet>
+<!-- SUPPORT_LTE_START-->   
+    <LTEATCmdSend CmdStr="send LTE"
+        ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.LTEATCmdSend"
+        OpType="1" Help="USAGE: send LTE [command {ATCommand}]"
+        OutPut="%ATCMDRESP%"
+        CmdGroup="0x00000010">
+    <para ParaName="command"
+        AttName="ATCMD"
+        ParaAtt="0" />
+    </LTEATCmdSend>
+<!-- SUPPORT_LTE_END-->
+    <GetSfpOnu CmdStr="get sfponu"
+            ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.SfpOnu"
+            OpType="1" Help="usage: get sfponu table {table} page {page} addr {addr} len {len}"
+            OutPut="table: %Device%
+page : %Page%
+addr : %Addr%
+len  : %Len%
+value: %Data%" 
+            CmdGroup="0x00000010">
+            <para ParaName="table" AttName="Device" ParaAtt="0"/>
+            <para ParaName="page" AttName="Page" ParaAtt="0"/>
+            <para ParaName="addr" AttName="Addr" ParaAtt="0"/>
+            <para ParaName="len" AttName="Len" ParaAtt="0"/>
+    </GetSfpOnu>
+    <SetSfpOnu CmdStr="set sfponu" 
+            ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.SfpOnu"
+            OpType="5"
+            Help="usage: set sfponu table {table} page {page} addr {addr} len {len} value {value}"
+            OutPut="set sfponu"
+            CmdGroup="0x00000010">
+            <para ParaName="table" AttName="Device" ParaAtt="0"/>
+            <para ParaName="page" AttName="Page" ParaAtt="0"/>
+            <para ParaName="addr" AttName="Addr" ParaAtt="0"/>
+            <para ParaName="len" AttName="Len" ParaAtt="0"/>
+            <para ParaName="value" AttName="Data" ParaAtt="0"/>
+      </SetSfpOnu>
+      <GetAsciiStr CmdStr="get ascii" 
+            ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.HexConvert"
+            OpType="1"
+            Help="usage: get ascii len {len} hex {hex}"
+            OutPut= "value: %Data%" 
+            CmdGroup="0x00000010">
+            <para ParaName="len" AttName="Len" ParaAtt="0"/>
+            <para ParaName="hex" AttName="Hex" ParaAtt="0"/>
+      </GetAsciiStr>
+      <EnableSfpLosPin CmdStr="set sfp los"
+            ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.SfpLosPin"
+            OpType="5"
+            Help="usage: set sfp los pin {enable|disable}"
+            OutPut=""
+            CmdGroup="0x00000010">
+            <para ParaName="pin" AttName="Pin" ParaAtt="0"/>
+      </EnableSfpLosPin>
+      <BackUpSfpOpticPara CmdStr="backup sfponu optic para"
+            ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.SfpOpticPara"
+            OpType="5"
+            Help="usage: backup sfponu optic para"
+            OutPut=""
+            CmdGroup="0x00000010">
+      </BackUpSfpOpticPara>
+      <SetMotorRunZero CmdStr="set motor run zero"
+            ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.MotorRunZero"
+            OpType="5"
+            Help="usage: set motor run zero motorid {motorid} direct {0|1}"
+            OutPut=""
+            CmdGroup="0x00000010">
+            <para ParaName="motorid" AttName="Motorid" ParaAtt="0"/>
+            <para ParaName="direct" AttName="Direct" ParaAtt="0"/>
+      </SetMotorRunZero>
+      <SetMotorRunByStep CmdStr="set motor run"
+            ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.MotorRunByStep"
+            OpType="5"
+            Help="usage: set motor run motorid {motorid} direct {0|1} step {0-360}"
+            OutPut=""
+            CmdGroup="0x00000010">
+            <para ParaName="motorid" AttName="Motorid" ParaAtt="0"/>
+            <para ParaName="direct" AttName="Direct" ParaAtt="0"/>
+            <para ParaName="step" AttName="Step" ParaAtt="0"/>
+      </SetMotorRunByStep>
+      <GetMotorRunStatus CmdStr="get motor status"
+            ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.MotorRunStatus"
+            OpType="1"
+            Help="usage: get motor status motorid {motorid}"
+            OutPut="motor: %Motorid%
+result : %Result%
+status : %Status%
+step  : %Step%"
+            CmdGroup="0x00000010">
+            <para ParaName="motorid" AttName="Motorid" ParaAtt="0"/>
+      </GetMotorRunStatus>
+      <TestGpioByValue CmdStr="test"
+            ObjPath="InternetGatewayDevice.X_HW_LDSP_EQUIP.GpioTestByValue"
+            OpType="1"
+            Help="usage: test motor {wakeup|uart} gpio {high|low}"
+            OutPut="%Result%"
+            CmdGroup="0x00000010">
+            <para ParaName="motor" AttName="Gpio" ParaAtt="0"/>
+            <para ParaName="gpio" AttName="Value" ParaAtt="0"/>
+      </TestGpioByValue>
+<SetAgingTimes CmdStr="set aging" ObjPath="InternetGatewayDevice.X_HW_AGING" OpType="5" Help="USAGE:
+     set aging times [0,100] mbist [0,100] ssn [0,100] delay [1,9999]
+OPTIONS:
+     times: Between 0 and 100. 0 means cancel flash aging test; Others means aging times.
+     ssn: Between 0 and 100. 0 means cancel ssn aging test; Others means ssn aging times.
+     delay: Between 1 and 9999. means delay time before aging." OutPut="set aging times" CmdGroup="0x00000010">
+<para ParaName="times" AttName="X_HW_AGINGTIMES" ParaAtt="0"/>
+<para ParaName="mbist" AttName="X_HW_MBISTTIMES" ParaAtt="0"/>
+<para ParaName="ssn" AttName="X_HW_SSNTIMES" ParaAtt="0"/>
+<para ParaName="delay" AttName="X_HW_AGINGDELAY" ParaAtt="0"/>
+</SetAgingTimes>
+<GetAgingResult CmdStr="display aging result" ObjPath="InternetGatewayDevice.X_HW_AGING" OpType="1" Help="USAGE:
+     display flash aging test result and PRBS test result." OutPut="
+%X_HW_AGINGRESULT%
+%X_HW_RAMTESTSESULT%
+%X_HW_DDRTESTSESULT%
+%X_HW_MBISTTESTSESULT%
+%X_HW_SSNTESTSESULT%
+%X_HW_ZWAVETESTSESULT%
+%X_HW_AGINGTEMPERATURERESULT%" CmdGroup="0x00000010"/>
+<GetTemperatureAgingResult CmdStr="display aging temperature" ObjPath="InternetGatewayDevice.X_HW_AGING" OpType="1" Help="USAGE:display aging temperature." OutPut="%X_HW_AGINGTEMPERATURERESULT%" CmdGroup="0x00000010"/>
+<SetDdrTest CmdStr="set ddr selftest" ObjPath="InternetGatewayDevice.X_HW_DDRTEST" OpType="0" Help="USAGE:
+     set ddr selftest onto {flash | ram}" OutPut="" CmdGroup="0x00000010">
+<para ParaName="onto" AttName="X_HW_DDRTESTTYPE" ParaAtt="0"/>	 
+</SetDdrTest>
+<GetCtreeData CmdStr="display ctreedata" ObjPath="InternetGatewayDevice.X_HW_CtreeData" OpType="0" Help="USAGE:
+    display ctreedata {Path xxxxxx}
+OPTIONS:
+     Path: The Ctree Path ,it can be attribute path ,and object path.
+	 For Example:
+	 InternetGatewayDevice.ManagementServer
+	 InternetGatewayDevice.ManagementServer.URL
+	 InternetGatewayDevice.UserInterface.X_HW_WebUserInfo
+	 InternetGatewayDevice.LANDevice.1.WLANConfiguration
+	 InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.WEPKey
+	 InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.Stats.ErrorsSent" OutPut="" CmdGroup="">
+<para ParaName="Path" AttName="X_HW_CtreePath" ParaAtt="0"/>
+</GetCtreeData>
+<SetHardinfo CmdStr="set hardinfo" ObjPath="InternetGatewayDevice.X_HW_SSMPPDT.Hardinfo" OpType="5" Help="USAGE:
+     set hardinfo [value {feature or spec and language}] -- set the value of feature or spec and language
+OPTIONS:
+     value must be a string separated by ';',that represents the feature or specifications and language" OutPut="" CmdGroup="0x00000010">
+<para ParaName="value" AttName="X_HW_Value" ParaAtt="0"/>
+</SetHardinfo>
+<GetHardinfo CmdStr="display equip hardinfo" ObjPath="InternetGatewayDevice.X_HW_SSMPPDT.Hardinfo" OpType="1" Help="USAGE:display equip hardinfo -- display the value of feature or spec and language" OutPut="%X_HW_Value%" CmdGroup="0x00000010" />
+<!-- SUPPORT_HGW_START-->
+<GetCmscrlInfo CmdStr="display cms-crl info" ObjPath="InternetGatewayDevice.X_HW_SSMPPDT.CmscrlInfo" OpType="1" Help="USAGE:display cms-crl info -- display cms crl info" OutPut="%X_HW_CmscrlInfo%" CmdGroup="0x00000010"/> 
+<GetBatteryChipStatus CmdStr="get battery-chip status" ObjPath="InternetGatewayDevice.X_HW_BatteryChipStatus" OpType="1" Help="USAGE:
+     display battery alarm status and standby battery status." OutPut="Battery alarm status:
+BatteryOn:%X_HW_BatteryOn%
+BatteryMiss:%X_HW_BatteryMiss%
+BatteryFail:%X_HW_BatteryFail%
+BatteryLow:%X_HW_BatteryLow%
+battery information = %X_HW_BatteryInformation%
+battery HW version  = %X_HW_BatteryHWVersion%
+battery SW version  = %X_HW_BatterySWVersion%
+battery status      = %X_HW_BatteryStatus%
+available capacity  = %X_HW_AvailableCapacity%" CmdGroup="0x00004010">
+</GetBatteryChipStatus>
+<GetSIMCardinfo CmdStr="display simcardstatus" ObjPath="InternetGatewayDevice.X_HW_SimCardInfo" OpType="1" Help="USAGE:display simcardstatus -- display the simcard status" OutPut="simstatus = %X_HW_CardStatus%" CmdGroup="0x00004010"/>
+<UsbEquipTestAll CmdStr="usb equipTest all" ObjPath="InternetGatewayDevice.X_HW_DEBUG.SMP.DM.UsbEquipTestAll" OpType="5" Help="USGAE:
+     usb equiptest all -- usb equipment command, which is only used in manufacture
+" OutPut="" CmdGroup=""/>
+<!-- SUPPORT_HGW_END-->
+<GetEfuseInfo CmdStr="display efuse info" ObjPath="InternetGatewayDevice.DeviceInfo.EfuseInfo" OpType="1" Help="USAGE:display efuse info -- display efuse info" OutPut="StartCode Hash Values:
+%X_HW_StartHash%
+Revoked Subkey ID Mask: %X_HW_RevokedMask%
+Subkey Category: %X_HW_SubkeyCategory%
+Security Enable: %State%
+TimeIDMask: %TimeIDMask%
+CodeIDMask: %CodeIDMask%
+DebugFlag: %DebugFlag%
+Flash Encrypt Enable: %FlashEncryptEnable%
+Version Info: %VersionInfo%
+" CmdGroup="0x00000010"/>
+<EfuseLoad CmdStr="load efuse by tftp" ObjPath="InternetGatewayDevice.X_HW_SSMPPDT.EfuseParaLoad" OpType="0" Help="USAGE: load efuse by tftp [svrip {ip addr}] [remotefile {file name}]" OutPut="" CmdGroup="0x00000010">
+<para ParaName="svrip" AttName="IPADDR" ParaAtt="0" />
+<para ParaName="remotefile" AttName="FILENAME" ParaAtt="0" />
+</EfuseLoad>	
+<KeyTestStart CmdStr="test button start" ObjPath="InternetGatewayDevice.X_HW_DEBUG.SMP.DM.KeyTestStart" OpType="5" Help="USAGE:
+     button test start -- start to test reset/wlan/wps/dect key" OutPut="" CmdGroup="0x00000010"/>
+<KeyTestEnd CmdStr="test button end" ObjPath="InternetGatewayDevice.X_HW_DEBUG.SMP.DM.KeyTestEnd" OpType="1" Help="USAGE:
+     test button end -- display status of reset/wlan/wps/led/wifi2g/wifi5g/dectpair/dectpage/wifi2g5g key" OutPut="resetkey status = %reset%
+wlankey status = %wlan%
+wpskey status = %wps%
+ledkey status = %led%
+wifi2gkey status = %wifi2g%
+wifi5gkey status = %wifi5g%
+pairkey status  = %dectpair%
+pagekey status = %dectpage%
+ghnpairkey status = %ghnpairkey%
+wifi2g5gkey status = %wifi2g5g%" CmdGroup="0x00000010"/>
+<!-- SUPPORT_HGW_START-->
+<UsbEquipTestSingle CmdStr="test usb interface" ObjPath="InternetGatewayDevice.X_HW_DEBUG.SMP.DM.UsbEquipTestSingle" OpType="1" Help="USAGE
+     test usb interface -- usb equipment command, which is only used in maintenance" OutPut="%UsbTestInfo%" CmdGroup="0x00000010"/>
+<SimEquipTest CmdStr="sim equiptest" ObjPath="InternetGatewayDevice.X_HW_DEBUG.SMP.DM.EquipTest" OpType="5" Help="USAGE: sim equiptest" OutPut="" CmdGroup="0x00000010">
+</SimEquipTest>	
+<BBUMonitorInterface CmdStr="test monitor interface" ObjPath="InternetGatewayDevice.X_HW_DEBUG.SMP.DM.BBUMonitorInterface" OpType="5" Help="" OutPut="" CmdGroup="0x00004010" /> 
+<SetTmpThreshold CmdStr="set tmp" ObjPath="InternetGatewayDevice.X_HW_DEBUG.SMP.Temperature" OpType="5" Help="USAGE:
+     set tmp threshold xxx,xxx,xxx
+OPTIONS:
+     threshold:xxx,xxx,xxx respectively corresponding the threshold of (MainChipUpperTmp),(BobChipTmp),(WifiChipTmp)
+     For Example:
+     set tmp threshold 120,130,140
+     so MainChipUpperTmp=120  BobChipTmp=130  WifiChipTmp=140" OutPut="" CmdGroup="0x00000010">
+<para ParaName="threshold" AttName="ThresHold" ParaAtt="0"/>
+</SetTmpThreshold>
+<!-- SUPPORT_HGW_END-->
+<SetEquipStep CmdStr="set mark-equip" ObjPath="InternetGatewayDevice.X_HW_DEBUG.SMP.EquipStep" OpType="5" Help="USAGE:
+     set mark-equip step xxx
+OPTIONS:
+     step:xxx up to eight characters" OutPut="" CmdGroup="0x00000010">
+<para ParaName="step" AttName="Step" ParaAtt="0"/>
+</SetEquipStep>
+<GetEquipStep CmdStr="display mark-equip step" ObjPath="InternetGatewayDevice.X_HW_DEBUG.SMP.EquipStep" OpType="1" Help="USAGE:
+     display mark-equip step" OutPut="
+step:%Step%" CmdGroup="0x00000010"/>
+<SetManufactureInfo CmdStr="set ManufactureInfo upport" ObjPath="InternetGatewayDevice.X_HW_DEBUG.SMP.ManufactureInfo" OpType="5" Help="USAGE:
+     set ManufactureInfo [upport mode {value}] [chipinfo {value}]  [boardtype {value}]  [optmode {value}]  [boardItem {value}]  [sn {value}]  [productmac {value}]  [machineItem {value}]   
+OPTIONS:
+     upport mode:1 means GPON mode, 2 means EPON mode, 3 means GE mode, 4 means AUTO mode, 5 means XGPON mode, 6 means 10GEPONA mode, 7 means 10GEPONS mode, 8 means WIFI mode, 9 means DSL mode, 10 means XGS-PON mode, 11 means XGE mode
+     chipinfo:must be composed of 1 chars: 0~9, A~Z
+     boardtype:the custom boardtype
+     optmode:must be less than 255
+	 ITEM: must be less than 33 chars and composed of digital or upper alpha chars
+	 snid: 20 digital or upper alpha chars for DSL Device, 16 hex digits or 12 characters end with 8 hex characters for others.
+	 MAC: must be composed of digital or upper alpha char, separated by : 
+	 ITEM: must be composed of 20 digital or upper alpha chars" OutPut="" CmdGroup="0x00000010">
+<para ParaName="mode" AttName="UpportMode" ParaAtt="0"/>
+<para ParaName="chipinfo" AttName="ChipInfo" ParaAtt="0"/>
+<para ParaName="boardtype" AttName="BoardType" ParaAtt="0"/>
+<para ParaName="optmode" AttName="OptMode" ParaAtt="0"/>
+<para ParaName="boardItem" AttName="BoardItem" ParaAtt="0"/>
+<para ParaName="sn" AttName="PonSn" ParaAtt="0"/>
+<para ParaName="productmac" AttName="LanMac" ParaAtt="0"/>
+<para ParaName="machineItem" AttName="MachineItem" ParaAtt="0"/>
+</SetManufactureInfo>
+<GetManufactureInfo CmdStr="display ManufactureInfo" ObjPath="InternetGatewayDevice.X_HW_DEBUG.SMP.ManufactureInfo" OpType="1" Help="USAGE:
+     display ManufactureInfo -- display ManufactureInfo of upport mode/chipinfo/boardtype/optmode." OutPut="
+upport mode:%UpportMode%
+chipinfo:%ChipInfo%
+boardtype:%BoardType%
+boardItem:%BoardItem%
+sn:%PonSn%
+productmac:%LanMac%
+machineItem:%MachineItem%
+%OptMode%" CmdGroup="0x00000010"/>
+<UndoRollBack CmdStr="undo rollback" ObjPath="InternetGatewayDevice.X_HW_DEBUG.SMP.UndoRollBack" OpType="5" Help="USAGE:
+     undo rollback -- Copy image from main area to standby area" OutPut="" CmdGroup="0x00000010"/>
+<!--SUPPORT_VOICE_START-->
+<setptcflag CmdStr="vspa set ptcflag" ObjPath="InternetGatewayDevice.X_HW_DEBUG.VSPA.setptcflag" OpType="5" Help="vspa set ptcflag enable {0:disable,1:enable,2:adapt} impedance {[0,15]}" OutPut="" CmdGroup="0x00004010">
+<para ParaName="enable" AttName="enable" ParaAtt="0"/>
+<para ParaName="impedance" AttName="impedance" ParaAtt="0"/>
+</setptcflag>
+<VspaVoipTest CmdStr="vspa voiptest" ObjPath="InternetGatewayDevice.X_HW_DEBUG.VSPA.vspavoiptest" OpType="5" Help="vspa voiptest switch {enable|disable}" OutPut="" CmdGroup="0x00000010">
+<para ParaName="switch" AttName="enable" ParaAtt="0"/>
+</VspaVoipTest>
+<testcmdspc CmdStr="vspa testcmd spc" ObjPath="InternetGatewayDevice.X_HW_DEBUG.VSPA.testcmdspc" OpType="5" Help="vspa testcmd spc action {start|stop} port1 {[0,7]} port2 {[0,7]} sendgain {[0,22]} receivegain {[0,24]}
+sendgain:0[-6db],1[-5.5db],2[-5db],......,22[5db], Step=0.5db
+receivegain:0[0db],1[-0.5db],2[-1db],......,24[-12db], Step=0.5db" OutPut="" CmdGroup="0x00000010">
+<para ParaName="action" AttName="testaction" ParaAtt="0"/>
+<para ParaName="port1" AttName="testport1" ParaAtt="0"/>
+<para ParaName="port2" AttName="testport2" ParaAtt="0"/>
+<para ParaName="sendgain" AttName="testsendgain" ParaAtt="0"/>
+<para ParaName="receivegain" AttName="testreceivegain" ParaAtt="0"/>
+</testcmdspc>
+<testcmddtmf CmdStr="vspa testcmd dtmfsend" ObjPath="InternetGatewayDevice.X_HW_DEBUG.VSPA.testcmddtmf" OpType="5" Help="vspa testcmd dtmfsend num {[0,9] |ABCDEF} action {start|stop}" OutPut="" CmdGroup="0x00000010">
+<para ParaName="num" AttName="dtmfnum" ParaAtt="0"/>
+<para ParaName="action" AttName="dtmfaction" ParaAtt="0"/>
+</testcmddtmf>
+<testcmdfsk CmdStr="vspa testcmd fsk" ObjPath="InternetGatewayDevice.X_HW_DEBUG.VSPA.testcmdfsk" OpType="5" Help="vspa testcmd fsk freq {[1,2]} level {[5,20]} action {start|stop}" OutPut="" CmdGroup="0x00000010">
+<para ParaName="freq" AttName="fskfreq" ParaAtt="0"/>
+<para ParaName="level" AttName="fsklevel" ParaAtt="0"/>
+<para ParaName="action" AttName="fskaction" ParaAtt="0"/>
+</testcmdfsk>
+<VspatestcmddtmfrecordActionStart CmdStr="vspa testcmd dtmfrecord action start" ObjPath="InternetGatewayDevice.X_HW_DEBUG.VSPA.VspatestcmddtmfrecordActionStart" OpType="5" Help="" OutPut="" CmdGroup="0x00000010"/>
+<VspatestcmddtmfrecordActionStop CmdStr="vspa testcmd dtmfrecord action stop" ObjPath="InternetGatewayDevice.X_HW_DEBUG.VSPA.VspatestcmddtmfrecordActionStop" OpType="5" Help="" OutPut="" CmdGroup="0x00000010"/>
+<VspatestcmddtmfrecordActionShow CmdStr="vspa testcmd dtmfrecord action show" ObjPath="InternetGatewayDevice.X_HW_DEBUG.VSPA.VspatestcmddtmfrecordActionShow" OpType="1" Help="vspa testcmd dtmfrecord action {start|stop|show}" OutPut="%output%" CmdGroup="0x00000010"/>
+<vspalongring CmdStr="vspa testcmd longring" ObjPath="InternetGatewayDevice.X_HW_DEBUG.VSPA.vspalongring" OpType="5" Help="" OutPut="" CmdGroup="0x00000010"/>
+<vspalinetest CmdStr="test resistance loop-line-test start" ObjPath="InternetGatewayDevice.X_HW_DEBUG.VSPA.vspalinetest" OpType="5" Help="" OutPut="" CmdGroup="0x00000010"/>
+<vspalinetestshow CmdStr="display resistance loop-line-test result" ObjPath="InternetGatewayDevice.X_HW_DEBUG.VSPA.vspalinetestshow" OpType="1" Help="" OutPut="%output%" CmdGroup="0x00000010"/>
+<VspaPolarReverse CmdStr="vspa testcmd polarreverse" ObjPath="InternetGatewayDevice.X_HW_DEBUG.VSPA.VspaPolarReverse" OpType="5" Help="vspa testcmd polarreverse action {start|stop}" OutPut="" CmdGroup="0x00000010">
+<para ParaName="action" AttName="testaction" ParaAtt="0"/>
+</VspaPolarReverse>
+<SetvoipportImpedance CmdStr="set voip portimpedance" ObjPath="InternetGatewayDevice.X_HW_DEBUG.VSPA.SetvoipportImpedance" OpType="0" Help="USAGE:
+	set voip portimpedance port {[0,7]} impedance {[0, 15]} 
+OPTIONS:
+	0:BureaumachineinChina(200+680||100nf),
+    1:UserMachineinChina(200+560||100nf),
+    2:600Ohm Interface,
+    3:Interface of Russian(150+510||47nf),
+    4:(220+820||115nf),
+    5:(220+820||120nf),
+    6:900Ohm Interface,
+    7:Interface of Brazil(800||50nf),
+    8:BT0(Zin=87+1052||228nF+229||28.4nF,Zload=93+615||471nF+179||495nF+244||32nF),
+    9:HK_BT3(Zin=370+620||310nf,Zload=600),
+    10:HK_BT5(Zin=270+264||357nf+1434||265nf,Zload=600),
+    11:BT1(BT0 without AGC),
+    12:BT2(Zin=87+1052||228nF+229||28.4nF,Zload=270+264||357nF+1434||265nF),
+    13:BT3(Zin=87+1052||228nF+229||28.4nF,Zload=164+162||363nF+1227||350nF),
+    14:Commonly used in Europe(Zin=270+750||150nf),
+    15:New Zealand(Zin=370+620||310nf)" OutPut="" CmdGroup="0x00000010">
+<para ParaName="port" AttName="port" ParaAtt="0"/>
+<para ParaName="impedance" AttName="impedance" ParaAtt="0"/>
+</SetvoipportImpedance>
+<GetvoipportImpedance CmdStr="get voip portimpedance" ObjPath="InternetGatewayDevice.X_HW_DEBUG.VSPA.GetvoipportImpedance" OpType="1" Help="get voip portimpedance port {[0,7]}" OutPut="%output%" CmdGroup="0x00000010">
+<para ParaName="port" AttName="port" ParaAtt="0"/>
+</GetvoipportImpedance>
+<!--SUPPORT_VOICE_END-->
+<!-- SUPPORT_HGW_START-->
+<SetApmPolicy CmdStr="set apmpolicy" ObjPath="InternetGatewayDevice.X_HW_APMPolicy" OpType="5" Help="USAGE:
+     set apmpolicy [mode {value}]
+OPTIONS:
+     mode: 0 means close and 1 means open" OutPut="" CmdGroup="">
+<para ParaName="mode" AttName="EnablePowerSavingMode" ParaAtt="0"/>
+</SetApmPolicy>
+<GETAPMPOLICY CmdStr="display apmpolicy" ObjPath="InternetGatewayDevice.X_HW_APMPolicy" OpType="1" Help="show apm policy" OutPut="Apm policy Info is(0 means close and 1 means open):
+Apm policy state    = %EnablePowerSavingMode%" CmdGroup="0x00004000"/>
+<SET_BATTERY_MODE CmdStr="set apmbatterymode" ObjPath="InternetGatewayDevice.X_HW_APMPolicy.BatteryModePolicy" OpType="5" Help="USAGE:
+     set apmbatterymode [notuseusb {value} | notuselan {value} | notusewlan {value} | notusevoice {value} | notusecatv {value} | notuseremote {value} ]
+OPTIONS:
+     value: 0 means open and 1 means close" OutPut="" CmdGroup="">
+<para ParaName="notuseusb" AttName="NotUseUsbService" ParaAtt="0"/>
+<para ParaName="notuselan" AttName="NotUseLanService" ParaAtt="0"/>
+<para ParaName="notusewlan" AttName="NotUseWlanService" ParaAtt="0"/>
+<para ParaName="notusevoice" AttName="NotUseVoiceService" ParaAtt="0"/>
+<para ParaName="notusecatv" AttName="NotUseCATVService" ParaAtt="0"/>
+<para ParaName="notuseremote" AttName="NotUseRemoteManagement" ParaAtt="0"/>
+</SET_BATTERY_MODE>
+<!-- SUPPORT_HGW_END-->
+<SetEponLoidPwd CmdStr="set eponloidpwd" ObjPath="InternetGatewayDevice.DeviceInfo" OpType="5" Help="set eponloidpwd loid xx pwd xx" OutPut="" CmdGroup="">
+<para ParaName="loid" AttName="X_HW_Loid" ParaAtt="0"/>
+<para ParaName="pwd" AttName="X_HW_EponPwd" ParaAtt="0"/>
+</SetEponLoidPwd>
+<GetEponLoidPwd CmdStr="display eponloidpwd" ObjPath="InternetGatewayDevice.DeviceInfo" OpType="1" Help="display eponloidpwd" OutPut="-----------------------
+LOID : %X_HW_Loid%
+PWD  : %X_HW_EponPwd%
+-----------------------" CmdGroup=""/>
+<GetSnPwdHex CmdStr="display hex-passwd" ObjPath="InternetGatewayDevice.DeviceInfo" OpType="1" Help="USAGE:
+     display hex-passwd -- get sn hex password of board" OutPut="hex-passwd = %X_HW_PonHexPassword%" CmdGroup=""/>
+<SetPonPsk CmdStr="set psk" ObjPath="InternetGatewayDevice.X_HW_XgponDeviceInfo" OpType="5" Help="USAGE:
+    set psk key {presharedkey}
+OPTIONS:
+    key: must be less than 16 chars" OutPut="" CmdGroup="0x00000010">
+<para ParaName="key" AttName="PreSharedKey" ParaAtt="0"/>
+</SetPonPsk>     
+<GetVendor CmdStr="display vendorId" ObjPath="InternetGatewayDevice.DeviceInfo" OpType="1" Help="USAGE:
+     display vendorId: get vendor ID of board" OutPut="vendor id = %X_HW_VendorId%" CmdGroup="0x00004010"/>
+<!-- SUPPORT_HGW_START-->
+<SetProductId CmdStr="set productId" ObjPath="InternetGatewayDevice.DeviceInfo" OpType="5" Help="USAGE:
+     set productId ID {value}
+OPTIONS:
+     ID: must be less than four digital char" OutPut="" CmdGroup="">
+<para ParaName="ID" AttName="X_HW_ProductId" ParaAtt="0"/>
+</SetProductId>
+<!-- SUPPORT_HGW_END-->
+<GetProductId CmdStr="display productId" ObjPath="InternetGatewayDevice.DeviceInfo" OpType="1" Help="USAGE:
+     display productId -- get product ID of board" OutPut="product id = %X_HW_ProductId%" CmdGroup="0x00004010"/>
+<GetEquipId CmdStr="display equipId" ObjPath="InternetGatewayDevice.DeviceInfo" OpType="1" Help="USAGE: 
+     display equipId -- get equipment ID of board" OutPut="equipment id = %X_HW_EquipmentId%" CmdGroup="0x00004010"/>
+<SetLanMac CmdStr="set lanmac" ObjPath="InternetGatewayDevice.DeviceInfo" OpType="5" Help="USAGE:
+     set lanmac MAC {address}
+OPTIONS:
+     MAC: must be composed of digital or upper alpha char, separated by : " OutPut="" CmdGroup="0x00000010">
+<para ParaName="MAC" AttName="X_HW_LanMac" ParaAtt="0"/>
+</SetLanMac>
+<SetWanMac CmdStr="set wanmac" ObjPath="InternetGatewayDevice.DeviceInfo" OpType="5" Help="USAGE:
+     set wanmac MAC {address}
+OPTIONS:
+     MAC: must be composed of digital or upper alpha char, separated by : " OutPut="" CmdGroup="0x00000010">
+<para ParaName="MAC" AttName="X_HW_WanMac" ParaAtt="0"/>
+</SetWanMac>
+<SetRFPI CmdStr="set rfpi" ObjPath="InternetGatewayDevice.DeviceInfo" OpType="5" Help="USAGE:
+     set rfpi value {value}
+OPTIONS:
+     value: must be 10 hex digits" OutPut="" CmdGroup="0x00000010">
+<para ParaName="value" AttName="X_HW_RFPI" ParaAtt="0"/>
+</SetRFPI>
+<SetBoardItem CmdStr="set boardItem" ObjPath="InternetGatewayDevice.DeviceInfo" OpType="5" Help="USAGE: 
+     set boardItem ItemId {value}
+OPTIONS: 
+     ITEM: must be less than 33 chars and composed of digital or upper alpha chars" OutPut="" CmdGroup="0x00000010">
+<para ParaName="ItemId" AttName="X_HW_BoardItem" ParaAtt="0"/>
+</SetBoardItem>
+<SetBoard2Item CmdStr="set board2Item" ObjPath="InternetGatewayDevice.DeviceInfo" OpType="5" Help="USAGE: 
+      set board2Item ItemId {value}
+ OPTIONS: 
+      ITEM: must be less than 33 chars and composed of digital or upper alpha chars" OutPut="" CmdGroup="0x00000010">
+ <para ParaName="ItemId" AttName="X_HW_Board2Item" ParaAtt="0"/>
+</SetBoard2Item>
+<SetMachineItem CmdStr="set machineItem" ObjPath="InternetGatewayDevice.DeviceInfo" OpType="5" Help="USAGE: 
+     set machineItem ItemId {value}
+OPTIONS: 
+     ITEM: must be composed of 20 digital or upper alpha chars" OutPut="" CmdGroup="0x00000010">
+<para ParaName="ItemId" AttName="X_HW_MachineItem" ParaAtt="0"/>
+</SetMachineItem>
+<!-- SUPPORT_HGW_START-->
+<!-- SUPPORT_HGW_END-->
+<SetUpportMode CmdStr="set upport" ObjPath="InternetGatewayDevice.DeviceInfo" OpType="5" Help="USAGE:
+     set upport mode {value} upportid {portid}
+OPTIONS:
+     mode: 1 means GPON mode, 2 means EPON mode, 3 means GE mode, 4 means AUTO mode, 5 means XGPON mode, 6 means 10GEPONA mode, 7 means 10GEPONS mode, 8 means WIFI mode, 9 means DSL mode, 10 means XGS-PON mode, 11 means XGE mode, 12 means 10GE AUTO mode
+     upportid:1~5 mean lan1~lan5, 0x102001  means PON" OutPut="" CmdGroup="0x00000010">
+<para ParaName="mode" AttName="X_HW_UpPortMode" ParaAtt="0"/>
+<para ParaName="upportid" AttName="X_HW_UpPortID" ParaAtt="0"/>
+</SetUpportMode>
+<SetProvisioningCode CmdStr="set provisioningCode" ObjPath="InternetGatewayDevice.DeviceInfo" OpType="5" Help="USAGE:
+     set provisioningCode code {value}
+OPTIONS:
+     CODE: must be less than 64 chars" OutPut="" CmdGroup="">
+<para ParaName="code" AttName="ProvisioningCode" ParaAtt="0"/>
+</SetProvisioningCode>
+<!-- SUPPORT_HGW_START-->
+<DownloadDataToUsb CmdStr="download usb" ObjPath="InternetGatewayDevice.X_HW_DEBUG.SMP.DM.FtpClient" OpType="5" Help="USAGE:
+     download usb [name {value}] [password {value}] [URL {path}] [port {value}] [Device {value}] [Local {value}]
+OPTIONS:
+     name:     ftp client user name, should be less than 32 chars, optional
+     password: ftp client user password, should be less than 64 chars, optional     
+     URL:      ftp URL, should be less than 128 char, necessarily
+     port:     ftp port, default value is 23, optional
+     Device:   usb storage device name, should be less than 32 char, necessarily
+     Local:    download directory, should be less than 64 chars, optional" OutPut="" CmdGroup="">
+<para ParaName="name" AttName="Username" ParaAtt="0"/>
+<para ParaName="password" AttName="Userpassword" ParaAtt="0"/>
+<para ParaName="URL" AttName="URL" ParaAtt="0"/>
+<para ParaName="port" AttName="Port" ParaAtt="0"/>
+<para ParaName="Device" AttName="Device" ParaAtt="0"/>
+<para ParaName="Local" AttName="LocalPath" ParaAtt="0"/>
+</DownloadDataToUsb>
+<!-- SUPPORT_HGW_END--> 
+<SetOpticMode CmdStr="set optmode" ObjPath="InternetGatewayDevice.DeviceInfo" OpType="5" Help="USAGE:
+     set optmode mode {value}
+OPTIONS:
+     mode: must be less than 255" OutPut="" CmdGroup="0x00000010">
+<para ParaName="mode" AttName="X_HW_OpticMode" ParaAtt="0"/>
+</SetOpticMode>
+<SetTelnetAccess CmdStr="set telnet" ObjPath="InternetGatewayDevice.UserInterface.X_HW_CLITelnetAccess" OpType="5" Help="USAGE:
+     set telnet [access {value}]
+OPTIONS:
+     access: 0 means disable telnet access, 1 means enable telnet access" OutPut="" CmdGroup="">
+<para ParaName="access" AttName="Access" ParaAtt="0"/>
+</SetTelnetAccess>
+<GetTelnetAccess CmdStr="display telnet access" ObjPath="InternetGatewayDevice.UserInterface.X_HW_CLITelnetAccess" OpType="1" Help="USAGE:
+     display telnet access -- get telnet access status" OutPut="Telnet Access : %Access%" CmdGroup="0x00004000"/>
+<!-- SUPPORT_HGW_START-->
+<SetWlanMac CmdStr="set wlanmac" ObjPath="InternetGatewayDevice.DeviceInfo" OpType="5" Help="USAGE:
+     set wlanmac MAC {address}
+OPTIONS:
+     MAC: must be composed of digital or upper alpha char, separated by : " OutPut="" CmdGroup="0x00000010">
+<para ParaName="MAC" AttName="X_HW_WlanMac" ParaAtt="0"/>
+</SetWlanMac>
+<SetBatteryAlarmPolicy CmdStr="set battery alarm policy" ObjPath="InternetGatewayDevice.X_HW_APMPolicy.BatteryAlarmPolicy" OpType="5" Help="" OutPut="" CmdGroup="">
+<para ParaName="enable" AttName="AlwaysEnable" ParaAtt="0"/>
+<para ParaName="voiceenable" AttName="VoiceServiceEnable" ParaAtt="0"/>
+</SetBatteryAlarmPolicy>
+<!-- SUPPORT_HGW_END-->
+<!-- SUPPORT_HGW_START-->
+<SwmBackupLog CmdStr="backup log" ObjPath="InternetGatewayDevice.X_HW_DEBUG.SMP.SWM.BackupLog" OpType="5" Help="backup log type {opt} by {tftp|ftp} svrip {ip addr} remotefile {file name} [user {user name}] [pwd {password}] [port {port}]" OutPut="" CmdGroup="">
+<para ParaName="by" AttName="ChannelName" ParaAtt="0"/>
+<para ParaName="svrip" AttName="IpAddr" ParaAtt="0"/>
+<para ParaName="remotefile" AttName="RemoteFilePath" ParaAtt="0"/>
+<para ParaName="type" AttName="LogType" ParaAtt="0"/>
+<para ParaName="user" AttName="UserName" ParaAtt="0"/>
+<para ParaName="pwd" AttName="Password" ParaAtt="0"/>
+<para ParaName="port" AttName="Port" ParaAtt="0"/>
+</SwmBackupLog>
+<!-- SUPPORT_HGW_END-->
+<!-- SUPPORT_CM_START-->
+<SwmSystemRollback CmdStr="system rollback" ObjPath="InternetGatewayDevice.X_HW_DEBUG.SMP.SWM.SystemRollback" OpType="1" Help="Rollback system to the other area!" OutPut="system rollback to %Area% area!" CmdGroup="0x00000010"/>
+<!-- SUPPORT_CM_END-->
+<!-- SUPPORT_HGW_START-->
+<GetSntp CmdStr="sntp get" ObjPath="InternetGatewayDevice.Time" OpType="1" Help="sntp get" OutPut="Enable=%Enable%
+NTPServer1=%NTPServer1%
+NTPServer2=%NTPServer2%
+NTPServer3=%NTPServer3%
+NTPServer4=%NTPServer4%
+NTPServer5=%NTPServer5%
+SynInterval=%X_HW_SynInterval%
+WanName=%X_HW_WanName%
+CfgMode=%X_HW_ExportCfgMode%
+ExportType=%X_HW_ExportType%
+DST   used=%DaylightSavingsUsed%
+start time=%DaylightSavingsStart%
+end   time=%DaylightSavingsEnd%
+start time[ex]=%X_HW_DaylightSavingsStartDate%
+end   time[ex]=%X_HW_DaylightSavingsEndDate%" CmdGroup="0x00004010"/>
+<SetSntp CmdStr="sntp set" ObjPath="InternetGatewayDevice.Time" OpType="5" Help="sntp set enable {0|1} server1 {svr1} server2 {svr2} server3 {svr3} server4 {svr4} server5 {svr5} syninterval {1,4294967295} wanname {str} dstused {0|1} starttime {abs time} endtime {abs time} starttime_ex {ex time} endtime_ex {ex time}" OutPut="" CmdGroup="">
+<para ParaName="enable" AttName="Enable" ParaAtt="0"/>
+<para ParaName="server1" AttName="NTPServer1" ParaAtt="0"/>
+<para ParaName="server2" AttName="NTPServer2" ParaAtt="0"/>
+<para ParaName="server3" AttName="NTPServer3" ParaAtt="0"/>
+<para ParaName="server4" AttName="NTPServer4" ParaAtt="0"/>
+<para ParaName="server5" AttName="NTPServer5" ParaAtt="0"/>
+<para ParaName="syninterval" AttName="X_HW_SynInterval" ParaAtt="0"/>
+<para ParaName="wanname" AttName="X_HW_WanName" ParaAtt="0"/>
+<para ParaName="starttime" AttName="DaylightSavingsStart" ParaAtt="0"/>
+<para ParaName="endtime" AttName="DaylightSavingsEnd" ParaAtt="0"/>
+<para ParaName="starttime_ex" AttName="X_HW_DaylightSavingsStartDate" ParaAtt="0"/>
+<para ParaName="endtime_ex" AttName="X_HW_DaylightSavingsEndDate" ParaAtt="0"/>
+<para ParaName="dstused" AttName="DaylightSavingsUsed" ParaAtt="0"/>
+</SetSntp>
+<!-- SUPPORT_HGW_END-->
+<GetEponKey CmdStr="display eponkey " ObjPath="InternetGatewayDevice.DeviceInfo" OpType="1" Help="display eponkey  -- get eponkey  of board" OutPut="Eponkey = %X_HW_EponKey%" CmdGroup=""/>
+<SetChipInfo CmdStr="set chip" ObjPath="InternetGatewayDevice.DeviceInfo" OpType="5" Help="USAGE:
+     set chip info {value}
+OPTIONS:
+     info: must be composed of 1 chars: 0~9, A~Z" OutPut="" CmdGroup="0x00000010">
+<para ParaName="info" AttName="X_HW_ChipInfo" ParaAtt="0"/>
+</SetChipInfo>
+<!-- SUPPORT_HGW_START-->
+<GetcwmpmonitorInfo CmdStr="display cwmp monitorInfo" ObjPath="InternetGatewayDevice.DeviceInfo.X_HW_Monitor" OpType="1" Help="USAGE:
+     display cwmp monitorInfo -- display cwmp monitor infomation" OutPut="*************** cwmp monitor info ***************
+Enable     = %Enable%
+InstanceNo = %MonitorNumberOfEntries%
+*************************************************" CmdGroup="0x00000010"/>
+<GetCwmpMonitorAlarm CmdStr="display cwmp monitorAlarm" ObjPath="InternetGatewayDevice.DeviceInfo.X_HW_Alarm.MonitorConfig" OpType="1" Help="USAGE:
+      display cwmp monitorAlarm [instance {xxx}]
+OPTIONS:
+     instance: instance number " OutPut="objPath  = %ParaList%
+Interval = %TimeList%" CmdGroup="0x00000010">
+<para ParaName="instance" AttName="xxx" ParaAtt="1"/>
+</GetCwmpMonitorAlarm>
+<!-- SUPPORT_HGW_END-->
+<GetEquipTestStatus CmdStr="display equiptest status" ObjPath="InternetGatewayDevice.X_HW_DEBUG.SMP.DM.DisplayEquipStatus" OpType="1" Help="USAGE:
+     display equiptest status -- ready means equip test would run" OutPut="Status:%Status%" CmdGroup="0x00004010"/>
+<!-- SUPPORT_HGW_START-->
+<CheckCustomize CmdStr="check current_customize" ObjPath="InternetGatewayDevice.X_HW_DEBUG.SMP.DM.CheckCurCustomize" OpType="1" Help="" OutPut="Program key:%ProgramKey%
+ConfigFile key:%ConfigFileKey%
+Program version:%ProgramVersion%
+ConfigFile version:%ConfigFileVersion%
+ProgramFile:%ProgramFileResult%
+ConfigFile Customize Info:%ConfigFileResult%
+RecoverFile info:%RecoverFileResult%
+SpecFile info:%SpecFileResult%
+FtFile info:%FtFileResult%
+WEB Default Language:%WebLanguageResult%
+WEB Frame:%WebFrameResult%
+WEB Menu:%WebMenuResult%" CmdGroup="0x00000010"/>
+<!-- SUPPORT_HGW_END-->
+<GetEquipTestMode CmdStr="display equip test mode" ObjPath="InternetGatewayDevice.X_HW_DEBUG.SMP.CLI.EquipTestMode" OpType="1" Help="" OutPut="equip test mode = %Mode%" CmdGroup="0x00004010"/>
+<SetEquipTestMode CmdStr="equip test" ObjPath="InternetGatewayDevice.X_HW_DEBUG.SMP.CLI.EquipTestMode" OpType="5" Help="USAGE:
+       equip test [mode {on/off}]" OutPut="" CmdGroup="0x00000010">
+<para ParaName="mode" AttName="Mode" ParaAtt="0"/>
+</SetEquipTestMode>
+<!-- SUPPORT_HGW_START-->
+<GetStbId CmdStr="display stbid" ObjPath="InternetGatewayDevice.DeviceInfo" OpType="1" Help="USAGE:
+       display stbid -- get stbid of board" OutPut="stbid = %X_HW_StbId%" CmdGroup="0x00004010"/>
+<SetStbId CmdStr="set stbid" ObjPath="InternetGatewayDevice.DeviceInfo" OpType="5" Help="USAGE:
+set stbid [valueid {value}]" OutPut="" CmdGroup="0x00000010">
+<para ParaName="valueid" AttName="X_HW_StbId" ParaAtt="0"/>
+</SetStbId>
+<!-- SUPPORT_HGW_END-->
+<!-- SUPPORT_HGW_START-->
+<SwmBackupLog CmdStr="backup file" ObjPath="InternetGatewayDevice.X_HW_DEBUG.SMP.SWM.BackupFile" OpType="5" Help="backup file type {json} by {tftp|ftp} svrip {ip addr} remotefile {file name} [user {user name}] [pwd {password}] [port {port}]" OutPut="" CmdGroup="">
+<para ParaName="by" AttName="ChannelName" ParaAtt="0"/>
+<para ParaName="svrip" AttName="IpAddr" ParaAtt="0"/>
+<para ParaName="remotefile" AttName="RemoteFilePath" ParaAtt="0"/>
+<para ParaName="type" AttName="LogType" ParaAtt="0"/>
+<para ParaName="user" AttName="UserName" ParaAtt="0"/>
+<para ParaName="pwd" AttName="Password" ParaAtt="0"/>
+<para ParaName="port" AttName="Port" ParaAtt="0"/>
+</SwmBackupLog>
+<GetEncryptStatus CmdStr="display flash encrypt status" ObjPath="InternetGatewayDevice.X_HW_DEBUG.SMP.DM.X_HW_FlashEncryptStatus" OpType="1" Help="display flash encrypt status" OutPut="%EncStatus%" CmdGroup="0x00000010"/>
+<!-- SUPPORT_HGW_END-->
+<LoadCertFile CmdStr="load certfile" ObjPath="InternetGatewayDevice.X_HW_DEBUG.SMP.SWM.LoadCert" OpType="0" Help="load certfile by {tftp|ftp} svrip {ip addr} remotefile {file name}" OutPut="" CmdGroup="0x00000010">
+<para ParaName="by" AttName="ChannelName" ParaAtt="0"/>
+<para ParaName="svrip" AttName="IpAddr" ParaAtt="0"/>
+<para ParaName="remotefile" AttName="RemoteFilePath" ParaAtt="0"/>
+</LoadCertFile>
+<DisplayCerts CmdStr="display certfile" ObjPath="InternetGatewayDevice.X_HW_DEBUG.SMP.SWM.CertInfos" OpType="1" Help="display certfile  --  display all cert files" OutPut="%CertName%" CmdGroup="0x00000010"/>
+<SetSN CmdStr="set sn" ObjPath="InternetGatewayDevice.DeviceInfo" OpType="5" Help="USAGE:
+     set sn snid {value}
+OPTIONS:
+     snid: 20 digital or upper alpha chars for DSL Device, 16 hex digits or 12 characters end with 8 hex characters for others. " OutPut="" CmdGroup="0x80000010">
+<para ParaName="snid" AttName="X_HW_PonSN" ParaAtt="0"/>
+</SetSN>
+<SetSnPwd CmdStr="set password" ObjPath="InternetGatewayDevice.DeviceInfo" OpType="5" Help="USAGE:
+     set password {snpasswd|eponkey|hex-passwd|registrationID} {value}
+OPTIONS:
+     snpasswd: must be less than 10 chars
+     eponkey: must be less than 32 chars
+     hex-passwd: must be in the hex format and less than 20 chars
+     registrationID: must be less than 36 chars" OutPut="" CmdGroup="0x80000000">
+<para ParaName="snpasswd" AttName="X_HW_PonPassword" ParaAtt="0"/>
+<para ParaName="eponkey" AttName="X_HW_EponKey" ParaAtt="0"/>
+<para ParaName="hex-passwd" AttName="X_HW_PonHexPassword" ParaAtt="0"/>
+<para ParaName="registrationID " AttName="X_HW_RegistrationID" ParaAtt="0"/>
+</SetSnPwd>
+<SetProductMac CmdStr="set productmac" ObjPath="InternetGatewayDevice.ProductMacConfig" OpType="5" Help="USAGE:
+     set productmac MAC {address}
+OPTIONS:
+     MAC: must be composed of digital or upper alpha char, separated by : " OutPut="" CmdGroup="0x80000010">
+<para ParaName="MAC" AttName="Product_LanMac" ParaAtt="0"/>
+</SetProductMac>
+<GetWapVer CmdStr="display inner version" ObjPath="InternetGatewayDevice.X_HW_DEBUG.SMP.DM.ShowWapVer" OpType="1" Help="USAGE:
+     display inner version -- get software version, including B version!" OutPut="MainVersion      : %MainVersion%
+StandbyVersion   : %StandbyVersion%
+ComponentVersion : %ComponentVersion%
+PluginVersion    : %PluginVersion%
+VersionMask      : %VersionMask%" CmdGroup="0x00004010"/>
+<!-- SUPPORT_HGW_START-->
+<!-- NOT_SUPPORT_XD_START-->
+<GetDeviceInfo CmdStr="display deviceInfo" ObjPath="InternetGatewayDevice.DeviceInfo" OpType="1" Help="USAGE:
+     display deviceInfo -- get device info of board, such as upport mode, release time, model name, and so on" OutPut="*************** device information ***************
+Manufacturer     = %Manufacturer%
+ManufacturerOUI  = %ManufacturerOUI%
+ModelName        = %ModelName%
+Description      = %Description%
+ManufactureInfo  = %ManufactureInfo%
+ProductClass     = %ProductClass%
+SpecVersion      = %SpecVersion%
+ProvisioningCode = %ProvisioningCode%
+UpTime           = %UpTime% seconds
+ReleaseTime      = %X_HW_ReleaseTime%
+UpPort mode      = %X_HW_UpPortMode%
+TotalMemory      = %X_HW_Memtotal% Mbytes
+TotalFlash       = %X_HW_Flashtotal% Mbytes
+HardwareInfo     = %HardwareInfo%
+*************************************************" CmdGroup="0x00004010"/>
+<!-- NOT_SUPPORT_XD_END-->
+<!-- SUPPORT_HGW_END-->
+</CliRoot>

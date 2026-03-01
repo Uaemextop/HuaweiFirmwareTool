@@ -1,0 +1,13 @@
+  0x00000d38  _init
+  0x00000f6c  main
+  0x00001430  _start
+  0x00002a48  _fini
+  0x0000c0e4  __data_start
+  0x0000c0e4  data_start
+  0x0000c0ec  __bss_start
+  0x0000c0ec  __bss_start__
+  0x0000c0ec  _edata
+  0x0000c108  _bss_end__
+  0x0000c108  __end__
+  0x0000c108  __bss_end__
+  0x0000c108  _end

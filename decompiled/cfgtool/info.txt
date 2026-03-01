@@ -1,0 +1,116 @@
+arch     arm
+baddr    0x0
+binsz    13064
+bintype  elf
+bits     32
+canary   false
+class    ELF32
+crypto   false
+endian   little
+havecode true
+intrp    /lib/ld-uClibc.so.0
+laddr    0x0
+lang     c
+linenum  false
+lsyms    false
+machine  ARM
+nx       true
+os       linux
+pic      true
+relocs   false
+relro    partial
+rpath    NONE
+sanitize false
+static   false
+stripped true
+subsys   linux
+va       true
+[Exports]
+
+nth paddr      vaddr      bind   type   size lib name
+―――――――――――――――――――――――――――――――――――――――――――――――――――――
+3   0x00000fbc 0x00000fbc GLOBAL FUNC   684      main
+10  ---------- 0x0000b220 GLOBAL NOTYPE 0        _bss_end__
+12  0x000020b0 0x000020b0 GLOBAL FUNC   0        _fini
+16  0x000030b8 0x0000b0b8 GLOBAL NOTYPE 0        __data_start
+17  0x000017f4 0x000017f4 GLOBAL FUNC   112      HW_CFGTOOL_XmlFind
+19  0x00001b7c 0x00001b7c GLOBAL FUNC   320      HW_CFGTOOL_OperByType
+22  0x00001a18 0x00001a18 GLOBAL FUNC   356      HW_CFGTOOL_CheckArg
+23  0x000030c0 0x0000b0c0 GLOBAL OBJ    324      g_stOpTypeTbl
+24  0x00001cbc 0x00001cbc GLOBAL FUNC   260      HW_CFGTOOL_GetParaFromString
+28  0x0000153c 0x0000153c GLOBAL FUNC   92       HW_CFGTOOL_GetOptFile
+29  0x00000e0c 0x00000e0c GLOBAL FUNC   0        _init
+30  0x00001934 0x00001934 GLOBAL FUNC   48       HW_CFGTOOL_FreeArgs
+37  0x00001268 0x00001268 GLOBAL FUNC   0        _start
+40  ---------- 0x0000b204 GLOBAL NOTYPE 0        __bss_start
+43  ---------- 0x0000b220 GLOBAL NOTYPE 0        __end__
+49  0x00001dc0 0x00001dc0 GLOBAL FUNC   752      HW_CFGTOOL_DealBatchType
+51  0x00001864 0x00001864 GLOBAL FUNC   208      HW_CFGTOOL_XmlGetToFile
+52  ---------- 0x0000b204 GLOBAL NOTYPE 0        __bss_start__
+55  0x00001784 0x00001784 GLOBAL FUNC   112      HW_CFGTOOL_XmlGet
+57  ---------- 0x0000b204 GLOBAL NOTYPE 0        _edata
+58  0x00001638 0x00001638 GLOBAL FUNC   332      HW_CFGTOOL_XmlCreate
+60  0x00001474 0x00001474 GLOBAL FUNC   68       HW_CFGTOOL_ShowUsage
+61  ---------- 0x0000b220 GLOBAL NOTYPE 0        __bss_end__
+63  0x000014b8 0x000014b8 GLOBAL FUNC   132      HW_CFGTOOL_BatchChangeRet
+64  ---------- 0x0000b220 GLOBAL NOTYPE 0        _end
+67  0x00001598 0x00001598 GLOBAL FUNC   160      HW_CFGTOOL_GetOptType
+68  0x00001964 0x00001964 GLOBAL FUNC   180      HW_CFGTOOL_MallocArgs
+[Imports]
+nth vaddr      bind   type   lib name
+―――――――――――――――――――――――――――――――――――――
+4   0x00000e30 GLOBAL FUNC       HW_OS_StrNCpy_S
+5   0x00000e3c GLOBAL FUNC       HW_OS_Fopen
+6   0x00000e48 GLOBAL FUNC       abort
+7   0x00000e54 GLOBAL FUNC       HW_XML_SetNodeContent
+8   0x00000e60 GLOBAL FUNC       HW_OS_ExecCmd
+9   0x00000e6c GLOBAL FUNC       __uClibc_main
+11  0x00000e78 GLOBAL FUNC       HW_OS_Fgets
+13  0x00000e84 GLOBAL FUNC       HW_CFGTOOL_CloneXMLValByPath
+14  0x00000e90 GLOBAL FUNC       HW_CFGTOOL_SetXMLValByPath
+15  0x00000e9c WEAK   NOTYPE     __deregister_frame_info
+18  0x00000ea8 GLOBAL FUNC       memset
+20  0x00000000 WEAK   NOTYPE     _Jv_RegisterClasses
+21  0x00000eb4 GLOBAL FUNC       HW_OS_Printf
+25  0x00000ec0 GLOBAL FUNC       HW_CFGTOOL_DelXMLValByPath
+26  0x00000ecc GLOBAL FUNC       HW_OS_MemSet_S
+27  0x00000000 WEAK   NOTYPE     _ITM_deregisterTMCloneTable
+31  0x00000ed8 GLOBAL FUNC       HW_OS_Access
+32  0x00000ee4 GLOBAL FUNC       HW_OS_MemFreeD
+33  0x00000ef0 GLOBAL FUNC       HW_XML_TransformFile
+34  0x00000efc GLOBAL FUNC       HW_OS_StrCaseCmp
+35  0x00000000 GLOBAL FUNC       __aeabi_unwind_cpp_pr0
+36  0x00000f08 GLOBAL FUNC       HW_XML_FreeNode
+38  0x00000f14 WEAK   FUNC       __cxa_finalize
+39  0x00000f20 WEAK   NOTYPE     __register_frame_info
+41  0x00000000 GLOBAL FUNC       __aeabi_unwind_cpp_pr1
+42  0x00000f2c GLOBAL FUNC       HW_XML_FreeSingleNode
+44  0x00000f38 GLOBAL FUNC       HW_XML_ParseFile
+45  0x00000000 WEAK   NOTYPE     _ITM_registerTMCloneTable
+46  0x00000f44 GLOBAL FUNC       HW_OS_MemMallocSet
+47  0x00000f50 GLOBAL FUNC       HW_OS_CmdFormat
+48  0x00000f5c GLOBAL FUNC       HW_OS_StrtokR
+50  0x00000f68 GLOBAL FUNC       HW_XML_NewNode
+53  0x00000f74 GLOBAL FUNC       HW_OS_Fclose
+54  0x00000f80 GLOBAL FUNC       HW_OS_StrStr
+56  0x00000f8c GLOBAL FUNC       HW_CFGTOOL_AddXMLValByPath
+59  0x00000f98 GLOBAL FUNC       HW_CFGTOOL_GetXMLValByPath
+62  0x00000fa4 GLOBAL FUNC       HW_CFGTOOL_SysTrace
+65  0x00000fb0 GLOBAL FUNC       memcpy
+
+[Strings]
+nth paddr      vaddr      len size section type  string
+―――――――――――――――――――――――――――――――――――――――――――――――――――――――
+0   0x000020c3 0x000020c3 527 528  .rodata ascii \n[cfgtool]\nUsage: cfgtool [OPER] [FILE] [PATH] {AttName and Value}\n  [OPER] : get/gettofile/set/add/del/batch/create\n  [FILE] : deftree/[abs path]\n  [PATH] : as, a.b.c(single-instance) or a.b.c.2(multi-instance)\nExample:\n  cfgtool add deftree InternetGatewayDevice.LANDevice.LANDeviceInstance.2\n  cfgtool del deftree InternetGatewayDevice.LANDevice.LANDeviceInstance.2\n  cfgtool clone deftree InternetGatewayDevice.Service.VoiceService.VoiceServiceInstance.1 /mnt/jffs2/clone.xml\n  cfgtool batch deftree /mnt/jffs2/batch.file\n\n
+1   0x000022d3 0x000022d3 24  25   .rodata ascii Add same node in batch\r\n
+2   0x000022ec 0x000022ec 24  25   .rodata ascii Del same node in batch\r\n
+3   0x00002305 0x00002305 7   8    .rodata ascii DEFTREE
+4   0x0000230d 0x0000230d 31  32   .rodata ascii /mnt/jffs2/hw_default_ctree.xml
+5   0x0000232d 0x0000232d 13  14   .rodata ascii hw_cfg_tool.c
+6   0x0000233d 0x0000233d 26  27   .rodata ascii echo %s > /var/cfgtool_ret
+7   0x00002358 0x00002358 4   5    .rodata ascii NULL
+0   0x000030e4 0x0000b0e4 9   10   .data   ascii GETTOFILE
+1   0x00003174 0x0000b174 6   7    .data   ascii CREATE
+2   0x00003198 0x0000b198 4   5    .data   ascii FIND
+3   0x000031bc 0x0000b1bc 5   6    .data   ascii BATCH
+4   0x000031e0 0x0000b1e0 5   6    .data   ascii CLONE

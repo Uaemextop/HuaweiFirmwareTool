@@ -1,0 +1,5 @@
+compiler    : hisilinux
+version     : 19.1.910
+model       : release
+chainInfo   : rtos310micro
+totalVersion: release

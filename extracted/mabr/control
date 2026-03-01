@@ -1,0 +1,15 @@
+Package: nanocdn
+Version: 2.1.0
+Depends: 
+Provides: 
+Source: http://www.broadpeak.tv
+License: 
+Section: opt
+Status: unknown ok not-installed
+Essential: no
+Priority: optional
+Maintainer: Broadpeak Nanocdn Team <integration.nanocdn@broadpeak.tv>
+Architecture: Broadpeak
+URL: 
+Installed-Size: 309388
+Description:  Broadpeak's nanocdn package 2.1.0-trunk-3143

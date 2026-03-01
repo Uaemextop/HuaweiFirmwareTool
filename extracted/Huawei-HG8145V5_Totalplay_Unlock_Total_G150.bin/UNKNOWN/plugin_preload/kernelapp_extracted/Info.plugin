@@ -1,0 +1,22 @@
+Name:kernelapp
+Version:19.1.910
+InstallSize:4250988
+Type:app
+Right:user
+Visibility:yes
+Architecture:arm
+KernelVersion:2.6.34.10
+EntryFile:daemon.sh
+Cpu:30
+PhysicalRam:20480
+VirtualRam:0
+Disk:1024
+Socket:1024
+Provides:huawei
+Description:netopen cplugin
+Compile:hisilinux
+MatchedDevicesType:
+lxc.name:kernelapp
+lxc.template:lxc-wap-share
+lxc.cgroup.cpu:30
+lxc.cgroup.mem:30720

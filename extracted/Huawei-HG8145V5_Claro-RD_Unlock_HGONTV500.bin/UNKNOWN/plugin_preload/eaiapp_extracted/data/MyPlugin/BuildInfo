@@ -1,0 +1,5 @@
+compiler    : hisilinux
+version     : 20.10.1.013
+model       : release
+chainInfo   : rtos404bmicro
+totalVersion: release

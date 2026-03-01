@@ -1,0 +1,8 @@
+  0x000004d8  HW_OS_MemFreeD
+  0x000004e4  polarssl_aes_setkey_dec
+  0x000004f0  polarssl_aes_init
+  0x000004fc  polarssl_aes_setkey_enc
+  0x00000508  HW_OS_MemMallocSet
+  0x00000514  polarssl_aes_crypt_cbc
+  0x00000520  HW_OS_MemCpy_S
+  0x0000052c  HW_PROC_DBG_LastWord

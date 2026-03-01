@@ -1,0 +1,6 @@
+compiler    : hisilinux
+version     : 20.1.44
+model       : release
+chainInfo   : rtos404v2076micro
+totalVersion: release
+ver         : 2.0

@@ -1,0 +1,14 @@
+<CliRoot>
+<!-- Command just for equip start -->
+<Maintain  CmdStr="maintain  mode" ObjPath="OntMaintain.sh" OpType="5" Help="" CmdGroup="0x00004010">
+</Maintain>
+<displaypreplugversion CmdStr="display preplug version" ObjPath="displaypreplugver.sh" OpType="1" Help="" CmdGroup="0x00004010">
+</displaypreplugversion >
+<iperf3 CmdStr="iperf3" ObjPath="iperf3.sh" OpType="0" Help="Usage: 
+iperf [-s|-c host] [options]
+iperf [-h|--help] [-v|--version]" CmdGroup="0x00004010">
+</iperf3>
+<DeleteIotInfo CmdStr="delete iot info" OpType="1" ObjPath="deleteiotinfo.sh" Help="" CmdGroup="0x00004010">
+</DeleteIotInfo>
+<!-- Command just for equip end -->
+</CliRoot>

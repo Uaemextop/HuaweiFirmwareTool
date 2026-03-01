@@ -1,0 +1,9 @@
+  0x00000540  WLAN_AES_Cbc_128_Encrypt
+  0x00000698  WLAN_AES_Cbc_128_Decrypt
+  0x0000902c  _bss_end__
+  0x0000902c  __bss_start__
+  0x0000902c  __bss_end__
+  0x0000902c  __bss_start
+  0x0000902c  __end__
+  0x0000902c  _edata
+  0x0000902c  _end

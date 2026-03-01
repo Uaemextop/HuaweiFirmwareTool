@@ -1,0 +1,134 @@
+arch     arm
+baddr    0x0
+binsz    16880
+bintype  elf
+bits     32
+canary   false
+class    ELF32
+crypto   false
+endian   little
+havecode true
+intrp    /lib/ld-uClibc.so.0
+laddr    0x0
+lang     c
+linenum  false
+lsyms    false
+machine  ARM
+nx       true
+os       linux
+pic      true
+relocs   false
+relro    partial
+rpath    NONE
+sanitize false
+static   false
+stripped true
+subsys   linux
+va       true
+[Exports]
+
+nth paddr      vaddr      bind   type   size lib name
+―――――――――――――――――――――――――――――――――――――――――――――――――――――
+3   0x00000f6c 0x00000f6c GLOBAL FUNC   1220     main
+11  ---------- 0x0000c108 GLOBAL NOTYPE 0        _bss_end__
+13  0x00002a48 0x00002a48 GLOBAL FUNC   0        _fini
+15  0x000040e4 0x0000c0e4 GLOBAL NOTYPE 0        __data_start
+26  0x00000d38 0x00000d38 GLOBAL FUNC   0        _init
+39  0x00001430 0x00001430 GLOBAL FUNC   0        _start
+45  ---------- 0x0000c0ec GLOBAL NOTYPE 0        __bss_start
+47  ---------- 0x0000c108 GLOBAL NOTYPE 0        __end__
+53  ---------- 0x0000c0ec GLOBAL NOTYPE 0        __bss_start__
+60  ---------- 0x0000c0ec GLOBAL NOTYPE 0        _edata
+61  ---------- 0x0000c108 GLOBAL NOTYPE 0        __bss_end__
+62  ---------- 0x0000c108 GLOBAL NOTYPE 0        _end
+[Imports]
+nth vaddr      bind   type   lib name
+―――――――――――――――――――――――――――――――――――――
+4   0x00000d5c GLOBAL FUNC       HW_OS_ReadFile
+5   0x00000000 GLOBAL OBJ        stderr
+6   0x00000d68 GLOBAL FUNC       HW_OS_AESCBCCalPSWLen
+7   0x00000d74 GLOBAL FUNC       HW_OS_StrNCpy_S
+8   0x00000d80 GLOBAL FUNC       HW_OS_Fopen
+9   0x00000d8c GLOBAL FUNC       abort
+10  0x00000d98 GLOBAL FUNC       __uClibc_main
+12  0x00000da4 GLOBAL FUNC       HW_OS_Fwrite
+14  0x00000db0 WEAK   NOTYPE     __deregister_frame_info
+16  0x00000dbc GLOBAL FUNC       HW_OS_AESCBCEncrypt
+17  0x00000dc8 GLOBAL FUNC       memset
+18  0x00000000 WEAK   NOTYPE     _Jv_RegisterClasses
+19  0x00000dd4 GLOBAL FUNC       HW_OS_Printf
+20  0x00000de0 GLOBAL FUNC       HW_OS_Rename
+21  0x00000dec GLOBAL FUNC       HW_SSL_AesSetKeyDec
+22  0x00000df8 GLOBAL FUNC       HW_PROC_DBG_LastWord
+23  0x00000e04 GLOBAL FUNC       HW_SSL_AesSetKeyEnc
+24  0x00000e10 GLOBAL FUNC       HW_OS_MemSet_S
+25  0x00000000 WEAK   NOTYPE     _ITM_deregisterTMCloneTable
+27  0x00000e1c GLOBAL FUNC       HW_SSL_Sha2Start
+28  0x00000e28 GLOBAL FUNC       HW_OS_Remove
+29  0x00000e34 GLOBAL FUNC       HW_OS_Fread
+30  0x00000e40 GLOBAL FUNC       HW_OS_Close
+31  0x00000e4c GLOBAL FUNC       HW_SSL_Sha2HmacUpdate
+32  0x00000e58 GLOBAL FUNC       HW_OS_StrCmp
+33  0x00000000 GLOBAL FUNC       __aeabi_unwind_cpp_pr0
+34  0x00000e64 GLOBAL FUNC       HW_OS_MemCpy_S
+35  0x00000e70 GLOBAL FUNC       HW_OS_GetFileSize
+36  0x00000e7c GLOBAL FUNC       HW_OS_MemCmp
+37  0x00000e88 GLOBAL FUNC       HW_OS_Open
+38  0x00000e94 GLOBAL FUNC       HW_OS_StrToUInt32
+40  0x00000ea0 GLOBAL FUNC       HW_SSL_Sha2HmacStart
+41  0x00000eac GLOBAL FUNC       HW_OS_Fprintf
+42  0x00000eb8 WEAK   FUNC       __cxa_finalize
+43  0x00000ec4 WEAK   NOTYPE     __register_frame_info
+44  0x00000ed0 GLOBAL FUNC       HW_SSL_Sha2HmacFinish
+46  0x00000000 GLOBAL FUNC       __aeabi_unwind_cpp_pr1
+48  0x00000edc GLOBAL FUNC       HW_OS_StrLen
+49  0x00000ee8 GLOBAL FUNC       HW_SSL_Sha2Finish
+50  0x00000000 WEAK   NOTYPE     _ITM_registerTMCloneTable
+51  0x00000ef4 GLOBAL FUNC       HW_SSL_AesCryptEcb
+52  0x00000f00 GLOBAL FUNC       HW_OS_GetLastErr
+54  0x00000f0c GLOBAL FUNC       HW_OS_AESCBCDecrypt
+55  0x00000f18 GLOBAL FUNC       HW_OS_Fseek
+56  0x00000f24 GLOBAL FUNC       HW_OS_Fclose
+57  0x00000f30 GLOBAL FUNC       HW_OS_StrNCmp
+58  0x00000f3c GLOBAL FUNC       HW_KMC_CfgGetKey
+59  0x00000f48 GLOBAL FUNC       HW_SSL_Sha2Update
+63  0x00000f54 GLOBAL FUNC       HW_OS_StrNLen
+65  0x00000f60 GLOBAL FUNC       HW_OS_Read
+
+[Strings]
+nth paddr      vaddr      len size section type  string
+―――――――――――――――――――――――――――――――――――――――――――――――――――――――
+0   0x00002bbb 0x00002bbb 5   6    .rodata ascii ^\b[^Z
+1   0x00002bcd 0x00002bcd 5   6    .rodata ascii -ZI\r\v
+2   0x00002c76 0x00002c76 4   5    .rodata ascii KwV\r
+3   0x00002c93 0x00002c93 5   6    .rodata ascii US]CQ
+4   0x00002ca6 0x00002ca6 4   5    .rodata ascii ^(BM
+5   0x00002cb5 0x00002cb5 4   5    .rodata ascii kZ;&
+6   0x00002e58 0x00002e58 14  15   .rodata ascii hw_ssp_ctool.c
+7   0x00002e6a 0x00002e6a 20  21   .rodata ascii fopen(%s,rb) failed\n
+8   0x00002e83 0x00002e83 21  22   .rodata ascii fopen(%s,wb+) failed\n
+9   0x00002e99 0x00002e99 40  41   .rodata ascii <%s:%d>file (%s) open failed, errno:%d\r\n
+10  0x00002ec2 0x00002ec2 33  34   .rodata ascii <%s:%d>fwrite(%d bytes) failed\n\r\n
+11  0x00002ee4 0x00002ee4 32  33   .rodata ascii <%s:%d>fread(%d bytes) failed\n\r\n
+12  0x00002f05 0x00002f05 33  34   .rodata ascii <%s:%d>fwrite(16 bytes) failed\n\r\n
+13  0x00002f27 0x00002f27 42  43   .rodata ascii <%s:%d>file (%s) open failed, errno (%d)\r\n
+14  0x00002f52 0x00002f52 52  53   .rodata ascii <%s:%d>file (%s) read head type failed, errno (%d)\r\n
+15  0x00002f87 0x00002f87 51  52   .rodata ascii <%s:%d>file (%s) read head crc failed, errno (%d)\r\n
+16  0x00002fbb 0x00002fbb 50  51   .rodata ascii <%s:%d>file (%s) read head key len err, len (%d)\r\n
+17  0x00002fee 0x00002fee 51  52   .rodata ascii <%s:%d>file (%s) read head key failed, errno (%d)\r\n
+18  0x00003022 0x00003022 49  50   .rodata ascii <%s:%d>crc mismatch, uiFileCrc:0x%x, uiCrc:0x%x\r\n
+19  0x00003054 0x00003054 44  45   .rodata ascii <%s:%d>get file (%s) size failed, errno:%d\r\n
+20  0x00003081 0x00003081 35  36   .rodata ascii <%s:%d>file size (%d) unexpacted.\r\n
+21  0x000030a5 0x000030a5 39  40   .rodata ascii <%s:%d>file size end (%d) unexpacted.\r\n
+22  0x000030cd 0x000030cd 37  38   .rodata ascii <%s:%d>file (%s) size check failed.\r\n
+23  0x000030f3 0x000030f3 35  36   .rodata ascii <%s:%d>file (%s, rb) open failed.\r\n
+24  0x00003117 0x00003117 16  17   .rodata ascii Df7!ui%s9(lmV1L8
+25  0x00003128 0x00003128 32  33   .rodata ascii <%s:%d>file (%s) fseek failed.\r\n
+26  0x00003149 0x00003149 46  47   .rodata ascii <%s:%d>MODE_DECRYPT::fread(16 bytes) failed\n\r\n
+27  0x00003178 0x00003178 30  31   .rodata ascii <%s:%d>fopen(%s,wb+) failed\n\r\n
+28  0x00003197 0x00003197 43  44   .rodata ascii <%s:%d>MODE_DECRYPT::fread(bytes) failed\n\r\n
+29  0x000031c3 0x000031c3 58  59   .rodata ascii <%s:%d>HMAC check failed: wrong key, or file corrupted.\n\r\n
+30  0x000031fe 0x000031fe 130 131  .rodata ascii \n  aescrypt2 <mode> <input filename> <output filename>\n\n  <mode>: 0 = encrypt, 1 = decrypt\n\n  example: aescrypt2 0 file file.aes\n\n
+31  0x00003281 0x00003281 33  34   .rodata ascii <%s:%d>invalide operation mode\n\r\n
+32  0x000032a3 0x000032a3 26  27   .rodata ascii /var/new_key_encryte_ctree
+33  0x000032be 0x000032be 48  49   .rodata ascii <%s:%d>input and output filenames must differ\n\r\n

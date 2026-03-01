@@ -1,0 +1,722 @@
+E4222 DEEP ANALYSIS — Ping7962V1-E4222-Telmex
+Tool:   tools/e4222_deep_analysis.py
+Target: /home/runner/work/HuaweiFirmwareTool/HuaweiFirmwareTool/extracted_configs/Ping7962V1-E4222-Telmex
+
+Scope: Ping7962V1-E4222-Telmex ONLY.
+Huawei ONT keys (prvt.key, plugprvt.key, hilink_serverkey) are NOT analysed here.
+
+================================================================
+RSA PRIVATE KEY  —  ssl_key.pem
+================================================================
+  File:   /home/runner/work/HuaweiFirmwareTool/HuaweiFirmwareTool/extracted_configs/Ping7962V1-E4222-Telmex/keys/ssl_key.pem
+  MD5:    eefec3b8a19156ff7e7d1972efdf2c16
+  SHA256: a592772ec4f661ca0233a59760552390948b201ba5d88e6629ab6afece74802c
+  Type:   RSA 2048-bit (UNENCRYPTED — shared across all E4222 units)
+  e (public exponent):  65537
+  n (modulus, hex):
+    d5c2b44ff05bfde8cc96857ad9cf04b5944b3233a6fc15a298f7e0238b223a9d
+    2431290506d5a8fed5e57add697be8a4a5d2f768835e0e2309cfe9483c441788
+    ... (512 hex chars total)
+  p (prime 1, first 32 hex): e9ff01e0c7396353c8d...
+  q (prime 2, first 32 hex): e9dc90e95b959e08f72...
+  DER public key first bytes: 30820122300d06092a864886f70d0101  (294 B)
+  Usage: HTTPS server key for CN=192.168.1.1 (ssl_cert.pem)
+  Note:  Identical key on ALL factory E4222 units — use for MITM/TLS intercept.
+
+================================================================
+BINARY / ELF FILES — CAPSTONE DISASSEMBLY + STRING EXTRACTION
+================================================================
+
+  No ELF binaries found in E4222 directory.
+  (E4222 is a Realtek MIPS device; rootfs binaries are not included
+   in this extraction — only web, configs, certs, and keys are present.)
+
+  Capstone was used to verify file types and would disassemble any
+  ELF binary placed in the E4222 directory automatically.
+
+================================================================
+CREDENTIALS — ALL CONFIG FILES
+================================================================
+
+  [config_decrypted.xml]
+    SNMP_SYS_DESCR                      System Description
+    SNMP_SYS_OID                        1.3.6.1.4.1.16972
+    SNMP_SYS_CONTACT                    System Contact
+    SNMP_SYS_LOCATION                   System Location
+    SNMP_TRAP_IP                        192.168.1.254
+    SNMP_COMM_RO                        public
+    SNMP_COMM_RW                        public
+    SNMP_SYS_NAME                       V7921I1
+    MIB_SNMPV3_RO_NAME                  test
+    MIB_SNMPV3_RO_PASSWORD              vHaxJNP9Z3
+    MIB_SNMPV3_RO_AUTH                  1
+    MIB_SNMPV3_RW_NAME                  admin
+    MIB_SNMPV3_RW_PASSWORD              vHaxJNP9Z3
+    MIB_SNMPV3_RW_AUTH                  1
+    MIB_SNMPV3_RW_PRIVACY               1
+    MIB_SNMP_VERSION                    2
+    TFTP_SERVER_ADDR                    tftp://0.0.0.0
+    WEP64_KEY1                          0000000000
+    WEP64_KEY2                          0000000000
+    WEP64_KEY3                          0000000000
+    WEP64_KEY4                          0000000000
+    WEP128_KEY1                         00000000000000000000000000
+    WEP128_KEY2                         00000000000000000000000000
+    WEP128_KEY3                         00000000000000000000000000
+    WEP128_KEY4                         00000000000000000000000000
+    WEP_DEFAULT_KEY                     0
+    WEP_KEY_TYPE                        0
+    AUTH_TYPE                           2
+    WLAN_ENABLE_SUPP_NONWPA             0
+    WLAN_SUPP_NONWPA                    0
+    WLAN_WPA_AUTH                       2
+    WLAN_WPA_CIPHER_SUITE               3
+    WLAN_WPA_PSK                        Gaviota1980
+    WLAN_WPA_GROUP_REKEY_TIME           86400
+    MAC_AUTH_ENABLED                    0
+    WPA2_CIPHER_SUITE                   3
+    WLAN1_WEP64_KEY1                    0000000000
+    WLAN1_WEP64_KEY2                    0000000000
+    WLAN1_WEP64_KEY3                    0000000000
+    WLAN1_WEP64_KEY4                    0000000000
+    WLAN1_WEP128_KEY1                   00000000000000000000000000
+    WLAN1_WEP128_KEY2                   00000000000000000000000000
+    WLAN1_WEP128_KEY3                   00000000000000000000000000
+    WLAN1_WEP128_KEY4                   00000000000000000000000000
+    WLAN1_WEP_DEFAULT_KEY               0
+    WLAN1_WEP_KEY_TYPE                  0
+    WLAN1_AUTH_TYPE                     2
+    WLAN1_ENABLE_SUPP_NONWPA            0
+    WLAN1_SUPP_NONWPA                   0
+    WLAN1_WPA_AUTH                      2
+    WLAN1_WPA_CIPHER_SUITE              3
+    WLAN1_WPA_PSK                       Gaviota1980
+    WLAN1_WPA_GROUP_REKEY_TIME          86400
+    WLAN1_MAC_AUTH_ENABLED              0
+    WLAN1_WPA2_CIPHER_SUITE             3
+    WLAN1_WSC_AUTH                      34
+    SUSER_NAME                          TELMEX
+    SUSER_PASSWORD                      Gaviota1980
+    SUSER_REMINDER                      sreminder
+    SUSER_LOGOUT                        10
+    SUSER_REMINDER_IS_DEFAULT           1
+    CWMP_PROVISIONINGCODE               Telmex
+    CWMP_ACS_URL                        https://cwmp.telmex.com
+    CWMP_ACS_USERNAME                   504EDCLPI194700643F
+    CWMP_ACS_PASSWORD                   vHaxJNP9Z3
+    CWMP_INFORM_ENABLE                  1
+    CWMP_INFORM_INTERVAL                86400
+    CWMP_INFORM_TIME                    0
+    CWMP_ACS_UPGRADESMANAGED            1
+    CWMP_SERIALNUMBER                   00000001
+    CWMP_DHCP_SERVERCONF                1
+    CWMP_LAN_IPIFENABLE                 1
+    CWMP_LAN_ETHIFENABLE                1
+    CWMP_WLAN_BASICENCRY                0
+    CWMP_DL_QUEUE_IDX                   -1
+    CWMP_DL_STARTTIME                   0
+    CWMP_DL_COMPLETETIME                0
+    CWMP_DL_FAULTCODE                   0
+    CWMP_INFORM_EVENTCODE               1
+    CWMP_CERT_PASSWORD                  client
+    CWMP_FLAG                           48
+    CWMP_FLAG2                          16
+    CWMP_ALIASBASED_ADDRESSING          1
+    CWMP_INSTANCE_MODE                  0
+    CWMP_AUTO_CREATEINSTANCES           0
+    UIF_PW_USER_SEL                     0
+    CWMP_CONREQ_PORT                    7547
+    CWMP_CONREQ_PATH                    /tr069
+    CWMP_WAN_INTERFACE                  65535
+    WSC_AUTH                            34
+    MIB_IP_ALG_FTP                      0
+    SNMPD_ENABLE                        1
+    LOID                                user
+    USER_DEFINED_BANDWIDTH              0
+    MIB_CWMP_PERIODIC_STATISTICS_ENABLE 0
+    MIB_CWMP_PERIODIC_STATISTICS_SAMPLEINTERVAL 3600
+    MIB_CWMP_PERIODIC_STATISTICS_NAME   sampleset-1
+    pppAuth                             1
+    vpass                               0
+    telnet                              0
+    ftp                                 0
+    tftp                                0
+    snmp                                2
+    ssh                                 0
+    telnet_port                         23
+    ftp_port                            1
+    wpaAuth                             2
+    wpaPSKFormat                        0
+    wpaPSK                              Gaviota1980
+    wpaGroupRekeyTime                   86400
+    authType                            2
+    cwmp_WLAN_BasicEncry                0
+    wpa2UnicastCipher                   3
+    userIsolation                       0
+    wepKeyType                          0
+    wepDefaultKey                       0
+    wep64Key1                           0000000000
+    wep64Key2                           0000000000
+    wep64Key3                           0000000000
+    wep64Key4                           0000000000
+    wep128Key1                          00000000000000000000000000
+    wep128Key2                          00000000000000000000000000
+    wep128Key3                          00000000000000000000000000
+    wep128Key4                          00000000000000000000000000
+    wsc_auth                            34
+    FUNCKEY_PSTN                        .0
+    FUNCKEY_TRANSFER                    .1
+    AUTO_BYPASS_RELAY                   0
+    KEY_EXCHANGE_MODE                   0
+    auth                                3
+    key                                 10:62:e5:55:51:11
+    password                            vHaxJNP9Z3
+
+  [config_modified.xml]
+    SNMP_SYS_DESCR                      System Description
+    SNMP_SYS_OID                        1.3.6.1.4.1.16972
+    SNMP_SYS_CONTACT                    System Contact
+    SNMP_SYS_LOCATION                   System Location
+    SNMP_TRAP_IP                        192.168.1.254
+    SNMP_COMM_RO                        public
+    SNMP_COMM_RW                        public
+    SNMP_SYS_NAME                       V7921I1
+    MIB_SNMPV3_RO_NAME                  test
+    MIB_SNMPV3_RO_PASSWORD              admin
+    MIB_SNMPV3_RO_AUTH                  1
+    MIB_SNMPV3_RW_NAME                  admin
+    MIB_SNMPV3_RW_PASSWORD              admin
+    MIB_SNMPV3_RW_AUTH                  1
+    MIB_SNMPV3_RW_PRIVACY               1
+    MIB_SNMP_VERSION                    2
+    TFTP_SERVER_ADDR                    tftp://0.0.0.0
+    WEP64_KEY1                          0000000000
+    WEP64_KEY2                          0000000000
+    WEP64_KEY3                          0000000000
+    WEP64_KEY4                          0000000000
+    WEP128_KEY1                         00000000000000000000000000
+    WEP128_KEY2                         00000000000000000000000000
+    WEP128_KEY3                         00000000000000000000000000
+    WEP128_KEY4                         00000000000000000000000000
+    WEP_DEFAULT_KEY                     0
+    WEP_KEY_TYPE                        0
+    AUTH_TYPE                           2
+    WLAN_ENABLE_SUPP_NONWPA             0
+    WLAN_SUPP_NONWPA                    0
+    WLAN_WPA_AUTH                       2
+    WLAN_WPA_CIPHER_SUITE               3
+    WLAN_WPA_PSK                        Gaviota1980
+    WLAN_WPA_GROUP_REKEY_TIME           86400
+    MAC_AUTH_ENABLED                    0
+    WPA2_CIPHER_SUITE                   3
+    WLAN1_WEP64_KEY1                    0000000000
+    WLAN1_WEP64_KEY2                    0000000000
+    WLAN1_WEP64_KEY3                    0000000000
+    WLAN1_WEP64_KEY4                    0000000000
+    WLAN1_WEP128_KEY1                   00000000000000000000000000
+    WLAN1_WEP128_KEY2                   00000000000000000000000000
+    WLAN1_WEP128_KEY3                   00000000000000000000000000
+    WLAN1_WEP128_KEY4                   00000000000000000000000000
+    WLAN1_WEP_DEFAULT_KEY               0
+    WLAN1_WEP_KEY_TYPE                  0
+    WLAN1_AUTH_TYPE                     2
+    WLAN1_ENABLE_SUPP_NONWPA            0
+    WLAN1_SUPP_NONWPA                   0
+    WLAN1_WPA_AUTH                      2
+    WLAN1_WPA_CIPHER_SUITE              3
+    WLAN1_WPA_PSK                       Gaviota1980
+    WLAN1_WPA_GROUP_REKEY_TIME          86400
+    WLAN1_MAC_AUTH_ENABLED              0
+    WLAN1_WPA2_CIPHER_SUITE             3
+    WLAN1_WSC_AUTH                      34
+    SUSER_NAME                          admin
+    SUSER_PASSWORD                      admin
+    SUSER_REMINDER                      sreminder
+    SUSER_LOGOUT                        10
+    SUSER_REMINDER_IS_DEFAULT           1
+    CWMP_PROVISIONINGCODE               Telmex
+    CWMP_ACS_URL                        https://cwmp.telmex.com
+    CWMP_ACS_USERNAME                   504EDCLPI194700643F
+    CWMP_ACS_PASSWORD                   vHaxJNP9Z3
+    CWMP_INFORM_ENABLE                  0
+    CWMP_INFORM_INTERVAL                86400
+    CWMP_INFORM_TIME                    0
+    CWMP_ACS_UPGRADESMANAGED            0
+    CWMP_SERIALNUMBER                   00000001
+    CWMP_DHCP_SERVERCONF                1
+    CWMP_LAN_IPIFENABLE                 1
+    CWMP_LAN_ETHIFENABLE                1
+    CWMP_WLAN_BASICENCRY                0
+    CWMP_DL_QUEUE_IDX                   -1
+    CWMP_DL_STARTTIME                   0
+    CWMP_DL_COMPLETETIME                0
+    CWMP_DL_FAULTCODE                   0
+    CWMP_INFORM_EVENTCODE               1
+    CWMP_CERT_PASSWORD                  client
+    CWMP_FLAG                           48
+    CWMP_FLAG2                          16
+    CWMP_ALIASBASED_ADDRESSING          1
+    CWMP_INSTANCE_MODE                  0
+    CWMP_AUTO_CREATEINSTANCES           0
+    UIF_PW_USER_SEL                     0
+    CWMP_CONREQ_PORT                    7547
+    CWMP_CONREQ_PATH                    /tr069
+    CWMP_WAN_INTERFACE                  65535
+    WSC_AUTH                            34
+    MIB_IP_ALG_FTP                      0
+    SNMPD_ENABLE                        1
+    LOID                                user
+    USER_DEFINED_BANDWIDTH              0
+    MIB_CWMP_PERIODIC_STATISTICS_ENABLE 0
+    MIB_CWMP_PERIODIC_STATISTICS_SAMPLEINTERVAL 3600
+    MIB_CWMP_PERIODIC_STATISTICS_NAME   sampleset-1
+    pppAuth                             1
+    vpass                               0
+    telnet                              1
+    ftp                                 1
+    tftp                                0
+    snmp                                2
+    ssh                                 1
+    telnet_port                         23
+    ftp_port                            21
+    wpaAuth                             2
+    wpaPSKFormat                        0
+    wpaPSK                              Gaviota1980
+    wpaGroupRekeyTime                   86400
+    authType                            2
+    cwmp_WLAN_BasicEncry                0
+    wpa2UnicastCipher                   3
+    userIsolation                       0
+    wepKeyType                          0
+    wepDefaultKey                       0
+    wep64Key1                           0000000000
+    wep64Key2                           0000000000
+    wep64Key3                           0000000000
+    wep64Key4                           0000000000
+    wep128Key1                          00000000000000000000000000
+    wep128Key2                          00000000000000000000000000
+    wep128Key3                          00000000000000000000000000
+    wep128Key4                          00000000000000000000000000
+    wsc_auth                            34
+    FUNCKEY_PSTN                        .0
+    FUNCKEY_TRANSFER                    .1
+    AUTO_BYPASS_RELAY                   0
+    KEY_EXCHANGE_MODE                   0
+    auth                                3
+    key                                 10:62:e5:55:51:11
+    password                            admin
+
+  [configs/config_default.xml]
+    TELNET_CAPABILITY                   2
+    USER_NAME                           user
+    USER_PASSWORD                       user
+    SNMP_SYS_DESCR                      System Description
+    SNMP_SYS_OID                        1.3.6.1.4.1.16972
+    SNMP_SYS_CONTACT                    System Contact
+    SNMP_SYS_LOCATION                   System Location
+    SNMP_TRAP_IP                        192.168.1.254
+    SNMP_COMM_RO                        public
+    SNMP_COMM_RW                        public
+    SNMP_SYS_NAME                       EARTH-4222
+    TFTP_SERVER_ADDR                    tftp://0.0.0.0
+    WEP64_KEY1                          0000000000
+    WEP64_KEY2                          0000000000
+    WEP64_KEY3                          0000000000
+    WEP64_KEY4                          0000000000
+    WEP128_KEY1                         00000000000000000000000000
+    WEP128_KEY2                         00000000000000000000000000
+    WEP128_KEY3                         00000000000000000000000000
+    WEP128_KEY4                         00000000000000000000000000
+    WEP_DEFAULT_KEY                     0
+    WEP_KEY_TYPE                        0
+    AUTH_TYPE                           2
+    WLAN_ENABLE_SUPP_NONWPA             0
+    WLAN_SUPP_NONWPA                    0
+    WLAN_WPA_AUTH                       2
+    WLAN_WPA_CIPHER_SUITE               0
+    WLAN_WPA_PSK                        00E04C867001
+    WLAN_WPA_GROUP_REKEY_TIME           86400
+    MAC_AUTH_ENABLED                    0
+    WPA2_CIPHER_SUITE                   0
+    WLAN1_WEP64_KEY1                    0000000000
+    WLAN1_WEP64_KEY2                    0000000000
+    WLAN1_WEP64_KEY3                    0000000000
+    WLAN1_WEP64_KEY4                    0000000000
+    WLAN1_WEP128_KEY1                   00000000000000000000000000
+    WLAN1_WEP128_KEY2                   00000000000000000000000000
+    WLAN1_WEP128_KEY3                   00000000000000000000000000
+    WLAN1_WEP128_KEY4                   00000000000000000000000000
+    WLAN1_WEP_DEFAULT_KEY               0
+    WLAN1_WEP_KEY_TYPE                  0
+    WLAN1_AUTH_TYPE                     2
+    WLAN1_ENABLE_SUPP_NONWPA            0
+    WLAN1_SUPP_NONWPA                   0
+    WLAN1_WPA_AUTH                      2
+    WLAN1_WPA_CIPHER_SUITE              0
+    WLAN1_WPA_PSK                       00E04C867001
+    WLAN1_WPA_GROUP_REKEY_TIME          86400
+    WLAN1_MAC_AUTH_ENABLED              0
+    WLAN1_WPA2_CIPHER_SUITE             0
+    WLAN1_WSC_AUTH                      1
+    SUSER_NAME                          admin
+    SUSER_PASSWORD                      EaR@GeN!9607#
+    CWMP_ACS_URL                        http://
+    CWMP_ACS_URL_OLD                    http://
+    CWMP_ACS_USERNAME                   username
+    CWMP_ACS_PASSWORD                   password
+    CWMP_INFORM_ENABLE                  1
+    CWMP_INFORM_INTERVAL                300
+    CWMP_INFORM_TIME                    0
+    CWMP_ACS_UPGRADESMANAGED            1
+    CWMP_SERIALNUMBER                   00000001
+    CWMP_DHCP_SERVERCONF                1
+    CWMP_LAN_IPIFENABLE                 1
+    CWMP_LAN_ETHIFENABLE                1
+    CWMP_WLAN_BASICENCRY                0
+    CWMP_DL_QUEUE_IDX                   -1
+    CWMP_DL_STARTTIME                   0
+    CWMP_DL_COMPLETETIME                0
+    CWMP_DL_FAULTCODE                   0
+    CWMP_INFORM_EVENTCODE               1
+    CWMP_INFORM_USER_EVENTCODE          0
+    CWMP_CERT_PASSWORD                  client
+    CWMP_FLAG                           48
+    CWMP_FLAG2                          0
+    CWMP_CONREQ_PORT                    7547
+    CWMP_CONREQ_PATH                    /tr069
+    CWMP_WAN_INTERFACE                  65535
+    CWMP_ACL_ENABLE                     0
+    CWMP_DELAY_RESTARTWAN_ENABLE        1
+    CWMP_DELAY_RESTARTWAN_CHECK_TIME    15
+    TR111_STUNUSERNAME                  acs
+    TR111_STUNPASSWORD                  acs
+    WSC_AUTH                            1
+    SNMPD_ENABLE                        1
+    LOID                                user
+    LOID_OLD                            user
+    GPON_PLOAM_PASSWD                   1234567890
+    WEB_SUSER_NAME                      admin
+    WEB_SUSER_PASSWORD                  00E04C867001
+    WEB_USER_NAME                       user
+    WEB_USER_PASSWORD                   00E04C867001
+    pppAuth                             0
+    vpass                               0
+    wpaAuth                             2
+    wpaPSKFormat                        0
+    wpaPSK                              00E04C867001
+    wpaGroupRekeyTime                   86400
+    authType                            2
+    cwmp_WLAN_BasicEncry                0
+    wpa2UnicastCipher                   0
+    userIsolation                       0
+    wepKeyType                          0
+    wepDefaultKey                       0
+    wep64Key1                           0000000000
+    wep64Key2                           0000000000
+    wep64Key3                           0000000000
+    wep64Key4                           0000000000
+    wep128Key1                          00000000000000000000000000
+    wep128Key2                          00000000000000000000000000
+    wep128Key3                          00000000000000000000000000
+    wep128Key4                          00000000000000000000000000
+    wsc_auth                            1
+    FUNCKEY_PSTN                        .0
+    FUNCKEY_TRANSFER                    .1
+    AUTH_METH_ID                        0
+    AUTH                                0
+    AUTHHEADER                          0
+    KEY_EXCHANGE_MODE                   0
+
+  [configs/config_factory.xml]
+    USER_NAME                           user
+    USER_PASSWORD                       user
+    SNMP_SYS_DESCR                      System Description
+    SNMP_SYS_OID                        1.3.6.1.4.1.16972
+    SNMP_SYS_CONTACT                    System Contact
+    SNMP_SYS_LOCATION                   System Location
+    SNMP_TRAP_IP                        192.168.1.254
+    SNMP_COMM_RO                        public
+    SNMP_COMM_RW                        public
+    SNMP_SYS_NAME                       EARTH-4222
+    TFTP_SERVER_ADDR                    tftp://0.0.0.0
+    WEP64_KEY1                          0000000000
+    WEP64_KEY2                          0000000000
+    WEP64_KEY3                          0000000000
+    WEP64_KEY4                          0000000000
+    WEP128_KEY1                         00000000000000000000000000
+    WEP128_KEY2                         00000000000000000000000000
+    WEP128_KEY3                         00000000000000000000000000
+    WEP128_KEY4                         00000000000000000000000000
+    WEP_DEFAULT_KEY                     0
+    WEP_KEY_TYPE                        0
+    AUTH_TYPE                           2
+    WLAN_ENABLE_SUPP_NONWPA             0
+    WLAN_SUPP_NONWPA                    0
+    WLAN_WPA_AUTH                       2
+    WLAN_WPA_CIPHER_SUITE               0
+    WLAN_WPA_PSK                        00E04C867001
+    WLAN_WPA_GROUP_REKEY_TIME           86400
+    MAC_AUTH_ENABLED                    0
+    WPA2_CIPHER_SUITE                   0
+    WLAN1_WEP64_KEY1                    0000000000
+    WLAN1_WEP64_KEY2                    0000000000
+    WLAN1_WEP64_KEY3                    0000000000
+    WLAN1_WEP64_KEY4                    0000000000
+    WLAN1_WEP128_KEY1                   00000000000000000000000000
+    WLAN1_WEP128_KEY2                   00000000000000000000000000
+    WLAN1_WEP128_KEY3                   00000000000000000000000000
+    WLAN1_WEP128_KEY4                   00000000000000000000000000
+    WLAN1_WEP_DEFAULT_KEY               0
+    WLAN1_WEP_KEY_TYPE                  0
+    WLAN1_AUTH_TYPE                     2
+    WLAN1_ENABLE_SUPP_NONWPA            0
+    WLAN1_SUPP_NONWPA                   0
+    WLAN1_WPA_AUTH                      2
+    WLAN1_WPA_CIPHER_SUITE              0
+    WLAN1_WPA_PSK                       00E04C867001
+    WLAN1_WPA_GROUP_REKEY_TIME          86400
+    WLAN1_MAC_AUTH_ENABLED              0
+    WLAN1_WPA2_CIPHER_SUITE             0
+    WLAN1_WSC_AUTH                      1
+    SUSER_NAME                          admin
+    SUSER_PASSWORD                      EaR@GeN!9607#
+    CWMP_ACS_URL                        http://
+    CWMP_ACS_URL_OLD                    http://
+    CWMP_ACS_USERNAME                   username
+    CWMP_ACS_PASSWORD                   password
+    CWMP_INFORM_ENABLE                  1
+    CWMP_INFORM_INTERVAL                300
+    CWMP_INFORM_TIME                    0
+    CWMP_ACS_UPGRADESMANAGED            1
+    CWMP_SERIALNUMBER                   00000001
+    CWMP_DHCP_SERVERCONF                1
+    CWMP_LAN_IPIFENABLE                 1
+    CWMP_LAN_ETHIFENABLE                1
+    CWMP_WLAN_BASICENCRY                0
+    CWMP_DL_QUEUE_IDX                   -1
+    CWMP_DL_STARTTIME                   0
+    CWMP_DL_COMPLETETIME                0
+    CWMP_DL_FAULTCODE                   0
+    CWMP_INFORM_EVENTCODE               1
+    CWMP_INFORM_USER_EVENTCODE          0
+    CWMP_CERT_PASSWORD                  client
+    CWMP_FLAG                           48
+    CWMP_FLAG2                          0
+    CWMP_CONREQ_PORT                    7547
+    CWMP_CONREQ_PATH                    /tr069
+    CWMP_WAN_INTERFACE                  65535
+    CWMP_ACL_ENABLE                     0
+    CWMP_DELAY_RESTARTWAN_ENABLE        1
+    CWMP_DELAY_RESTARTWAN_CHECK_TIME    15
+    TR111_STUNUSERNAME                  acs
+    TR111_STUNPASSWORD                  acs
+    WSC_AUTH                            1
+    SNMPD_ENABLE                        1
+    LOID                                user
+    LOID_OLD                            user
+    GPON_PLOAM_PASSWD                   1234567890
+    WEB_SUSER_NAME                      admin
+    WEB_SUSER_PASSWORD                  00E04C867001
+    WEB_USER_NAME                       user
+    WEB_USER_PASSWORD                   00E04C867001
+    pppAuth                             0
+    vpass                               0
+    wpaAuth                             2
+    wpaPSKFormat                        0
+    wpaPSK                              00E04C867001
+    wpaGroupRekeyTime                   86400
+    authType                            2
+    cwmp_WLAN_BasicEncry                0
+    wpa2UnicastCipher                   0
+    userIsolation                       0
+    wepKeyType                          0
+    wepDefaultKey                       0
+    wep64Key1                           0000000000
+    wep64Key2                           0000000000
+    wep64Key3                           0000000000
+    wep64Key4                           0000000000
+    wep128Key1                          00000000000000000000000000
+    wep128Key2                          00000000000000000000000000
+    wep128Key3                          00000000000000000000000000
+    wep128Key4                          00000000000000000000000000
+    wsc_auth                            1
+    FUNCKEY_PSTN                        .0
+    FUNCKEY_TRANSFER                    .1
+    AUTO_BYPASS_RELAY                   0
+    AUTH_METH_ID                        0
+    AUTH                                0
+    AUTHHEADER                          0
+    KEY_EXCHANGE_MODE                   0
+
+  [configs/province/config_default.xml]
+    USER_NAME                           user
+    USER_PASSWORD                       user
+    SNMP_SYS_DESCR                      System Description
+    SNMP_SYS_NAME                       EARTH-4222
+    TFTP_SERVER_ADDR                    tftp://0.0.0.0
+    WEP64_KEY1                          0000000000
+    WEP64_KEY2                          0000000000
+    WEP64_KEY3                          0000000000
+    WEP64_KEY4                          0000000000
+    WEP128_KEY1                         00000000000000000000000000
+    WEP128_KEY2                         00000000000000000000000000
+    WEP128_KEY3                         00000000000000000000000000
+    WEP128_KEY4                         00000000000000000000000000
+    WEP_DEFAULT_KEY                     0
+    WEP_KEY_TYPE                        0
+    AUTH_TYPE                           2
+    WLAN_ENABLE_SUPP_NONWPA             0
+    WLAN_SUPP_NONWPA                    0
+    WLAN_WPA_AUTH                       2
+    WLAN_WPA_CIPHER_SUITE               0
+    WLAN_WPA_PSK                        12345678
+    WLAN_WPA_GROUP_REKEY_TIME           86400
+    MAC_AUTH_ENABLED                    0
+    WPA2_CIPHER_SUITE                   2
+    WLAN1_WEP64_KEY1                    0000000000
+    WLAN1_WEP64_KEY2                    0000000000
+    WLAN1_WEP64_KEY3                    0000000000
+    WLAN1_WEP64_KEY4                    0000000000
+    WLAN1_WEP128_KEY1                   00000000000000000000000000
+    WLAN1_WEP128_KEY2                   00000000000000000000000000
+    WLAN1_WEP128_KEY3                   00000000000000000000000000
+    WLAN1_WEP128_KEY4                   00000000000000000000000000
+    WLAN1_WEP_DEFAULT_KEY               0
+    WLAN1_WEP_KEY_TYPE                  0
+    WLAN1_AUTH_TYPE                     2
+    WLAN1_ENABLE_SUPP_NONWPA            0
+    WLAN1_SUPP_NONWPA                   0
+    WLAN1_WPA_AUTH                      2
+    WLAN1_WPA_CIPHER_SUITE              0
+    WLAN1_WPA_PSK                       12345678
+    WLAN1_WPA_GROUP_REKEY_TIME          86400
+    WLAN1_MAC_AUTH_ENABLED              0
+    WLAN1_WPA2_CIPHER_SUITE             2
+    WLAN1_WSC_AUTH                      32
+    SUSER_NAME                          admin
+    SUSER_PASSWORD                      EaR@GeN!9607#
+    CWMP_ACS_URL                        http://
+    CWMP_ACS_URL_OLD                    http://
+    CWMP_ACS_USERNAME                   username
+    CWMP_ACS_PASSWORD                   password
+    CWMP_INFORM_ENABLE                  1
+    CWMP_INFORM_INTERVAL                300
+    CWMP_INFORM_TIME                    0
+    CWMP_ACS_UPGRADESMANAGED            1
+    CWMP_SERIALNUMBER                   00000001
+    CWMP_DHCP_SERVERCONF                1
+    CWMP_LAN_IPIFENABLE                 1
+    CWMP_LAN_ETHIFENABLE                1
+    CWMP_WLAN_BASICENCRY                0
+    CWMP_DL_QUEUE_IDX                   -1
+    CWMP_DL_STARTTIME                   0
+    CWMP_DL_COMPLETETIME                0
+    CWMP_DL_FAULTCODE                   0
+    CWMP_INFORM_EVENTCODE               1
+    CWMP_INFORM_USER_EVENTCODE          0
+    CWMP_CERT_PASSWORD                  client
+    CWMP_FLAG                           48
+    CWMP_FLAG2                          0
+    CWMP_CONREQ_PORT                    7547
+    CWMP_CONREQ_PATH                    /tr069
+    CWMP_WAN_INTERFACE                  65535
+    CWMP_ACL_ENABLE                     0
+    CWMP_DELAY_RESTARTWAN_ENABLE        1
+    CWMP_DELAY_RESTARTWAN_CHECK_TIME    15
+    WSC_AUTH                            32
+    LOID                                user
+    LOID_OLD                            user
+    GPON_PLOAM_PASSWD                   1234567890
+    WEB_SUSER_NAME                      admin
+    WEB_SUSER_PASSWORD                  0
+    WEB_USER_NAME                       user
+    WEB_USER_PASSWORD                   0
+    wpaAuth                             2
+    wpaPSKFormat                        0
+    wpaPSK                              0
+    wpaGroupRekeyTime                   86400
+    authType                            2
+    cwmp_WLAN_BasicEncry                0
+    wpa2UnicastCipher                   2
+    userIsolation                       0
+    wepKeyType                          0
+    wepDefaultKey                       0
+    wep64Key1                           0000000000
+    wep64Key2                           0000000000
+    wep64Key3                           0000000000
+    wep64Key4                           0000000000
+    wep128Key1                          00000000000000000000000000
+    wep128Key2                          00000000000000000000000000
+    wep128Key3                          00000000000000000000000000
+    wep128Key4                          00000000000000000000000000
+    wsc_auth                            32
+    FUNCKEY_PSTN                        .0
+    FUNCKEY_TRANSFER                    .1
+    AUTO_BYPASS_RELAY                   0
+    AUTH_METH_ID                        0
+    AUTH                                0
+    AUTHHEADER                          0
+    KEY_EXCHANGE_MODE                   0
+
+================================================================
+WEB SOURCE — HARDCODED CREDENTIALS & CRYPTO PATTERNS
+================================================================
+  [web/admin/login.asp]  password = 'document.getElementById('
+  [web/admin/login.asp]  password = 'password.setAttribute('
+  [web/interface_grouping.asp]  key = 'group_select.value;'
+  [web/ipsec.asp]  crypt = 'document.getElementByName('
+  [web/macIptbl.asp]  key = 'idx.charAt(1);'
+  [web/voip_fxo.asp]  Key = 'Must'
+  [web/wlbasic.asp]  Support = '=1){'
+  [web/admin/jquip.js]  support = '{boxModel:null,opacity:/^0.55$/.test(a7.style.opacity),cssFloat:!!a7.style.cssFloat};var'
+  [web/admin/jquip.js]  Key = 'function(i){this.keyCode=i};for(var'
+  [web/admin/jquip.js]  key = 'function(i){i=i||window.event;return'
+  [web/admin/jquip_sizzle.js]  password = 'function(e){return'
+  [web/admin/md5.js]  key = 'str2binl(key);'
+  [web/admin/md5.js]  key = 'core_md5(bkey,'
+  [web/admin/md5.js]  hash = 'core_md5(ipad.concat(str2binl(data)),'
+  [web/admin/php-crypt-md5.js]  MD5 = 'C_algo.MD5;'
+  [web/admin/php-crypt-md5.js]  MD5 = 'C_algo.PHP_CRYPT_MD5'
+  [web/admin/php-crypt-md5.js]  crypt = 'CryptoJS.algo.PHP_CRYPT_MD5.create();'
+  [web/admin/php-crypt-md5.js]  hash = 'kdf.compute(password,'
+  [web/admin/php-crypt-md5.js]  password = 'Utf8.parse(password);'
+  [web/admin/php-crypt-md5.js]  hash = 'CryptoJS.PHP_CRYPT_MD5(password,'
+  [web/admin/php-crypt-md5.js]  MD5 = 'function'
+  [web/admin/rollups/md5.js]  MD5 = 't.extend({_doReset:function(){this._hash=new'
+  [web/admin/rollups/md5.js]  hash = 'this._hash.clone();return'
+  [web/admin/rollups/md5.js]  MD5 = 't._createHelper(q);r.HmacMD5=t._createHmacHelper(q)})(Math);'
+  [web/admin/userMenu.js]  key = '(key'
+  [web/common.js]  key = 'key;'
+
+  --- Login mechanism ---
+  Auth flow: MD5(password + challenge) via php-crypt-md5.js → POST /boaform/admin/formLogin
+  Password hash scheme: $1$ (MD5-crypt / PHP crypt)
+  postTableEncrypt() in common.js computes checksum over all form fields
+
+================================================================
+NON-RFC1918 / HIDDEN IP ADDRESSES
+================================================================
+
+  9.9.9.9
+    alue Name="TR111_UDPCONNREQADDR" Value="9.9.9.9:7547"/> <Value Name="TR111_STUNENABLE"
+
+  130.149.17.8
+    > <Value Name="NTP_SERVER_HOST3" Value="130.149.17.8"/> <Value Name="NTP_SERVER_HOST4" Value
+    RICA"); %></option>      <option value="130.149.17.8"><% multilang("585" "LANG_130_149_17_8_
+
+  192.5.41.41
+    > <Value Name="NTP_SERVER_HOST4" Value="192.5.41.41"/> <Value Name="NTP_SERVER_HOST5" Value
+    e="ntpServerHost1">      <option value="192.5.41.41"><% multilang("583" "LANG_192_5_41_41_N
+
+  192.5.41.209
+    > <Value Name="NTP_SERVER_HOST5" Value="192.5.41.209"/> <Value Name="UPNP" Value="0"/> <Valu
+    RICA"); %></option>      <option value="192.5.41.209"><% multilang("584" "LANG_192_5_41_209_
+
+  200.23.51.102
+    > <Value Name="NTP_SERVER_HOST1" Value="200.23.51.102"/> <Value Name="NTP_SERVER_HOST2" Value
+
+  203.117.180.36
+    ROPE"); %></option>      <option value="203.117.180.36"><% multilang("586" "LANG_203_117_180_3
+
+  220.130.158.52
+    > <Value Name="NTP_SERVER_HOST2" Value="220.130.158.52"/> <Value Name="NTP_SERVER_HOST3" Value
